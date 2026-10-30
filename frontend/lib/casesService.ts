@@ -996,10 +996,6 @@ export function autoGenerateSummary(caseItem: CaseDetail): string {
     discrepancyNote = " Sensor deceleration metrics corroborate video optical velocity calculations.";
   }
 
-  const combinedText = `${caseItem.name} ${caseItem.description} ${caseItem.evidenceList.map(e => `${e.name} ${e.extractedData?.summary || ""}`).join(" ")}`.toLowerCase();
-  const isLorry = /lorry|truck|semi|trailer|hauler|container|heavy/i.test(combinedText);
-  const isMotorcycle = /bike|motorcycle|moto|two-wheel|scooter|rider/i.test(combinedText);
-  const vehicleBName = isLorry ? "Vehicle B (Commercial Heavy Lorry / Truck)" : isMotorcycle ? "Vehicle B (Sport Motorcycle)" : "Vehicle B (Blue SUV)";
 
   // Automatically trigger live Groq/Gemini AI backend in background without human clicks!
   if (typeof window !== "undefined") {

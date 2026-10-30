@@ -29,15 +29,12 @@ import {
   Info
 } from "lucide-react";
 import TopHeader from "@/components/TopHeader";
-import ThreeForensicCanvas from "@/components/3d/ThreeForensicCanvas";
+import ThreeForensicCanvas, { ScenarioType } from "@/components/3d/ThreeForensicCanvas";
 import { 
   getStoredCaseById, 
-  getStoredCases,
-  saveStoredCases,
   CaseDetail, 
   EvidenceRecord, 
-  addEvidenceToCase,
-  analyzeCaseEvidence, 
+  addEvidenceToCase, 
   deleteEvidenceFromCase,
   deleteCase
 } from "@/lib/casesService";
@@ -50,8 +47,6 @@ export default function CaseDetailsPage() {
   const [caseData, setCaseData] = useState<CaseDetail | null>(null);
   const [activeTab, setActiveTab] = useState<"details" | "records" | "visuals">("details");
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisNotice, setAnalysisNotice] = useState<string | null>(null);
   const [viewingEvidence, setViewingEvidence] = useState<EvidenceRecord | null>(null);
   const [extractedDrawerRecord, setExtractedDrawerRecord] = useState<EvidenceRecord | null>(null);
   const [selectedUpdateId, setSelectedUpdateId] = useState<string | null>(null);
@@ -69,7 +64,7 @@ export default function CaseDetailsPage() {
       const found = getStoredCaseById(caseId);
       if (found) {
         setCaseData({ ...found });
-        const vid = (found as any).videoUrl || found.evidenceList?.find(e => (e.dataType === "Video" || /\.(mp4|mov|avi|webm)$/i.test(e.name)) && e.fileUrl)?.fileUrl;
+        const vid = (found as unknown as Record<string, string>).videoUrl || found.evidenceList?.find(e => (e.dataType === "Video" || /\.(mp4|mov|avi|webm)$/i.test(e.name)) && e.fileUrl)?.fileUrl;
         if (vid) setUploadedVideoUrl(vid);
         if (found.updates && found.updates.length > 0) {
           setSelectedUpdateId((prev) => prev || found.updates![0].id);
@@ -114,56 +109,6 @@ export default function CaseDetailsPage() {
       </div>
     );
   }
-
-  // Trigger Smart Analysis (Direct Real-time Groq/Gemini AI Call)
-  const handleTriggerAnalysis = async () => {
-    if (!caseData) return;
-    setIsAnalyzing(true);
-    setAnalysisNotice("Querying Groq & Gemini AI for real-time forensic synthesis on uploaded media...");
-
-    try {
-      const res = await fetch(`http://localhost:8000/api/cases/${caseData.id}/generate-summary`, {
-        method: "POST"
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const execSummary = data.summary?.executive || (typeof data.summary === "string" ? data.summary : null);
-        if (execSummary) {
-          const nowStr = new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) + " UTC";
-          const updated = {
-            ...caseData,
-            summary: execSummary,
-            lastAnalyzedAt: nowStr
-          };
-          setCaseData(updated);
-          const cases = getStoredCases();
-          const target = cases.find(c => c.id === caseData.id || c.caseNumber === caseData.caseNumber);
-          if (target) {
-            target.summary = execSummary;
-            target.lastAnalyzedAt = nowStr;
-            saveStoredCases(cases);
-          }
-          setAnalysisNotice(`AI Analysis Complete! Synthesized via ${data.providerUsed || "Multi-Modal AI Pipeline"}.`);
-          setTimeout(() => setAnalysisNotice(null), 4500);
-          setIsAnalyzing(false);
-          return;
-        }
-      }
-    } catch {
-      // fallback to client-side rule synthesis
-    }
-
-    try {
-      const updated = analyzeCaseEvidence(caseData.id);
-      setCaseData({ ...updated });
-      setAnalysisNotice(`Analysis Updated from ${updated.evidenceList.length} evidence source(s).`);
-      setTimeout(() => setAnalysisNotice(null), 4000);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
 
   // Upload new evidence from Records tab (Streams to Supabase Storage & Database)
   const handleUploadNewEvidence = (files: FileList | null) => {
@@ -223,8 +168,7 @@ export default function CaseDetailsPage() {
       });
       setCaseData({ ...updated });
     }
-    setAnalysisNotice(`New evidence ingested to Supabase Storage. Extracted optical metadata and synced 3D reconstruction!`);
-    setTimeout(() => setAnalysisNotice(null), 4000);
+
   };
 
   // Delete evidence
@@ -367,21 +311,6 @@ export default function CaseDetailsPage() {
           </div>
         </div>
 
-        {/* Delete Case Action */}
-        <div className="relative z-10 px-4 py-2 border-t border-white/10">
-          <button
-            onClick={() => {
-              if (confirm(`Permanently delete case "${caseData.name}" (${caseData.caseNumber})?`)) {
-                deleteCase(caseData.id);
-                router.push("/cases");
-              }
-            }}
-            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-rose-400 bg-rose-950/40 hover:bg-rose-900/60 rounded-full border border-rose-800/50 transition cursor-pointer"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            <span>Delete Case</span>
-          </button>
-        </div>
 
         {/* Bullish Diagonal Lines Gradient Effect at Bottom */}
         <div className="sidebar-bottom-bullish" />
@@ -830,6 +759,34 @@ export default function CaseDetailsPage() {
                   </div>
                 </div>
 
+                {/* Block 4: Case Removal / Danger Zone */}
+                <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-soft border border-[#F0F0F0] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <span className="text-[13px] font-medium text-[#8A8A8A]">
+                      Case Actions
+                    </span>
+                    <h4 className="text-base font-extrabold text-[#111111] mt-0.5">
+                      Delete Case Dossier
+                    </h4>
+                    <p className="text-xs text-[#8A8A8A] mt-0.5">
+                      Permanently remove this case dossier and all its synchronized evidence records from local storage.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (confirm(`Permanently delete case "${caseData.name}" (${caseData.caseNumber})?`)) {
+                        deleteCase(caseData.id);
+                        router.push("/cases");
+                      }
+                    }}
+                    className="h-10 px-5 rounded-full text-xs font-bold text-[#E11D48] bg-[#FFEAEA] hover:bg-[#FFD4D4] border border-[#FFD4D4] transition flex items-center justify-center gap-2 self-start sm:self-auto cursor-pointer shadow-2xs"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete Case</span>
+                  </button>
+                </div>
               </div>
             )}
 
@@ -1089,8 +1046,8 @@ export default function CaseDetailsPage() {
                     caseTitle={caseData.name}
                     caseDescription={caseData.description}
                     evidenceList={caseData.evidenceList}
-                    evidenceVideoUrl={uploadedVideoUrl || (caseData as any).videoUrl || caseData.evidenceList.find(e => (e.dataType === "Video" || /\.(mp4|mov|avi|webm)$/i.test(e.name)) && e.fileUrl)?.fileUrl}
-                    defaultScenario={(caseData as any).scenario}
+                    evidenceVideoUrl={uploadedVideoUrl || (caseData as unknown as Record<string, string>).videoUrl || caseData.evidenceList.find(e => (e.dataType === "Video" || /\.(mp4|mov|avi|webm)$/i.test(e.name)) && e.fileUrl)?.fileUrl}
+                    defaultScenario={(caseData as unknown as { scenario?: ScenarioType }).scenario}
                     onVideoUploaded={(file: File) => {
                       const blobUrl = URL.createObjectURL(file);
                       setUploadedVideoUrl(blobUrl);
