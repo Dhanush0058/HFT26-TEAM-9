@@ -144,7 +144,7 @@ export default function CaseDetailsPage() {
 
   return (
     <div className="min-h-screen bg-[#F6F5F2] text-[#111111] p-4 sm:p-6 font-sans">
-      <div className="max-w-7xl mx-auto flex gap-6">
+      <div className="w-full flex gap-6">
         
         {/* Floating Left Sub-Sidebar for Case Navigation */}
         <aside className="w-64 shrink-0 select-none">

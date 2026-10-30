@@ -15,7 +15,7 @@ export default function DocsPage() {
 
   return (
     <div className="min-h-screen bg-[#F6F5F2] text-[#111111] p-4 sm:p-6 font-sans">
-      <div className="max-w-7xl mx-auto flex gap-6">
+      <div className="w-full flex gap-6">
         
         {/* Floating Sidebar */}
         <Sidebar currentTab="docs" />

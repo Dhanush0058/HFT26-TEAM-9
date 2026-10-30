@@ -131,7 +131,7 @@ export default function CreateNewCasePage() {
 
   return (
     <div className="min-h-screen bg-[#F6F5F2] text-[#111111] p-4 sm:p-6 font-sans">
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6">
         
         {/* Top Header & Back Button */}
         <div className="flex items-center justify-between">

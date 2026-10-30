@@ -18,7 +18,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-[#F6F5F2] text-[#111111] p-4 sm:p-6 font-sans">
-      <div className="max-w-7xl mx-auto flex gap-6">
+      <div className="w-full flex gap-6">
         
         {/* Floating Sidebar */}
         <Sidebar currentTab="settings" />
@@ -27,7 +27,7 @@ export default function SettingsPage() {
           
           <TopHeader title="Settings" showSearch={false} />
 
-          <main className="max-w-3xl space-y-6">
+          <main className="max-w-5xl space-y-6">
             
             <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-soft border border-[#F0F0F0] space-y-6">
               
