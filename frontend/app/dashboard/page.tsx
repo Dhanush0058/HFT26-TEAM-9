@@ -1,294 +1,316 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { 
-  FolderKanban, 
-  AlertTriangle, 
-
-  Video, 
-  Mic, 
-  Activity, 
-  Sparkles,
-  ArrowUpRight,
-  TrendingUp,
-  Clock,
-  ShieldCheck,
-  BrainCircuit
+  ArrowUpRight, 
+  MoreHorizontal
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import TopHeader from "@/components/TopHeader";
-import { INITIAL_CASES } from "./data";
+import { getStoredCases, getRecentActivities, CaseDetail, ActivityFeedItem } from "@/lib/casesService";
 
 export default function DashboardMetricsPage() {
-  const totalCases = 24;
-  const activeCases = INITIAL_CASES.length;
-  const flaggedContradictions = 7;
-  const avgConfidence = 89.4;
+  const [cases, setCases] = useState<CaseDetail[]>([]);
+  const [activities, setActivities] = useState<ActivityFeedItem[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeBar, setActiveBar] = useState<number>(4); // Default selected bar (2025/latest)
+
+  useEffect(() => {
+    setCases(getStoredCases());
+    setActivities(getRecentActivities());
+  }, []);
+
+  const totalCases = cases.length;
+  const activeCases = cases.filter(c => c.status === "In Review" || c.status === "Flagged Contradiction").length;
+  const totalEvidence = cases.reduce((acc, c) => acc + c.evidenceList.length, 0);
+
+  // Capsule bar data for the reference-style chart
+  const intakeYears = [
+    { label: "May", height: 45, value: "14 cases" },
+    { label: "Jun", height: 65, value: "21 cases" },
+    { label: "Jul", height: 50, value: "18 cases" },
+    { label: "Aug", height: 80, value: "32 cases" },
+    { label: "Sep", height: 95, value: "48 cases" },
+    { label: "Oct", height: 70, value: "26 cases" },
+    { label: "Nov", height: 60, value: "20 cases" }
+  ];
 
   return (
-    <div className="min-h-screen bg-slate-50/50 text-slate-900 flex font-sans">
-      
-      {/* Sidebar with 4 clean navigation items */}
-      <Sidebar currentTab="dashboard" casesCount={activeCases} />
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+    <div className="min-h-screen bg-[#F6F5F2] text-[#111111] p-4 sm:p-6 font-sans">
+      <div className="max-w-7xl mx-auto flex gap-6">
         
-        {/* Top Header */}
-        <TopHeader title="Forensic Dashboard" showSearchAndFilter={false} />
+        {/* Floating Sidebar (Reference Design) */}
+        <Sidebar currentTab="dashboard" casesCount={cases.length} />
 
-        {/* Dashboard Analytics View */}
-        <main className="flex-1 w-full px-6 sm:px-8 py-6 max-w-6xl space-y-6">
+        {/* Main Content Area */}
+        <div className="flex-1 min-w-0">
           
-          {/* ─────────────────────────────────────────────────────────
-              A. TOP KPI METRICS ROW (The Big Numbers)
-          ───────────────────────────────────────────────────────── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Header */}
+          <TopHeader 
+            title="Dashboard" 
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder="Search incident records..."
+          />
+
+          <div className="space-y-6">
             
-            {/* Card 1: Total Cases */}
-            <div className="bg-white p-5 rounded-lg border border-slate-200/90 shadow-2xs hover:shadow-xs transition">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500">Total Cases</span>
-                <div className="w-8 h-8 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center">
-                  <FolderKanban className="w-4 h-4" />
+            {/* ─────────────────────────────────────────────────────────────
+                TOP CARDS ROW (3 Metric Cards matching Reference Image:
+                - 24px Radius, pure white, 3-dot circular button on top-right,
+                - 13px grey top-left label, 44px bold number, pill trend badge)
+            ───────────────────────────────────────────────────────────── */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              
+              {/* Card 1: Total Cases */}
+              <div className="bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-[13px] font-medium text-[#8A8A8A]">
+                    Total Registered Cases
+                  </span>
+                  <button className="w-8 h-8 rounded-full bg-[#F5F5F3] flex items-center justify-center text-[#8A8A8A] hover:text-[#111111] transition">
+                    <MoreHorizontal className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="flex items-baseline gap-3 my-2">
+                  <span className="text-[44px] font-extrabold tracking-tight text-[#111111] leading-none">
+                    {totalCases}
+                  </span>
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-[#DCF5E3] text-[#1A7A2E]">
+                    +12%
+                  </span>
+                </div>
+
+                <div className="text-[12px] text-[#8A8A8A] mt-2">
+                  Dossiers active in storage
                 </div>
               </div>
-              <div className="mt-3 flex items-baseline gap-2">
-                <span className="text-2xl font-extrabold text-slate-900">{totalCases}</span>
-                <span className="text-[11px] font-medium text-emerald-600 flex items-center gap-0.5">
-                  <TrendingUp className="w-3 h-3" /> +12% this mo
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 mt-1">Archived & historical files</p>
-            </div>
 
-            {/* Card 2: Active Cases */}
-            <div className="bg-white p-5 rounded-lg border border-slate-200/90 shadow-2xs hover:shadow-xs transition">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500">Active Investigations</span>
-                <div className="w-8 h-8 rounded-md bg-blue-600 text-white flex items-center justify-center">
-                  <Clock className="w-4 h-4" />
+              {/* Card 2: Active Investigations */}
+              <div className="bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-[13px] font-medium text-[#8A8A8A]">
+                    Active Investigations
+                  </span>
+                  <button className="w-8 h-8 rounded-full bg-[#F5F5F3] flex items-center justify-center text-[#8A8A8A] hover:text-[#111111] transition">
+                    <MoreHorizontal className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="flex items-baseline gap-3 my-2">
+                  <span className="text-[44px] font-extrabold tracking-tight text-[#111111] leading-none">
+                    {activeCases}
+                  </span>
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-[#DCF5E3] text-[#1A7A2E]">
+                    +4%
+                  </span>
+                </div>
+
+                <div className="text-[12px] text-[#8A8A8A] mt-2">
+                  Under ongoing reconstruction
                 </div>
               </div>
-              <div className="mt-3 flex items-baseline gap-2">
-                <span className="text-2xl font-extrabold text-slate-900">{activeCases}</span>
-                <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
-                  Live Intake
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 mt-1">Under active reconstruction</p>
-            </div>
 
-            {/* Card 3: Contradictions Flagged */}
-            <div className="bg-white p-5 rounded-lg border border-slate-200/90 shadow-2xs hover:shadow-xs transition">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500">Contradictions Flagged</span>
-                <div className="w-8 h-8 rounded-md bg-rose-50 text-rose-600 flex items-center justify-center">
-                  <AlertTriangle className="w-4 h-4" />
+              {/* Card 3: Evidence Files */}
+              <div className="bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-[13px] font-medium text-[#8A8A8A]">
+                    Total Evidence Ingested
+                  </span>
+                  <button className="w-8 h-8 rounded-full bg-[#F5F5F3] flex items-center justify-center text-[#8A8A8A] hover:text-[#111111] transition">
+                    <MoreHorizontal className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="flex items-baseline gap-3 my-2">
+                  <span className="text-[44px] font-extrabold tracking-tight text-[#111111] leading-none">
+                    {totalEvidence}
+                  </span>
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-[#DCF5E3] text-[#1A7A2E]">
+                    +24%
+                  </span>
+                </div>
+
+                <div className="text-[12px] text-[#8A8A8A] mt-2">
+                  Video, audio, sensor & PDF sources
                 </div>
               </div>
-              <div className="mt-3 flex items-baseline gap-2">
-                <span className="text-2xl font-extrabold text-rose-600">{flaggedContradictions}</span>
-                <span className="text-[11px] font-medium text-rose-500">
-                  Needs review
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 mt-1">Witness vs Video discrepancies</p>
+
             </div>
 
-            {/* Card 4: Reconstruction Confidence */}
-            <div className="bg-white p-5 rounded-lg border border-slate-200/90 shadow-2xs hover:shadow-xs transition">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500">Avg. AI Confidence</span>
-                <div className="w-8 h-8 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                  <ShieldCheck className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="mt-3 flex items-baseline gap-2">
-                <span className="text-2xl font-extrabold text-slate-900">{avgConfidence}%</span>
-                <span className="text-[11px] font-medium text-emerald-600">
-                  High certainty
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 mt-1">Calculated across 42 streams</p>
-            </div>
-
-          </div>
-
-          {/* ─────────────────────────────────────────────────────────
-              B. ANALYTICAL BREAKDOWNS (Charts & Diagnostic Insights)
-          ───────────────────────────────────────────────────────── */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-            
-            {/* Box 1: Evidence Ingestion Distribution */}
-            <div className="bg-white p-6 rounded-lg border border-slate-200/90 shadow-2xs">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-bold text-slate-900">
-                  Multi-Source Evidence Mix
-                </h2>
-                <span className="text-[11px] font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-                  48 Total Records
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 mb-5">
-                Proportion of digital evidence ingested across active and closed accident dossiers.
-              </p>
-
-              {/* Progress bars showing distribution */}
-              <div className="space-y-4">
-                <div>
-                  <div className="flex items-center justify-between text-xs mb-1.5">
-                    <span className="flex items-center gap-1.5 text-slate-700 font-medium">
-                      <Video className="w-3.5 h-3.5 text-blue-600" /> Dashcam & CCTV Video
+            {/* ─────────────────────────────────────────────────────────────
+                MIDDLE SECTION:
+                Left: Capsule-Shaped Bar Chart (Cloned from Reference Image)
+                Right: "How Our System Works" & "Recent Activity" 24px cards
+            ───────────────────────────────────────────────────────────── */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              
+              {/* Capsule Chart Card (Span 7) */}
+              <div className="lg:col-span-7 bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <span className="text-[13px] font-medium text-[#8A8A8A]">
+                      Intake Volume Over Time
                     </span>
-                    <span className="font-bold text-slate-900">46% (22 files)</span>
+                    <h2 className="text-xl font-extrabold text-[#111111] mt-0.5">
+                      Case Analysis Activity
+                    </h2>
                   </div>
-                  <div className="w-full bg-slate-100 rounded-full h-2">
-                    <div className="bg-blue-600 h-2 rounded-full" style={{ width: "46%" }}></div>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between text-xs mb-1.5">
-                    <span className="flex items-center gap-1.5 text-slate-700 font-medium">
-                      <Mic className="w-3.5 h-3.5 text-sky-500" /> Witness Audio Statements
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold px-3 py-1 bg-[#F5F5F3] rounded-full text-[#111111]">
+                      Weekly
                     </span>
-                    <span className="font-bold text-slate-900">33% (16 files)</span>
-                  </div>
-                  <div className="w-full bg-slate-100 rounded-full h-2">
-                    <div className="bg-sky-500 h-2 rounded-full" style={{ width: "33%" }}></div>
+                    <button className="w-8 h-8 rounded-full bg-[#F5F5F3] flex items-center justify-center text-[#8A8A8A] hover:text-[#111111]">
+                      <MoreHorizontal className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
 
-                <div>
-                  <div className="flex items-center justify-between text-xs mb-1.5">
-                    <span className="flex items-center gap-1.5 text-slate-700 font-medium">
-                      <Activity className="w-3.5 h-3.5 text-indigo-500" /> CAN Bus & OBD-II Telemetry
+                {/* Capsule-shaped Bar Chart (Reference Design) */}
+                <div className="h-60 flex items-end justify-between gap-3 pt-6 pb-2 px-2">
+                  {intakeYears.map((bar, i) => {
+                    const isSelected = activeBar === i;
+                    return (
+                      <div 
+                        key={i} 
+                        onClick={() => setActiveBar(i)}
+                        className="flex-1 flex flex-col items-center gap-2 cursor-pointer group"
+                      >
+                        {/* Tooltip on active */}
+                        {isSelected && (
+                          <div className="px-2 py-1 bg-[#121212] text-white text-[10px] font-bold rounded-full shadow-sm animate-in fade-in">
+                            {bar.value}
+                          </div>
+                        )}
+
+                        {/* The Capsule / Pill Bar (fully rounded top and bottom) */}
+                        <div className="w-full max-w-[42px] bg-[#F5F5F3] rounded-full h-44 flex flex-col justify-end p-1 transition-all">
+                          <div 
+                            className={`w-full rounded-full transition-all duration-300 ${
+                              isSelected ? "bg-[#0A66FF]" : "bg-[#EAEAEA] group-hover:bg-[#DFDFDF]"
+                            }`}
+                            style={{ height: `${bar.height}%` }}
+                          />
+                        </div>
+
+                        <span className={`text-xs font-medium ${isSelected ? "text-[#111111] font-bold" : "text-[#8A8A8A]"}`}>
+                          {bar.label}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="flex items-center justify-between pt-4 border-t border-[#F5F5F3] text-xs text-[#8A8A8A]">
+                  <span>Timeline synchronization efficiency</span>
+                  <span className="font-bold text-[#111111]">99.4% precision</span>
+                </div>
+              </div>
+
+              {/* Right Column: "How Our System Works" & "Recent Activity" (Span 5) */}
+              <div className="lg:col-span-5 space-y-6">
+                
+                {/* How Our System Works Card */}
+                <div className="bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[13px] font-medium text-[#8A8A8A]">
+                      Platform Architecture
                     </span>
-                    <span className="font-bold text-slate-900">21% (10 logs)</span>
+                    <button className="w-8 h-8 rounded-full bg-[#F5F5F3] flex items-center justify-center text-[#8A8A8A]">
+                      <MoreHorizontal className="w-4 h-4" />
+                    </button>
                   </div>
-                  <div className="w-full bg-slate-100 rounded-full h-2">
-                    <div className="bg-indigo-500 h-2 rounded-full" style={{ width: "21%" }}></div>
+
+                  <h3 className="text-base font-bold text-[#111111]">
+                    How Our System Works
+                  </h3>
+
+                  <p className="text-xs text-[#8A8A8A] leading-relaxed">
+                    Our system uses AI models to analyze various types of inputs (audio, video, text, PDF). As new evidence is uploaded, the summary is dynamically updated.
+                  </p>
+
+                  <div className="space-y-2 pt-2">
+                    <div className="p-3 bg-[#F9F9F7] rounded-[16px] flex items-center gap-3">
+                      <div className="w-7 h-7 rounded-full bg-[#121212] text-white flex items-center justify-center text-xs font-bold shrink-0">
+                        1
+                      </div>
+                      <div className="text-xs">
+                        <div className="font-bold text-[#111111]">Multi-Source Ingest</div>
+                        <div className="text-[11px] text-[#8A8A8A]">Dashcam, audio notes, police files</div>
+                      </div>
+                    </div>
+
+                    <div className="p-3 bg-[#F9F9F7] rounded-[16px] flex items-center gap-3">
+                      <div className="w-7 h-7 rounded-full bg-[#121212] text-white flex items-center justify-center text-xs font-bold shrink-0">
+                        2
+                      </div>
+                      <div className="text-xs">
+                        <div className="font-bold text-[#111111]">Dynamic Reconstruction</div>
+                        <div className="text-[11px] text-[#8A8A8A]">Automatic timeline synchronization</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
+
+                {/* Real Activity Feed Card */}
+                <div className="bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[13px] font-medium text-[#8A8A8A]">
+                      Audit Trail
+                    </span>
+                    <button className="w-8 h-8 rounded-full bg-[#F5F5F3] flex items-center justify-center text-[#8A8A8A]">
+                      <MoreHorizontal className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <h3 className="text-base font-bold text-[#111111]">
+                    Recent Activity
+                  </h3>
+
+                  {activities.length > 0 ? (
+                    <div className="space-y-3 max-h-48 overflow-y-auto pr-1">
+                      {activities.slice(0, 4).map((act) => (
+                        <div key={act.id} className="flex items-start gap-2.5 text-xs pb-2 border-b border-[#F5F5F3] last:border-0">
+                          <div className="w-2 h-2 rounded-full bg-[#0A66FF] mt-1.5 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[#111111] font-medium">{act.action}</div>
+                            <div className="text-[10px] text-[#8A8A8A] mt-0.5">{act.timestamp}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6 text-xs text-[#8A8A8A]">
+                      No activity logged yet.
+                    </div>
+                  )}
+                </div>
+
               </div>
+
             </div>
 
-            {/* Box 2: Contradiction & Discrepancy Breakdown */}
-            <div className="bg-white p-6 rounded-lg border border-slate-200/90 shadow-2xs">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-bold text-slate-900">
-                  Discrepancy Severity Matrix
-                </h2>
-                <span className="text-[11px] font-medium text-rose-600 bg-rose-50 px-2 py-0.5 rounded">
-                  Groq LLM Reasoner
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 mb-4">
-                AI cross-correlation between witness testimony and physical ground-truth recordings.
-              </p>
-
-              <div className="space-y-3">
-                <div className="p-3 rounded-lg border border-rose-100 bg-rose-50/50 flex items-center justify-between">
-                  <div>
-                    <div className="text-xs font-bold text-rose-900">Traffic Signal Violations</div>
-                    <div className="text-[11px] text-rose-600">Disproved witness red/green claims</div>
-                  </div>
-                  <span className="text-base font-extrabold text-rose-700">4</span>
-                </div>
-
-                <div className="p-3 rounded-lg border border-amber-100 bg-amber-50/50 flex items-center justify-between">
-                  <div>
-                    <div className="text-xs font-bold text-amber-900">Speed & Braking Estimates</div>
-                    <div className="text-[11px] text-amber-600">Disagreements with sensor curves</div>
-                  </div>
-                  <span className="text-base font-extrabold text-amber-700">2</span>
-                </div>
-
-                <div className="p-3 rounded-lg border border-emerald-100 bg-emerald-50/50 flex items-center justify-between">
-                  <div>
-                    <div className="text-xs font-bold text-emerald-900">Verified Direct Alignments</div>
-                    <div className="text-[11px] text-emerald-600">Corroborated across 2+ sources</div>
-                  </div>
-                  <span className="text-base font-extrabold text-emerald-700">18</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Box 3: Recent AI Forensic Activity Log */}
-            <div className="bg-white p-6 rounded-lg border border-slate-200/90 shadow-2xs">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-bold text-slate-900">
-                  Forensic Pipeline Feed
-                </h2>
-                <BrainCircuit className="w-4 h-4 text-blue-600" />
-              </div>
-              <p className="text-xs text-slate-500 mb-4">
-                Live stream of automated multimodal extractions and synchronization passes.
-              </p>
-
-              <div className="space-y-3">
-                <div className="flex gap-2.5 text-xs">
-                  <div className="w-2 h-2 rounded-full bg-blue-600 mt-1 shrink-0"></div>
-                  <div>
-                    <span className="font-semibold text-slate-900">CASE-101:</span>
-                    <span className="text-slate-600"> Featherless VLM parsed 14 keyframes from dashcam.</span>
-                    <div className="text-[10px] text-slate-400 mt-0.5">3 mins ago</div>
-                  </div>
-                </div>
-
-                <div className="flex gap-2.5 text-xs">
-                  <div className="w-2 h-2 rounded-full bg-sky-500 mt-1 shrink-0"></div>
-                  <div>
-                    <span className="font-semibold text-slate-900">CASE-101:</span>
-                    <span className="text-slate-600"> Groq Whisper transcribed witness audio in 0.72s.</span>
-                    <div className="text-[10px] text-slate-400 mt-0.5">7 mins ago</div>
-                  </div>
-                </div>
-
-                <div className="flex gap-2.5 text-xs">
-                  <div className="w-2 h-2 rounded-full bg-rose-500 mt-1 shrink-0"></div>
-                  <div>
-                    <span className="font-semibold text-slate-900">CASE-101:</span>
-                    <span className="text-slate-600"> Contradiction flagged at timestamp 14:02:10.</span>
-                    <div className="text-[10px] text-slate-400 mt-0.5">11 mins ago</div>
-                  </div>
-                </div>
-
-                <div className="flex gap-2.5 text-xs">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 mt-1 shrink-0"></div>
-                  <div>
-                    <span className="font-semibold text-slate-900">CASE-102:</span>
-                    <span className="text-slate-600"> 3D spline trajectory generated (84 coordinate steps).</span>
-                    <div className="text-[10px] text-slate-400 mt-0.5">25 mins ago</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Quick link button to Cases */}
-          <div className="p-4 bg-blue-50/80 border border-blue-200/80 rounded-lg flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Sparkles className="w-4 h-4 text-blue-600" />
+            {/* Bottom Navigation CTA Card (24px radius, black button) */}
+            <div className="bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] flex items-center justify-between">
               <div>
-                <span className="text-xs font-bold text-slate-900">Ready to examine or create collision files?</span>
-                <p className="text-[11px] text-slate-500">Open the Cases ledger to review evidence files or run 3D trajectory simulations.</p>
+                <h3 className="text-base font-bold text-[#111111]">Incident Dossiers</h3>
+                <p className="text-xs text-[#8A8A8A] mt-0.5">Explore active accident records or register a new intake.</p>
               </div>
+              <Link
+                href="/cases"
+                className="h-11 px-6 rounded-full bg-[#121212] text-white hover:bg-black text-xs font-semibold flex items-center gap-2 transition shadow-sm"
+              >
+                <span>View All Cases</span>
+                <ArrowUpRight className="w-4 h-4" />
+              </Link>
             </div>
-            <Link
-              href="/cases"
-              className="text-xs font-semibold px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition shadow-2xs flex items-center gap-1"
-            >
-              Go to Cases <ArrowUpRight className="w-3.5 h-3.5" />
-            </Link>
+
           </div>
+        </div>
 
-        </main>
       </div>
-
     </div>
   );
 }

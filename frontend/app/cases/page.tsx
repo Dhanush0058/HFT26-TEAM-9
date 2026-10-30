@@ -6,8 +6,9 @@ import {
   Calendar, 
   MapPin, 
   User, 
-  FileText,
-  Plus
+  FileText, 
+  Plus, 
+  ArrowRight 
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import TopHeader from "@/components/TopHeader";
@@ -16,146 +17,137 @@ import { getStoredCases, CaseDetail } from "@/lib/casesService";
 export default function CasesPage() {
   const [cases, setCases] = useState<CaseDetail[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState<"ALL" | "FLAGGED" | "VERIFIED">("ALL");
-  const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
 
   useEffect(() => {
-    // Load persisted cases from local storage / API
     setCases(getStoredCases());
   }, []);
 
-  // Filter & Search Logic
   const filteredCases = cases.filter((c) => {
-    const matchesSearch =
-      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.caseNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.filedBy.toLowerCase().includes(searchQuery.toLowerCase());
-
-    if (!matchesSearch) return false;
-
-    if (activeFilter === "FLAGGED") return c.status === "Flagged Contradiction";
-    if (activeFilter === "VERIFIED") return c.status === "Verified Consistent";
-    return true;
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      c.name.toLowerCase().includes(q) ||
+      c.caseNumber.toLowerCase().includes(q) ||
+      c.address.toLowerCase().includes(q) ||
+      c.filedBy.toLowerCase().includes(q)
+    );
   });
 
   return (
-    <div className="min-h-screen bg-slate-50/50 text-slate-900 flex font-sans">
-      
-      {/* Sidebar with 4 clean options */}
-      <Sidebar currentTab="cases" casesCount={cases.length} />
-
-      {/* Main Container */}
-      <div className="flex-1 flex flex-col min-w-0">
+    <div className="min-h-screen bg-[#F6F5F2] text-[#111111] p-4 sm:p-6 font-sans">
+      <div className="max-w-7xl mx-auto flex gap-6">
         
-        {/* Top Header with Search, Filter & Profile */}
-        <TopHeader
-          title="Cases"
-          showSearchAndFilter={true}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          activeFilter={activeFilter}
-          onFilterChange={setActiveFilter}
-          isFilterMenuOpen={isFilterMenuOpen}
-          setIsFilterMenuOpen={setIsFilterMenuOpen}
-        />
+        {/* Floating Sidebar */}
+        <Sidebar currentTab="cases" casesCount={cases.length} />
 
-        {/* Content Area */}
-        <main className="flex-1 w-full px-6 sm:px-8 py-6 max-w-6xl">
+        <div className="flex-1 min-w-0">
           
-          {/* ─────────────────────────────────────────────────────────
-              1. FIXED TOP '+ CREATE' RECTANGLE
-              - Direct navigation to /cases/new (NO MODAL)
-              - Solid blue background (`bg-blue-600`)
-              - White text
-              - Plus icon on left + text to create a new case
-          ───────────────────────────────────────────────────────── */}
-          <Link
-            href="/cases/new"
-            className="w-full mb-5 px-5 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-xs transition-all duration-150 cursor-pointer flex items-center gap-3.5 select-none block"
-          >
-            <div className="w-8 h-8 rounded-md bg-white/15 flex items-center justify-center text-white shrink-0">
-              <Plus className="w-5 h-5 stroke-[2.5]" />
-            </div>
-            <div>
-              <div className="text-base font-semibold leading-tight">
-                Create New Case
-              </div>
-              <p className="text-xs text-blue-100 mt-0.5">
-                Click to open case intake form and upload multi-source digital evidence
-              </p>
-            </div>
-          </Link>
+          {/* Top Header */}
+          <TopHeader
+            title="Cases"
+            showSearch={true}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder="Search case name, ID, officer..."
+          />
 
-          {/* ─────────────────────────────────────────────────────────
-              2. VERTICAL LIST OF CASE RECTANGLES
-              - On clicking ANY case card, opens /cases/[caseId]
-              - Clean layout:
-                * Case Name on top left
-                * Case ID in framed box on top right
-                * Date, Address, Officer on bottom
-          ───────────────────────────────────────────────────────── */}
-          <div className="space-y-3.5">
-            {filteredCases.map((caseItem) => (
+          <div className="space-y-6">
+            
+            {/* New Case Card (24px radius, Black pill button, clean minimalist style) */}
+            <div className="bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <span className="text-[13px] font-medium text-[#8A8A8A]">
+                  New Investigation Intake
+                </span>
+                <h2 className="text-xl font-extrabold text-[#111111] mt-0.5">
+                  Register Incident Dossier
+                </h2>
+                <p className="text-xs text-[#8A8A8A] mt-1">
+                  Upload multi-format evidence (dashcam, audio notes, police files, sensor logs).
+                </p>
+              </div>
+
               <Link
-                key={caseItem.id}
-                href={`/cases/${caseItem.id}`}
-                className="group block w-full bg-white border border-slate-200 hover:border-blue-400 rounded-lg p-5 shadow-2xs hover:shadow-xs transition-all duration-150"
+                href="/cases/new"
+                className="h-11 px-6 rounded-full bg-[#121212] text-white hover:bg-black text-xs font-semibold flex items-center justify-center gap-2 transition shrink-0 shadow-sm"
               >
-                {/* Top Row: Case Name (left) & Case ID Box (right) */}
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <h2 className="text-lg font-bold text-slate-900 group-hover:text-blue-600 transition">
-                      {caseItem.name}
-                    </h2>
-                  </div>
-
-                  {/* Framed Case ID Box */}
-                  <div className="px-3 py-1 rounded border border-slate-300 text-slate-700 text-xs font-mono font-semibold bg-slate-50 shrink-0">
-                    {caseItem.caseNumber}
-                  </div>
-                </div>
-
-                {/* Bottom Row: Additional Details (date, address, officer) */}
-                <div className="flex flex-wrap items-center gap-y-1.5 gap-x-5 text-xs text-slate-500 mt-3 pt-2.5 border-t border-slate-100">
-                  <span className="flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Accident: {caseItem.accidentDate}</span>
-                  </span>
-
-                  <span className="flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{caseItem.address}</span>
-                  </span>
-
-                  <span className="flex items-center gap-1.5">
-                    <User className="w-3.5 h-3.5 text-slate-400" />
-                    <span>
-                      Officer: <strong className="text-slate-700 font-medium">{caseItem.filedBy}</strong>
-                    </span>
-                  </span>
-                </div>
+                <Plus className="w-4 h-4 stroke-[2.5]" />
+                <span>New Case</span>
               </Link>
-            ))}
+            </div>
 
-            {filteredCases.length === 0 && (
-              <div className="text-center py-12 bg-white rounded-lg border border-slate-200 p-8">
-                <FileText className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-                <h3 className="text-sm font-semibold text-slate-700">No matching incident cases found</h3>
-                <p className="text-xs text-slate-400 mt-1">Try clearing your search query or filter</p>
-                <button
-                  onClick={() => { setSearchQuery(""); setActiveFilter("ALL"); }}
-                  className="mt-3 text-xs font-medium px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded transition"
+            {/* List of Case Cards (24px radius white cards, 3-dot top-right, clean typography) */}
+            <div className="space-y-4">
+              {filteredCases.map((caseItem) => (
+                <Link
+                  key={caseItem.id}
+                  href={`/cases/${caseItem.id}`}
+                  className="group block bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] hover:border-[#111111] transition-all duration-200 card-hover-shadow"
                 >
-                  Reset Filters
-                </button>
-              </div>
-            )}
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-xs font-mono font-bold text-[#8A8A8A]">
+                          {caseItem.caseNumber}
+                        </span>
+                        {caseItem.status === "Flagged Contradiction" ? (
+                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#FFE0E0] text-[#C52A2A]">
+                            Contradiction Flagged
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#DCF5E3] text-[#1A7A2E]">
+                            Verified Consistent
+                          </span>
+                        )}
+                      </div>
+
+                      <h3 className="text-lg font-bold text-[#111111] group-hover:text-[#0A66FF] transition">
+                        {caseItem.name}
+                      </h3>
+                    </div>
+
+                    <div className="w-9 h-9 rounded-full bg-[#F5F5F3] flex items-center justify-center text-[#8A8A8A] group-hover:bg-[#121212] group-hover:text-white transition shrink-0">
+                      <ArrowRight className="w-4 h-4" />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-y-2 gap-x-6 text-xs text-[#8A8A8A] mt-4 pt-4 border-t border-[#F5F5F3]">
+                    <span className="flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-[#8A8A8A]" />
+                      <span>{caseItem.accidentDate}</span>
+                    </span>
+
+                    <span className="flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-[#8A8A8A]" />
+                      <span className="text-[#111111] font-medium">{caseItem.address}</span>
+                    </span>
+
+                    <span className="flex items-center gap-1.5">
+                      <User className="w-3.5 h-3.5 text-[#8A8A8A]" />
+                      <span>Officer: <strong className="text-[#111111] font-medium">{caseItem.filedBy}</strong></span>
+                    </span>
+
+                    <span className="ml-auto text-[11px] font-bold text-[#111111] bg-[#F5F5F3] px-3 py-1 rounded-full">
+                      {caseItem.evidenceList.length} Evidence Source(s)
+                    </span>
+                  </div>
+                </Link>
+              ))}
+
+              {filteredCases.length === 0 && (
+                <div className="bg-white rounded-[24px] p-12 text-center border border-[#F0F0F0] shadow-soft space-y-2">
+                  <FileText className="w-10 h-10 text-[#8A8A8A] mx-auto opacity-40" />
+                  <h4 className="text-sm font-bold text-[#111111]">No Cases Found</h4>
+                  <p className="text-xs text-[#8A8A8A]">Try adjusting your search query or register a new case.</p>
+                </div>
+              )}
+            </div>
+
           </div>
 
-        </main>
-      </div>
+        </div>
 
+      </div>
     </div>
   );
 }
