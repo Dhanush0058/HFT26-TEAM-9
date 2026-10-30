@@ -57,13 +57,19 @@ export default function CaseDetailsPage() {
   const [scrubberTime, setScrubberTime] = useState(2.8);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  // Load case data
+  // Load case data and auto-refresh when AI completes in background
   useEffect(() => {
     if (!caseId) return;
-    const found = getStoredCaseById(caseId);
-    if (found) {
-      setCaseData(found);
-    }
+    const reload = () => {
+      const found = getStoredCaseById(caseId);
+      if (found) {
+        setCaseData({ ...found });
+      }
+    };
+    reload();
+
+    window.addEventListener('caseUpdated', reload);
+    return () => window.removeEventListener('caseUpdated', reload);
   }, [caseId]);
 
   // Scrubber animation loop for Visuals tab

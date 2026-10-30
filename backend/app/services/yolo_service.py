@@ -149,3 +149,4 @@ class YOLODetectionService:
         ]
 
 yolo_service = YOLODetectionService()
+
