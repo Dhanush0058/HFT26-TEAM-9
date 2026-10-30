@@ -32,5 +32,11 @@ class Settings:
     FEATHERLESS_VLM_MODEL: str = os.getenv("FEATHERLESS_VLM_MODEL", "Qwen/Qwen2-VL-7B-Instruct")
     FEATHERLESS_BASE_URL: str = os.getenv("FEATHERLESS_BASE_URL", "https://api.featherless.ai/v1")
 
+    # 5. Supabase Cloud Database & Storage
+    SUPABASE_URL: str = os.getenv("SUPABASE_URL", "").strip()
+    SUPABASE_KEY: str = os.getenv("SUPABASE_KEY", "").strip()
+    SUPABASE_SERVICE_ROLE_KEY: str = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+    SUPABASE_BUCKET: str = os.getenv("SUPABASE_BUCKET", "evidence-media").strip()
+
 settings = Settings()
 

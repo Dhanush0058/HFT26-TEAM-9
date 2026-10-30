@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
 import TopHeader from "@/components/TopHeader";
 import { 
@@ -9,7 +9,11 @@ import {
   Sliders, 
   CheckCircle2, 
   Save,
-  Lock
+  Lock,
+  Database,
+  HardDrive,
+  Terminal,
+  Check
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -19,6 +23,26 @@ export default function SettingsPage() {
   const [auditLogging, setAuditLogging] = useState(true);
   const [confidenceFloor, setConfidenceFloor] = useState("75");
   const [isSaved, setIsSaved] = useState(false);
+  const [copiedSql, setCopiedSql] = useState(false);
+  const [supabaseStatus, setSupabaseStatus] = useState<{
+    configured: boolean;
+    connected: boolean;
+    bucket: string;
+    supabaseUrl: string | null;
+    status: string;
+  } | null>(null);
+
+  useEffect(() => {
+    fetch("http://localhost:8000/api/supabase/status")
+      .then((r) => r.json())
+      .then((data) => setSupabaseStatus(data))
+      .catch(() => {});
+  }, []);
+
+  const handleCopySqlNotice = () => {
+    setCopiedSql(true);
+    setTimeout(() => setCopiedSql(false), 2000);
+  };
 
   const handleSave = () => {
     setIsSaved(true);
@@ -89,6 +113,74 @@ export default function SettingsPage() {
                 </div>
                 <div className="text-[10px] text-slate-400 mt-0.5">Active & Local</div>
               </div>
+            </div>
+          </div>
+
+          {/* Block 1.5: Supabase Cloud Database & Storage */}
+          <div className="bg-white p-6 rounded-lg border border-slate-200/90 shadow-2xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+              <div>
+                <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <Database className="w-4 h-4 text-emerald-600" /> Supabase Cloud Database & Storage
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  PostgreSQL relational tables and Object Storage bucket for digital evidence assets.
+                </p>
+              </div>
+              {supabaseStatus?.connected ? (
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 self-start sm:self-auto">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Connected
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 self-start sm:self-auto">
+                  <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                  Awaiting Keys in backend/.env
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+              <div className="p-3.5 rounded-lg border border-slate-100 bg-slate-50/70">
+                <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Database Status</div>
+                <div className="text-xs font-bold text-slate-800 mt-1 flex items-center gap-1.5">
+                  <Database className="w-3.5 h-3.5 text-emerald-600" />
+                  {supabaseStatus?.connected ? "PostgreSQL Connected" : "Local In-Memory Cache (Active)"}
+                </div>
+                <div className="text-[10px] text-slate-400 mt-0.5">
+                  {supabaseStatus?.supabaseUrl || "Tables: cases, evidence_records, timeline"}
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-lg border border-slate-100 bg-slate-50/70">
+                <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Storage Bucket</div>
+                <div className="text-xs font-bold text-slate-800 mt-1 flex items-center gap-1.5">
+                  <HardDrive className="w-3.5 h-3.5 text-blue-600" />
+                  {supabaseStatus?.bucket || "evidence-media"}
+                </div>
+                <div className="text-[10px] text-slate-400 mt-0.5">Videos, Images, Documents, Sensors</div>
+              </div>
+
+              <div className="p-3.5 rounded-lg border border-slate-100 bg-slate-50/70">
+                <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">SQL Migration</div>
+                <div className="text-xs font-bold text-slate-800 mt-1 flex items-center gap-1.5">
+                  <Terminal className="w-3.5 h-3.5 text-indigo-600" />
+                  supabase_schema.sql
+                </div>
+                <div className="text-[10px] text-slate-400 mt-0.5">Ready for Supabase SQL Editor</div>
+              </div>
+            </div>
+
+            <div className="bg-slate-900 text-slate-200 p-4 rounded-lg font-mono text-xs space-y-2">
+              <div className="flex items-center justify-between text-slate-400 text-[11px] border-b border-slate-800 pb-2">
+                <span>Setup Guide: Execute SQL Schema in Supabase Dashboard</span>
+                <span className="text-emerald-400 text-[10px]">supabase_schema.sql</span>
+              </div>
+              <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
+                1. Open your Supabase Dashboard &rarr; <strong>SQL Editor</strong> &rarr; <strong>New query</strong>.<br />
+                2. Copy & paste the contents of <code className="bg-slate-800 px-1 py-0.5 rounded text-amber-300">supabase_schema.sql</code> and click <strong>Run</strong>.<br />
+                3. Paste your project URL & Anon Key into <code className="bg-slate-800 px-1 py-0.5 rounded text-amber-300">backend/.env</code> (<span className="text-slate-400">SUPABASE_URL</span> &amp; <span className="text-slate-400">SUPABASE_KEY</span>).
+              </p>
             </div>
           </div>
 

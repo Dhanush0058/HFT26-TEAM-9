@@ -50,9 +50,16 @@ def root():
         }
     }
 
+@app.get("/api/supabase/status")
+def supabase_status():
+    from app.services.supabase_service import supabase_service
+    return supabase_service.get_status()
+
 @app.get("/health")
 @app.get("/api/health")
 def health_check():
+    from app.services.supabase_service import supabase_service
+    sb_status = supabase_service.get_status()
     return {
         "status": "healthy",
         "service": "Rekishi Forensics Engine",
@@ -63,6 +70,13 @@ def health_check():
             "nvidia": bool(settings.NVIDIA_API_KEY),
             "featherless": bool(settings.FEATHERLESS_API_KEY),
             "offlineFallback": True
+        },
+        "database": {
+            "provider": "Supabase",
+            "configured": sb_status["configured"],
+            "connected": sb_status["connected"],
+            "bucket": sb_status["bucket"],
+            "status": sb_status["status"]
         }
     }
 

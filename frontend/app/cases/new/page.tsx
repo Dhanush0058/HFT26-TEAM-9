@@ -107,16 +107,45 @@ export default function CreateNewCasePage() {
     if (!caseName.trim()) return;
 
     setIsSubmitting(true);
-    setSubmittingStatus("Initializing Multi-Modal AI Intake...");
+    setSubmittingStatus("Initializing Multi-Modal AI Intake & Supabase Vault...");
 
     try {
       let aiSummary: string | undefined = undefined;
       let aiScenario: string | undefined = undefined;
 
-      const vidFile = uploadedRealFiles.find(f => f.type.includes("video") || /\.(mp4|mov|avi|webm)$/i.test(f.name));
+      // 1. Register base case in backend
+      setSubmittingStatus("Registering incident dossier in forensic database...");
+      try {
+        const res = await fetch("http://localhost:8000/api/cases", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: caseName.trim(),
+            caseNumber: caseNumber,
+            location: address.trim() || "Unspecified City Sector",
+            address: address.trim() || "Unspecified City Sector",
+            date: accidentDate,
+            accidentDate: accidentDate,
+            officer: filedBy.trim(),
+            filedBy: filedBy.trim(),
+            witnessStatement: description.trim(),
+            description: description.trim(),
+            sources: sources || []
+          })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          aiSummary = data.summary?.executive || data.summary;
+          aiScenario = data.scenario;
+        }
+      } catch {
+        // Continue with resilient local fallback
+      }
 
+      // 2. Upload video stream if provided (runs YOLOv8 detection and stores to Supabase)
+      const vidFile = uploadedRealFiles.find(f => f.type.includes("video") || /\.(mp4|mov|avi|webm)$/i.test(f.name));
       if (vidFile) {
-        setSubmittingStatus("Running YOLOv8 Optical Detection on uploaded video stream...");
+        setSubmittingStatus("Uploading video to Supabase Storage & executing YOLOv8 detection...");
         const formData = new FormData();
         formData.append("file", vidFile);
         try {
@@ -132,36 +161,34 @@ export default function CreateNewCasePage() {
         } catch {
           // fallback gracefully
         }
-      } else {
-        setSubmittingStatus("Synthesizing multi-source forensic evidence via Groq & Gemini AI...");
-        try {
-          const res = await fetch("http://localhost:8000/api/cases", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              name: caseName.trim(),
-              caseNumber: caseNumber,
-              location: address.trim() || "Unspecified City Sector",
-              address: address.trim() || "Unspecified City Sector",
-              date: accidentDate,
-              accidentDate: accidentDate,
-              officer: filedBy.trim(),
-              filedBy: filedBy.trim(),
-              witnessStatement: description.trim(),
-              description: description.trim(),
-              sources: sources || []
-            })
-          });
-          if (res.ok) {
-            const data = await res.json();
-            aiSummary = data.summary?.executive || data.summary;
-            aiScenario = data.scenario;
+      }
+
+      // 3. Upload non-video evidence files (images, documents, text notes, audio, csv) to Supabase Storage
+      const otherFiles = uploadedRealFiles.filter(f => !f.type.includes("video") && !/\.(mp4|mov|avi|webm)$/i.test(f.name));
+      if (otherFiles.length > 0) {
+        setSubmittingStatus(`Ingesting ${otherFiles.length} file(s) (Images, Documents, Text) into Supabase Cloud Storage...`);
+        for (const f of otherFiles) {
+          try {
+            const formData = new FormData();
+            formData.append("file", f);
+            const res = await fetch(`http://localhost:8000/api/cases/${caseNumber}/upload-evidence`, {
+              method: "POST",
+              body: formData
+            });
+            if (res.ok) {
+              const d = await res.json();
+              if (d.summary) {
+                aiSummary = d.summary?.executive || d.summary;
+              }
+            }
+          } catch {
+            // resilient fallback
           }
-        } catch {
-          // fallback gracefully
         }
       }
 
+      // 4. Save and index dossier
+      setSubmittingStatus("Finalizing synchronized timeline and physical reconstruction...");
       const created = createNewCase({
         name: caseName.trim(),
         caseNumber: caseNumber,

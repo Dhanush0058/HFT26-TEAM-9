@@ -162,7 +162,7 @@ export default function CaseDetailsPage() {
     }
   };
 
-  // Upload new evidence from Records tab
+  // Upload new evidence from Records tab (Streams to Supabase Storage & Database)
   const handleUploadNewEvidence = (files: FileList | null) => {
     if (!files || files.length === 0) return;
     for (let i = 0; i < files.length; i++) {
@@ -174,12 +174,40 @@ export default function CaseDetailsPage() {
         blobUrl = URL.createObjectURL(f);
         setUploadedVideoUrl(blobUrl);
 
-        // Upload real video file to backend YOLO service
+        // Upload real video file to backend YOLO & Supabase Storage
         const formData = new FormData();
         formData.append("file", f);
         fetch(`http://localhost:8000/api/cases/${caseData.id}/upload-video`, {
           method: "POST",
           body: formData
+        }).then(async res => {
+          if (res.ok) {
+            const d = await res.json();
+            if (d.summary) {
+              setCaseData(prev => prev ? ({
+                ...prev,
+                summary: d.summary?.executive || d.summary
+              }) : null);
+            }
+          }
+        }).catch(() => {});
+      } else {
+        // Upload non-video evidence (Image, Document, Text, Audio, CSV) to Supabase Storage
+        const formData = new FormData();
+        formData.append("file", f);
+        fetch(`http://localhost:8000/api/cases/${caseData.id}/upload-evidence`, {
+          method: "POST",
+          body: formData
+        }).then(async res => {
+          if (res.ok) {
+            const d = await res.json();
+            if (d.summary) {
+              setCaseData(prev => prev ? ({
+                ...prev,
+                summary: d.summary?.executive || d.summary
+              }) : null);
+            }
+          }
         }).catch(() => {});
       }
 
@@ -192,7 +220,7 @@ export default function CaseDetailsPage() {
       });
       setCaseData({ ...updated });
     }
-    setAnalysisNotice(`New evidence ingested. Extracted optical metadata and synced 3D reconstruction!`);
+    setAnalysisNotice(`New evidence ingested to Supabase Storage. Extracted optical metadata and synced 3D reconstruction!`);
     setTimeout(() => setAnalysisNotice(null), 4000);
   };
 

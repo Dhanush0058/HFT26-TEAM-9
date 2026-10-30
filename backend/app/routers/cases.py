@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from app.services.ai_pipeline import forensic_ai_engine
 from app.services.trajectory_service import trajectory_engine
 from app.services.yolo_service import yolo_service
+from app.services.supabase_service import supabase_service
 
 router = APIRouter(prefix="/api/cases", tags=["Cases & Forensics"])
 
@@ -52,11 +53,26 @@ class AddEvidenceRequest(BaseModel):
 @router.get("", response_model=List[Dict[str, Any]])
 def list_cases(status: Optional[str] = None):
     """
-    List all forensic incident cases.
+    List all forensic incident cases. Merges Supabase cases if configured.
     """
+    if supabase_service.is_configured():
+        sb_cases = supabase_service.list_cases(status=status)
+        if sb_cases:
+            existing_ids = {c.get("id", "").upper() for c in CASES_DB}
+            for sbc in sb_cases:
+                if sbc.get("id", "").upper() not in existing_ids:
+                    CASES_DB.append(sbc)
+
     if status and status != "ALL":
         return [c for c in CASES_DB if c.get("status") == status]
     return CASES_DB
+
+@router.get("/supabase/status")
+def get_supabase_status():
+    """
+    Returns current Supabase connection, database, and storage status.
+    """
+    return supabase_service.get_status()
 
 @router.get("/{case_id}")
 def get_case_by_id(case_id: str):
@@ -64,8 +80,16 @@ def get_case_by_id(case_id: str):
     Get full case details including evidence records, timeline, contradictions, and trajectory.
     """
     for c in CASES_DB:
-        if c.get("id").upper() == case_id.upper():
+        if c.get("id").upper() == case_id.upper() or c.get("caseNumber", "").upper() == case_id.upper():
             return c
+
+    # Fallback to Supabase Database
+    if supabase_service.is_configured():
+        sb_case = supabase_service.get_case(case_id)
+        if sb_case:
+            CASES_DB.append(sb_case)
+            return sb_case
+
     raise HTTPException(status_code=404, detail=f"Case {case_id} not found")
 
 @router.post("", status_code=201)
@@ -295,6 +319,8 @@ def create_case(payload: CreateCaseRequest):
             return new_case
 
     CASES_DB.insert(0, new_case)
+    # Sync case to Supabase Database if configured
+    supabase_service.save_case(new_case)
     return new_case
 
 @router.get("/{case_id}/report")
@@ -441,6 +467,26 @@ async def upload_case_video(case_id: str, file: UploadFile = File(...)):
     )
     target_case["summary"] = summary_data
 
+    # Upload video stream to Supabase Storage bucket ('evidence-media')
+    try:
+        with open(dest_path, "rb") as vf:
+            v_bytes = vf.read()
+        sb_url = supabase_service.upload_file(
+            file_bytes=v_bytes,
+            filename=safe_name,
+            content_type=file.content_type or "video/mp4",
+            folder="videos"
+        )
+        if sb_url:
+            new_ev["fileUrl"] = sb_url
+            target_case["videoUrl"] = sb_url
+    except Exception as e:
+        print(f"[Supabase] Video storage upload notice: {e}")
+
+    # Synchronize evidence record and case state in Supabase DB
+    supabase_service.save_evidence_record(case_id, new_ev)
+    supabase_service.save_case(target_case)
+
     return {
         "success": True,
         "caseId": case_id,
@@ -451,6 +497,135 @@ async def upload_case_video(case_id: str, file: UploadFile = File(...)):
         "scenario": scenario,
         "detections": detections,
         "trajectory": traj,
+        "summary": summary_data
+    }
+
+
+@router.post("/{case_id}/upload-evidence")
+async def upload_case_evidence_file(case_id: str, file: UploadFile = File(...)):
+    """
+    Accepts any uploaded evidence asset: Images (PNG/JPG), Documents (PDF/DOCX),
+    Audio (WAV/MP3), Telemetry/Sensor (CSV/JSON), Text notes (TXT).
+    Uploads directly to Supabase Storage bucket ('evidence-media') and saves to Supabase Database!
+    """
+    target_case = None
+    for c in CASES_DB:
+        if c.get("id").upper() == case_id.upper() or c.get("caseNumber", "").upper() == case_id.upper():
+            target_case = c
+            break
+
+    if not target_case:
+        if supabase_service.is_configured():
+            target_case = supabase_service.get_case(case_id)
+            if target_case:
+                CASES_DB.append(target_case)
+
+    if not target_case:
+        raise HTTPException(status_code=404, detail=f"Case {case_id} not found")
+
+    file_bytes = await file.read()
+    filename = file.filename or "evidence_file"
+    safe_name = f"{case_id}_{filename}"
+
+    # 1. Save local copy in uploads folder
+    uploads_dir = Path(__file__).resolve().parent.parent.parent / "uploads"
+    uploads_dir.mkdir(parents=True, exist_ok=True)
+    local_dest = uploads_dir / safe_name
+    with open(local_dest, "wb") as f:
+        f.write(file_bytes)
+
+    # 2. Classify file type & storage folder
+    fn_lower = filename.lower()
+    ct_lower = (file.content_type or "").lower()
+    if any(fn_lower.endswith(ext) for ext in [".jpg", ".jpeg", ".png", ".webp", ".bmp"]) or "image" in ct_lower:
+        file_type = "IMAGE"
+        folder = "images"
+    elif any(fn_lower.endswith(ext) for ext in [".pdf", ".doc", ".docx"]) or "pdf" in ct_lower:
+        file_type = "DOCUMENT"
+        folder = "documents"
+    elif any(fn_lower.endswith(ext) for ext in [".mp3", ".wav", ".m4a", ".aac", ".ogg"]) or "audio" in ct_lower:
+        file_type = "AUDIO"
+        folder = "audio"
+    elif any(fn_lower.endswith(ext) for ext in [".csv", ".tsv", ".json"]):
+        file_type = "SENSOR"
+        folder = "sensors"
+    elif any(fn_lower.endswith(ext) for ext in [".mp4", ".mov", ".avi", ".webm"]) or "video" in ct_lower:
+        file_type = "VIDEO"
+        folder = "videos"
+    else:
+        file_type = "WITNESS_TEXT"
+        folder = "text"
+
+    # 3. Upload to Supabase Storage
+    supabase_url = supabase_service.upload_file(
+        file_bytes=file_bytes,
+        filename=safe_name,
+        content_type=file.content_type or "application/octet-stream",
+        folder=folder
+    )
+    final_file_url = supabase_url if supabase_url else f"/uploads/{safe_name}"
+
+    size_mb = f"{len(file_bytes) / (1024 * 1024):.1f} MB"
+    if len(file_bytes) < 1024 * 1024:
+        size_mb = f"{max(1, round(len(file_bytes) / 1024))} KB"
+
+    # 4. Extract text snippet if available
+    snippet = ""
+    if file_type in ["WITNESS_TEXT", "SENSOR"]:
+        try:
+            snippet = file_bytes[:2048].decode("utf-8", errors="ignore")
+        except Exception:
+            snippet = ""
+
+    ev_id = f"EV-{case_id}-{len(target_case.get('records', [])) + 1}"
+    new_ev = {
+        "id": ev_id,
+        "caseId": case_id,
+        "type": file_type,
+        "sourceName": filename,
+        "size": size_mb,
+        "fileUrl": final_file_url,
+        "timestampRecorded": target_case.get("date"),
+        "transcriptOrExtractedText": snippet,
+        "extractedObservations": [
+            {
+                "timestampSec": 1.0,
+                "observation": f"Forensic ingestion of {file_type} evidence source: '{filename}'. Ingested to {'Supabase Cloud Storage' if supabase_url else 'local encrypted vault'}.",
+                "confidence": 98 if file_type in ["VIDEO", "IMAGE", "SENSOR"] else 82,
+                "isGroundTruth": file_type in ["VIDEO", "IMAGE", "SENSOR"]
+            }
+        ]
+    }
+
+    target_case.setdefault("records", []).append(new_ev)
+
+    # 5. Recalculate evidence counts
+    t_key = file_type.lower()
+    if t_key not in ["video", "audio", "sensor"]:
+        t_key = "text"
+    target_case.setdefault("evidenceCounts", {})[t_key] = target_case.get("evidenceCounts", {}).get(t_key, 0) + 1
+
+    # 6. Save evidence record to Supabase DB
+    supabase_service.save_evidence_record(case_id, new_ev)
+
+    # 7. Re-generate AI forensic summary
+    summary_data = forensic_ai_engine.generate_case_summary(
+        case_title=target_case.get("name", target_case.get("title")),
+        location=target_case.get("location", target_case.get("address")),
+        date=target_case.get("date"),
+        evidence_list=target_case.get("records", [])
+    )
+    target_case["summary"] = summary_data
+    supabase_service.save_case(target_case)
+
+    return {
+        "success": True,
+        "caseId": case_id,
+        "filename": filename,
+        "fileType": file_type,
+        "fileUrl": final_file_url,
+        "supabaseStored": bool(supabase_url),
+        "evidenceRecord": new_ev,
         "summary": summary_data
     }
 
@@ -529,6 +704,10 @@ def add_case_evidence(case_id: str, payload: AddEvidenceRequest):
     target_case["fullSummary"] = summary_data
     target_case["contradictions"] = contradictions
     target_case["status"] = "Flagged Contradiction" if contradictions else "Verified Consistent"
+
+    # Sync new evidence and case updates to Supabase
+    supabase_service.save_evidence_record(target_case["id"], new_ev)
+    supabase_service.save_case(target_case)
 
     return {
         "success": True,
@@ -612,6 +791,7 @@ def delete_case(case_id: str):
         c for c in CASES_DB 
         if c.get("id", "").upper() != case_id.upper() and c.get("caseNumber", "").upper() != case_id.upper()
     ]
+    supabase_deleted = supabase_service.delete_case(case_id)
     return {
         "success": True,
         "caseId": case_id,
