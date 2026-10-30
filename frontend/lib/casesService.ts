@@ -542,7 +542,7 @@ export function analyzeCaseEvidence(caseId: string): CaseDetail {
   return caseItem;
 }
 
-export function addEvidenceToCase(caseId: string, file: { name: string; size: string; type: string; accidentTime?: string }): CaseDetail {
+export function addEvidenceToCase(caseId: string, file: { name: string; size: string; type: string; accidentTime?: string; fileUrl?: string }): CaseDetail {
   const cases = getStoredCases();
   const caseItem = cases.find((c) => c.id.toLowerCase() === caseId.toLowerCase() || c.caseNumber.toLowerCase() === caseId.toLowerCase());
   if (!caseItem) throw new Error("Case not found");
@@ -579,6 +579,7 @@ export function addEvidenceToCase(caseId: string, file: { name: string; size: st
     uploadDate: nowStr,
     size: file.size || "2.4 MB",
     dataType: dataType,
+    fileUrl: file.fileUrl,
     accidentTime: file.accidentTime || caseItem.accidentDate || "14:02 UTC",
     is_data_extracted: 1, // When a file is uploaded, extract its data/metadata and set flag = 1
     status: "Extracted",

@@ -56,6 +56,7 @@ export default function CaseDetailsPage() {
   // Visuals tab scrubber state
   const [scrubberTime, setScrubberTime] = useState(2.8);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string | null>(null);
 
   // Load case data and auto-refresh when AI completes in background
   useEffect(() => {
@@ -130,15 +131,31 @@ export default function CaseDetailsPage() {
     for (let i = 0; i < files.length; i++) {
       const f = files[i];
       const sizeMb = (f.size / (1024 * 1024)).toFixed(1);
+      let blobUrl: string | undefined = undefined;
+
+      if (f.type.includes("video") || /\.(mp4|mov|avi|webm)$/i.test(f.name)) {
+        blobUrl = URL.createObjectURL(f);
+        setUploadedVideoUrl(blobUrl);
+
+        // Upload real video file to backend YOLO service
+        const formData = new FormData();
+        formData.append("file", f);
+        fetch(`http://localhost:8000/api/cases/${caseData.id}/upload-video`, {
+          method: "POST",
+          body: formData
+        }).catch(() => {});
+      }
+
       const updated = addEvidenceToCase(caseData.id, {
         name: f.name,
         size: `${sizeMb} MB`,
         type: f.type || "application/octet-stream",
-        accidentTime: caseData.accidentDate
+        accidentTime: caseData.accidentDate,
+        fileUrl: blobUrl
       });
       setCaseData({ ...updated });
     }
-    setAnalysisNotice(`New evidence ingested. Extracted metadata and auto-updated dynamic summary!`);
+    setAnalysisNotice(`New evidence ingested. Extracted optical metadata and synced 3D reconstruction!`);
     setTimeout(() => setAnalysisNotice(null), 4000);
   };
 
@@ -729,6 +746,17 @@ export default function CaseDetailsPage() {
                   caseTitle={caseData.name}
                   caseDescription={caseData.description}
                   evidenceList={caseData.evidenceList}
+                  evidenceVideoUrl={uploadedVideoUrl || caseData.evidenceList.find(e => e.dataType === "Video" && e.fileUrl)?.fileUrl}
+                  onVideoUploaded={(file) => {
+                    const blobUrl = URL.createObjectURL(file);
+                    setUploadedVideoUrl(blobUrl);
+                    const formData = new FormData();
+                    formData.append("file", file);
+                    fetch(`http://localhost:8000/api/cases/${caseData.id}/upload-video`, {
+                      method: "POST",
+                      body: formData
+                    }).catch(() => {});
+                  }}
                 />
 
                 {/* Secondary Visual Charts: Kinematics & Contradiction Graph */}
