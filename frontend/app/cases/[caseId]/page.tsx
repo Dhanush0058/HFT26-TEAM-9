@@ -148,96 +148,101 @@ export default function CaseDetailsPage() {
       {/* Fixed Left Sub-Sidebar touching screen edges */}
       <aside 
         style={{ position: "fixed", left: 0, top: 0, height: "100vh", width: "260px", margin: 0 }}
-        className="fixed left-0 top-0 h-screen w-[260px] m-0 z-30 bg-white border-r border-[#F0F0F0] flex flex-col justify-between p-5 select-none"
+        className="fixed left-0 top-0 h-screen w-[260px] m-0 z-30 bg-white flex flex-col justify-between select-none"
       >
-        <div className="space-y-4">
-          
-          {/* Back to Cases Button */}
-          <Link
-            href="/cases"
-            className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-[#F5F5F3] hover:bg-[#EAEAEA] text-[#111111] text-xs font-bold transition shadow-2xs"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to Cases</span>
-          </Link>
-
-          {/* Case Mini Summary Box */}
-          <div className="p-4 rounded-[18px] bg-[#F9F9F7] border border-[#EEEEEC] space-y-1.5">
-            <div className="text-[11px] font-medium text-[#8A8A8A] uppercase tracking-wider">
-              Active Case
-            </div>
-            <div className="text-xs font-mono font-extrabold text-[#0A66FF] truncate">
-              {caseData.caseNumber}
-            </div>
-            <div className="text-xs font-bold text-[#111111] line-clamp-2 leading-tight">
-              {caseData.name}
-            </div>
+        <div>
+          {/* Top header of sub-sidebar: 72px tall with border-b, merging seamlessly with TopHeader */}
+          <div className="h-[72px] px-4 flex items-center border-b border-[#F0F0F0]">
+            <Link
+              href="/cases"
+              className="w-full flex items-center gap-2 px-3.5 py-2 rounded-full bg-[#F5F5F3] hover:bg-[#EAEAEA] text-[#111111] text-xs font-bold transition shadow-2xs"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Back to Cases</span>
+            </Link>
           </div>
 
-          {/* Case Internal Tabs: Details, Records, Visuals */}
-          <nav className="space-y-1.5 pt-2">
-            <button
-              type="button"
-              onClick={() => setActiveTab("details")}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-full text-xs font-semibold transition-all duration-150 ${
-                activeTab === "details"
-                  ? "bg-[#121212] text-white shadow-sm"
-                  : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F9F9F7]"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <FileText className={`w-4 h-4 ${activeTab === "details" ? "text-white" : "text-[#8A8A8A]"}`} />
-                <span className="text-sm font-medium">Details</span>
+          <div className="p-4 space-y-4">
+            {/* Case Mini Summary Box */}
+            <div className="p-3.5 rounded-[18px] bg-[#F9F9F7] border border-[#EEEEEC] space-y-1">
+              <div className="text-[10px] font-medium text-[#8A8A8A] uppercase tracking-wider">
+                Active Case
               </div>
-              {activeTab === "details" && <ChevronRight className="w-4 h-4 text-white/80" />}
-            </button>
+              <div className="text-xs font-mono font-extrabold text-[#0A66FF] truncate">
+                {caseData.caseNumber}
+              </div>
+              <div className="text-xs font-bold text-[#111111] line-clamp-1 leading-tight">
+                {caseData.name}
+              </div>
+            </div>
 
-            <button
-              type="button"
-              onClick={() => setActiveTab("records")}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-full text-xs font-semibold transition-all duration-150 ${
-                activeTab === "records"
-                  ? "bg-[#121212] text-white shadow-sm"
-                  : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F9F9F7]"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Database className={`w-4 h-4 ${activeTab === "records" ? "text-white" : "text-[#8A8A8A]"}`} />
-                <span className="text-sm font-medium">Records</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-                  activeTab === "records" ? "bg-white/20 text-white" : "bg-[#F0F0F0] text-[#111111]"
-                }`}>
-                  {caseData.evidenceList.length}
-                </span>
-                {activeTab === "records" && <ChevronRight className="w-4 h-4 text-white/80" />}
-              </div>
-            </button>
+            {/* Case Internal Tabs: Details, Records, Visuals */}
+            <nav className="space-y-1.5 pt-1">
+              <button
+                type="button"
+                onClick={() => setActiveTab("details")}
+                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-full text-xs font-semibold transition-all duration-150 ${
+                  activeTab === "details"
+                    ? "bg-[#121212] text-white shadow-sm"
+                    : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F9F9F7]"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <FileText className={`w-4 h-4 ${activeTab === "details" ? "text-white" : "text-[#8A8A8A]"}`} />
+                  <span className="text-sm font-medium">Details</span>
+                </div>
+                {activeTab === "details" && <ChevronRight className="w-4 h-4 text-white/80" />}
+              </button>
 
-            <button
-              type="button"
-              onClick={() => setActiveTab("visuals")}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-full text-xs font-semibold transition-all duration-150 ${
-                activeTab === "visuals"
-                  ? "bg-[#121212] text-white shadow-sm"
-                  : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F9F9F7]"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Eye className={`w-4 h-4 ${activeTab === "visuals" ? "text-white" : "text-[#8A8A8A]"}`} />
-                <span className="text-sm font-medium">Visuals</span>
-              </div>
-              {activeTab === "visuals" && <ChevronRight className="w-4 h-4 text-white/80" />}
-            </button>
-          </nav>
+              <button
+                type="button"
+                onClick={() => setActiveTab("records")}
+                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-full text-xs font-semibold transition-all duration-150 ${
+                  activeTab === "records"
+                    ? "bg-[#121212] text-white shadow-sm"
+                    : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F9F9F7]"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Database className={`w-4 h-4 ${activeTab === "records" ? "text-white" : "text-[#8A8A8A]"}`} />
+                  <span className="text-sm font-medium">Records</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                    activeTab === "records" ? "bg-white/20 text-white" : "bg-[#F0F0F0] text-[#111111]"
+                  }`}>
+                    {caseData.evidenceList.length}
+                  </span>
+                  {activeTab === "records" && <ChevronRight className="w-4 h-4 text-white/80" />}
+                </div>
+              </button>
 
+              <button
+                type="button"
+                onClick={() => setActiveTab("visuals")}
+                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-full text-xs font-semibold transition-all duration-150 ${
+                  activeTab === "visuals"
+                    ? "bg-[#121212] text-white shadow-sm"
+                    : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F9F9F7]"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Eye className={`w-4 h-4 ${activeTab === "visuals" ? "text-white" : "text-[#8A8A8A]"}`} />
+                  <span className="text-sm font-medium">Visuals</span>
+                </div>
+                {activeTab === "visuals" && <ChevronRight className="w-4 h-4 text-white/80" />}
+              </button>
+            </nav>
+          </div>
         </div>
 
         {/* Bottom Status Pill */}
-        <div className="pt-4 border-t border-[#F0F0F0] text-[11px] text-[#8A8A8A]">
+        <div className="p-4 border-t border-[#F5F5F3] text-[11px] text-[#8A8A8A]">
           <span className="font-semibold text-[#111111]">{caseData.evidenceList.length}</span> files linked
         </div>
+
+        {/* Vertical divider border line strictly below 72px */}
+        <div className="absolute right-0 top-[72px] bottom-0 w-[1px] bg-[#F0F0F0]" />
       </aside>
 
       {/* Fixed Topbar touching screen edges */}
@@ -246,10 +251,10 @@ export default function CaseDetailsPage() {
         showSearch={false}
       />
 
-      {/* Main Content Area starting after sidebar (260px) and topbar (72px) */}
+      {/* Main Content Area starting after sidebar (260px) and topbar (72px + 32px breathing room) */}
       <main 
-        style={{ marginLeft: "260px", paddingTop: "72px" }}
-        className="ml-[260px] pt-[72px] p-6 sm:p-8 min-h-screen"
+        style={{ marginLeft: "260px", paddingTop: "104px" }}
+        className="ml-[260px] pt-[104px] px-6 sm:px-8 pb-12 min-h-screen"
       >
         <div className="space-y-6">
             

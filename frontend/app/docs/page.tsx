@@ -22,10 +22,10 @@ export default function DocsPage() {
       {/* Fixed Topbar touching screen edges */}
       <TopHeader title="Documentation" showSearch={false} />
 
-      {/* Main Content Area starting after sidebar (260px) and topbar (72px) */}
+      {/* Main Content Area starting after sidebar (260px) and topbar (72px + 32px breathing room) */}
       <main 
-        style={{ marginLeft: "260px", paddingTop: "72px" }}
-        className="ml-[260px] pt-[72px] p-6 sm:p-8 min-h-screen space-y-6"
+        style={{ marginLeft: "260px", paddingTop: "104px" }}
+        className="ml-[260px] pt-[104px] px-6 sm:px-8 pb-12 min-h-screen space-y-6"
       >
             
             {/* Pill Navigation Tabs matching Reference Aesthetic */}

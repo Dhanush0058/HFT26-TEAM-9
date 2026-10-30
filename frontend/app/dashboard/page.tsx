@@ -50,10 +50,10 @@ export default function DashboardMetricsPage() {
         searchPlaceholder="Search incident records..."
       />
 
-      {/* Main Content Area starting after sidebar (260px) and topbar (72px) */}
+      {/* Main Content Area starting after sidebar (260px) and topbar (72px + 32px breathing room) */}
       <main 
-        style={{ marginLeft: "260px", paddingTop: "72px" }}
-        className="ml-[260px] pt-[72px] p-6 sm:p-8 min-h-screen"
+        style={{ marginLeft: "260px", paddingTop: "104px" }}
+        className="ml-[260px] pt-[104px] px-6 sm:px-8 pb-12 min-h-screen"
       >
         <div className="space-y-6">
             
