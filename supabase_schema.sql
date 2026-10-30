@@ -206,3 +206,4 @@ values (
     '{"executive": "At 09:15:22 UTC on Interstate 101 Northbound, Lead Vehicle 1 initiated sudden braking due to stationary traffic. Commercial Truck (Vehicle 2) deployed retarder brakes with 1.1s reaction latency. Vehicle 3 failed to maintain safe stopping distance, causing sequential rear-end impact."}'::jsonb
 )
 on conflict (id) do nothing;
+
