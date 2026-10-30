@@ -104,10 +104,9 @@ class YOLODetectionService:
     @staticmethod
     def get_demo_detections() -> List[Dict[str, Any]]:
         """
-        Pre-indexed forensic detections for standard intersection incident scenario:
-        - Car (Vehicle A): Red Sedan westbound
-        - Car (Vehicle B): Blue SUV southbound
-        - Motorcycle: Passing through cross-street perimeter at T+01.0s
+        Forensic YOLOv8 detections for intersection collision scenario:
+        - Car (Vehicle A): Crimson Sedan westbound (classId: 2)
+        - Motorcycle (Vehicle B): Cobalt Sport Motorcycle southbound (classId: 3)
         """
         return [
             {
@@ -115,18 +114,17 @@ class YOLODetectionService:
                 "timestamp": "T+00.0s",
                 "vehicleCount": 2,
                 "detectedObjects": [
-                    {"label": "car", "classId": 2, "confidence": 97.4, "bbox": [180.0, 320.0, 520.0, 680.0], "identifier": "Vehicle A (Sedan)"},
-                    {"label": "car", "classId": 2, "confidence": 88.2, "bbox": [780.0, 240.0, 940.0, 420.0], "identifier": "Vehicle B (SUV)"}
+                    {"label": "car", "classId": 2, "confidence": 98.4, "bbox": [180.0, 320.0, 520.0, 680.0], "identifier": "Vehicle A (Sedan)"},
+                    {"label": "motorcycle", "classId": 3, "confidence": 96.2, "bbox": [760.0, 220.0, 890.0, 410.0], "identifier": "Vehicle B (Sport Motorcycle)"}
                 ]
             },
             {
                 "timeSec": 1.0,
                 "timestamp": "T+01.0s",
-                "vehicleCount": 3,
+                "vehicleCount": 2,
                 "detectedObjects": [
-                    {"label": "car", "classId": 2, "confidence": 98.1, "bbox": [260.0, 310.0, 610.0, 690.0], "identifier": "Vehicle A (Sedan)"},
-                    {"label": "car", "classId": 2, "confidence": 92.5, "bbox": [710.0, 260.0, 910.0, 460.0], "identifier": "Vehicle B (SUV)"},
-                    {"label": "motorcycle", "classId": 3, "confidence": 91.8, "bbox": [980.0, 290.0, 1080.0, 410.0], "identifier": "Perimeter Commuter Motorcycle"}
+                    {"label": "car", "classId": 2, "confidence": 98.9, "bbox": [260.0, 310.0, 610.0, 690.0], "identifier": "Vehicle A (Sedan - Cruising)"},
+                    {"label": "motorcycle", "classId": 3, "confidence": 97.5, "bbox": [720.0, 270.0, 860.0, 480.0], "identifier": "Vehicle B (Sport Motorcycle - Approaching)"}
                 ]
             },
             {
@@ -134,8 +132,8 @@ class YOLODetectionService:
                 "timestamp": "T+02.0s",
                 "vehicleCount": 2,
                 "detectedObjects": [
-                    {"label": "car", "classId": 2, "confidence": 98.8, "bbox": [390.0, 300.0, 750.0, 710.0], "identifier": "Vehicle A (Sedan - Braking)"},
-                    {"label": "car", "classId": 2, "confidence": 95.3, "bbox": [620.0, 280.0, 860.0, 520.0], "identifier": "Vehicle B (SUV - Entering Path)"}
+                    {"label": "car", "classId": 2, "confidence": 99.2, "bbox": [390.0, 300.0, 750.0, 710.0], "identifier": "Vehicle A (Sedan - Emergency Braking)"},
+                    {"label": "motorcycle", "classId": 3, "confidence": 98.1, "bbox": [640.0, 310.0, 790.0, 530.0], "identifier": "Vehicle B (Motorcycle - Entering Intersection)"}
                 ]
             },
             {
@@ -143,7 +141,8 @@ class YOLODetectionService:
                 "timestamp": "T+02.8s",
                 "vehicleCount": 2,
                 "detectedObjects": [
-                    {"label": "car", "classId": 2, "confidence": 99.1, "bbox": [480.0, 310.0, 840.0, 720.0], "identifier": "Collision Impact: Vehicle A into Vehicle B"}
+                    {"label": "car", "classId": 2, "confidence": 99.4, "bbox": [480.0, 310.0, 840.0, 720.0], "identifier": "Collision Point: Vehicle A Bumper"},
+                    {"label": "motorcycle", "classId": 3, "confidence": 95.8, "bbox": [560.0, 340.0, 720.0, 560.0], "identifier": "Collision Point: Vehicle B Flank"}
                 ]
             }
         ]

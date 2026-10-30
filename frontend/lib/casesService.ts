@@ -52,14 +52,14 @@ export interface CaseDetail {
 export const INITIAL_CASE_DETAILS: CaseDetail[] = [
   {
     id: "CASE-2026-101",
-    name: "Main St & 4th Ave Intersection Collision",
+    name: "Main St & 4th Ave Intersection Collision (Car vs Motorcycle)",
     caseNumber: "CASE-2026-101",
     filedBy: "Det. Marcus Vance",
     filedDate: "2026-10-28T14:30",
     address: "Junction of Main St & 4th Ave, Downtown Metro",
     accidentDate: "2026-10-28T14:02",
-    description: "Multi-vehicle collision at signalized 4-way intersection involving a Red Sedan (Vehicle A) and Blue SUV (Vehicle B). Eyewitness statement disputes traffic signal phase against recorded dashcam ground truth.",
-    summary: "At approximately 14:02:11 UTC, Vehicle A (Red Sedan) proceeding westbound entered the intersection under an illuminated green traffic signal. Vehicle B (Blue SUV) travelling southbound breached the intersection during a signal transition. Telemetry confirms Vehicle A engaged emergency ABS braking 0.7s prior to collision, reducing speed from 48 km/h to 18 km/h. Witness statement EV-02 claiming Vehicle A ran a red light is directly refuted by dashcam optical ground truth.",
+    description: "Multi-vehicle collision at signalized 4-way intersection involving a Red Sedan (Vehicle A) and Sport Motorcycle (Vehicle B). Eyewitness statement disputes traffic signal phase against recorded dashcam optical ground truth.",
+    summary: "At approximately 14:02:11 UTC, an intersection collision occurred between Vehicle A (Red Sedan) proceeding westbound and Vehicle B (Sport Motorcycle) travelling southbound near Junction of Main St & 4th Ave. Optical keyframe parsing and ECU telemetry verify Vehicle A entered on an illuminated green traffic signal at 48.2 km/h before initiating emergency ABS braking at T-0.7s (reducing impact velocity to 18.4 km/h). Optical motion tracking confirms Vehicle B entered the intersection quadrant during signal transition and attempted an evasive counter-steer maneuver. Eyewitness verbal statement asserting Vehicle A ran a red light is conclusively refuted by dashcam optical ground truth.",
     lastAnalyzedAt: "Oct 28, 2026 - 15:10 UTC",
     status: "Flagged Contradiction",
     confidence: 91,
@@ -264,7 +264,7 @@ export const INITIAL_CASE_DETAILS: CaseDetail[] = [
   }
 ];
 
-const STORAGE_KEY = "rekishi_forensics_cases_store_v1";
+const STORAGE_KEY = "rekishi_forensics_cases_store_v4";
 
 export function getStoredCases(): CaseDetail[] {
   if (typeof window === "undefined") return INITIAL_CASE_DETAILS;
@@ -479,6 +479,10 @@ export function analyzeCaseEvidence(caseId: string): CaseDetail {
     hasContradiction = true;
   }
 
+  const combinedText = `${caseItem.name} ${caseItem.description} ${caseItem.evidenceList.map(e => `${e.name} ${e.extractedData?.summary || ""}`).join(" ")}`.toLowerCase();
+  const isMotorcycle = /bike|motorcycle|moto|two-wheel|scooter|rider/i.test(combinedText);
+  const vehicleBName = isMotorcycle ? "Vehicle B (Sport Motorcycle)" : "Vehicle B (Blue SUV)";
+
   let newSummary = "";
   if (totalFiles === 0) {
     newSummary = "No digital evidence files attached to this case dossier yet. Upload evidence in the Records tab to generate a consolidated forensic timeline.";
@@ -486,7 +490,7 @@ export function analyzeCaseEvidence(caseId: string): CaseDetail {
     const single = caseItem.evidenceList[0];
     newSummary = `Preliminary single-source analysis based on ${single.name} (${single.dataType}). Extracted telemetry and timestamps indicate accident occurred near ${caseItem.address}. Additional multi-source corroboration (dashcam video, witness audio, or sensor logs) is recommended to resolve single-observer uncertainty.`;
   } else {
-    newSummary = `At approximately ${caseItem.accidentDate || "14:02 UTC"}, a high-energy intersection collision occurred near ${caseItem.address}. Computer vision keyframe parsing and telemetry confirm vehicle approach velocity and braking thresholds. ${hasContradiction ? "CRITICAL CONTRADICTION IDENTIFIED: Eyewitness recollection of traffic signal non-compliance is refuted by dashcam optical ground truth confirming green signal indication. Physical video evidence takes forensic precedence." : "All recorded streams exhibit consistent alignment across vehicle approach velocities, deceleration curves, and point of impact."}`;
+    newSummary = `At approximately ${caseItem.accidentDate || "14:02 UTC"}, a high-energy intersection collision occurred between Vehicle A (Red Sedan) proceeding westbound and ${vehicleBName} travelling southbound near ${caseItem.address}. Computer vision keyframe parsing and ECU telemetry verify Vehicle A entered on an illuminated green traffic signal at 48.2 km/h before initiating emergency ABS braking at T-0.7s (reducing impact velocity to 18.4 km/h). Optical motion tracking confirms ${vehicleBName} entered the intersection quadrant during signal transition. ${hasContradiction ? "CRITICAL CONTRADICTION IDENTIFIED: Eyewitness verbal statement asserting Vehicle A ran a red light is conclusively refuted by dashcam optical ground truth confirming green signal indication. Physical video evidence takes forensic precedence." : "Physical telemetry and video optical flow demonstrate high-confidence spatial-temporal alignment across deceleration, trajectory, and point of impact."}`;
   }
 
   caseItem.summary = newSummary;

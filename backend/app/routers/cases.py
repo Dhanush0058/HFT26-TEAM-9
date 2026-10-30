@@ -433,12 +433,24 @@ def get_case_trajectory(case_id: str):
     """
     for c in CASES_DB:
         if c.get("id").upper() == case_id.upper():
-            traj = c.get("trajectory")
-            if not traj:
-                traj = trajectory_engine.generate_default_intersection_trajectory()
-                c["trajectory"] = traj
+            title_desc = f"{c.get('name', '')} {c.get('description', '')} {json.dumps(c.get('records', []))}".lower()
+            if "rear" in title_desc or "highway" in title_desc:
+                traj = trajectory_engine.generate_rear_end_trajectory()
+                scenario_name = "HIGHWAY_REAR_END"
+            elif "head" in title_desc or "oncoming" in title_desc:
+                traj = trajectory_engine.generate_head_on_trajectory()
+                scenario_name = "HEAD_ON"
+            elif "bike" in title_desc or "motorcycle" in title_desc:
+                traj = trajectory_engine.generate_intersection_trajectory("MOTORCYCLE")
+                scenario_name = "CAR_VS_BIKE"
+            else:
+                traj = trajectory_engine.generate_intersection_trajectory("SUV")
+                scenario_name = "INTERSECTION_TBONE"
+
+            c["trajectory"] = traj
             return {
                 "caseId": case_id,
+                "scenario": scenario_name,
                 "frameCount": len(traj),
                 "frames": traj
             }

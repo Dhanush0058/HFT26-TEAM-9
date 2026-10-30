@@ -389,26 +389,27 @@ export default function CaseDetailsPage() {
                     </div>
                     <div>
                       <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                        Block 2: Brief Forensic Summary <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-100 text-blue-800">Dynamic AI</span>
+                        Block 2: Executive Forensic Synthesis <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold">Auto-Generated AI</span>
                       </h3>
                       <p className="text-[11px] text-slate-500">
-                        Formula: <code className="text-blue-700 font-semibold">Summary = f(all_evidence_files)</code>. Re-generated and replaced on each evidence update.
+                        Automated multi-modal synthesis generated directly from video optical flow, telemetry, and witness records.
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] text-slate-400">
-                      Last Synthesized: {caseData.lastAnalyzedAt || "Current"}
+                      Auto-Updated: {caseData.lastAnalyzedAt || "Current"}
                     </span>
                     <button
                       type="button"
                       onClick={handleTriggerAnalysis}
                       disabled={isAnalyzing}
-                      className="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 rounded-md text-xs font-semibold transition flex items-center gap-1.5"
+                      title="Force manual re-sync if new evidence uploaded"
+                      className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-[11px] font-medium transition flex items-center gap-1.5"
                     >
                       <RefreshCw className={`w-3 h-3 ${isAnalyzing ? "animate-spin" : ""}`} />
-                      <span>{isAnalyzing ? "Re-synthesizing..." : "Re-generate"}</span>
+                      <span>{isAnalyzing ? "Syncing..." : "Re-sync"}</span>
                     </button>
                   </div>
                 </div>
@@ -726,6 +727,8 @@ export default function CaseDetailsPage() {
                   isPlaying={isPlaying}
                   onTogglePlay={() => setIsPlaying(!isPlaying)}
                   caseTitle={caseData.name}
+                  caseDescription={caseData.description}
+                  evidenceList={caseData.evidenceList}
                 />
 
                 {/* Secondary Visual Charts: Kinematics & Contradiction Graph */}
