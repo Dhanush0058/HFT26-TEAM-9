@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { 
   Calendar, 
@@ -11,23 +11,26 @@ import {
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import TopHeader from "@/components/TopHeader";
-import { CaseItem, INITIAL_CASES } from "./data";
-import CreateCaseModal from "./CreateCaseModal";
+import { getStoredCases, CaseDetail } from "@/lib/casesService";
 
 export default function CasesPage() {
-  const [cases, setCases] = useState<CaseItem[]>(INITIAL_CASES);
+  const [cases, setCases] = useState<CaseDetail[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<"ALL" | "FLAGGED" | "VERIFIED">("ALL");
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  useEffect(() => {
+    // Load persisted cases from local storage / API
+    setCases(getStoredCases());
+  }, []);
 
   // Filter & Search Logic
   const filteredCases = cases.filter((c) => {
     const matchesSearch =
       c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.caseNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.officer.toLowerCase().includes(searchQuery.toLowerCase());
+      c.filedBy.toLowerCase().includes(searchQuery.toLowerCase());
 
     if (!matchesSearch) return false;
 
@@ -35,10 +38,6 @@ export default function CasesPage() {
     if (activeFilter === "VERIFIED") return c.status === "Verified Consistent";
     return true;
   });
-
-  const handleCaseCreated = (newCase: CaseItem) => {
-    setCases([newCase, ...cases]);
-  };
 
   return (
     <div className="min-h-screen bg-slate-50/50 text-slate-900 flex font-sans">
@@ -66,13 +65,14 @@ export default function CasesPage() {
           
           {/* ─────────────────────────────────────────────────────────
               1. FIXED TOP '+ CREATE' RECTANGLE
+              - Direct navigation to /cases/new (NO MODAL)
               - Solid blue background (`bg-blue-600`)
               - White text
-              - Plus icon on left + text
+              - Plus icon on left + text to create a new case
           ───────────────────────────────────────────────────────── */}
-          <div
-            onClick={() => setIsCreateModalOpen(true)}
-            className="w-full mb-5 px-5 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-xs transition-all duration-150 cursor-pointer flex items-center gap-3.5 select-none"
+          <Link
+            href="/cases/new"
+            className="w-full mb-5 px-5 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-xs transition-all duration-150 cursor-pointer flex items-center gap-3.5 select-none block"
           >
             <div className="w-8 h-8 rounded-md bg-white/15 flex items-center justify-center text-white shrink-0">
               <Plus className="w-5 h-5 stroke-[2.5]" />
@@ -82,13 +82,18 @@ export default function CasesPage() {
                 Create New Case
               </div>
               <p className="text-xs text-blue-100 mt-0.5">
-                Click to ingest new dashcam video, witness statements, or sensor data
+                Click to open case intake form and upload multi-source digital evidence
               </p>
             </div>
-          </div>
+          </Link>
 
           {/* ─────────────────────────────────────────────────────────
               2. VERTICAL LIST OF CASE RECTANGLES
+              - On clicking ANY case card, opens /cases/[caseId]
+              - Clean layout:
+                * Case Name on top left
+                * Case ID in framed box on top right
+                * Date, Address, Officer on bottom
           ───────────────────────────────────────────────────────── */}
           <div className="space-y-3.5">
             {filteredCases.map((caseItem) => (
@@ -107,7 +112,7 @@ export default function CasesPage() {
 
                   {/* Framed Case ID Box */}
                   <div className="px-3 py-1 rounded border border-slate-300 text-slate-700 text-xs font-mono font-semibold bg-slate-50 shrink-0">
-                    {caseItem.id}
+                    {caseItem.caseNumber}
                   </div>
                 </div>
 
@@ -115,7 +120,7 @@ export default function CasesPage() {
                 <div className="flex flex-wrap items-center gap-y-1.5 gap-x-5 text-xs text-slate-500 mt-3 pt-2.5 border-t border-slate-100">
                   <span className="flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{caseItem.date}</span>
+                    <span>Accident: {caseItem.accidentDate}</span>
                   </span>
 
                   <span className="flex items-center gap-1.5">
@@ -126,7 +131,7 @@ export default function CasesPage() {
                   <span className="flex items-center gap-1.5">
                     <User className="w-3.5 h-3.5 text-slate-400" />
                     <span>
-                      Officer: <strong className="text-slate-700 font-medium">{caseItem.officer}</strong> ({caseItem.department})
+                      Officer: <strong className="text-slate-700 font-medium">{caseItem.filedBy}</strong>
                     </span>
                   </span>
                 </div>
@@ -151,14 +156,6 @@ export default function CasesPage() {
         </main>
       </div>
 
-      {/* CREATE CASE MODAL */}
-      <CreateCaseModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onCaseCreated={handleCaseCreated}
-      />
-
     </div>
   );
 }
-
