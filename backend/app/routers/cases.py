@@ -589,3 +589,20 @@ def get_case_evidence_gaps(case_id: str):
             }
     raise HTTPException(status_code=404, detail=f"Case {case_id} not found")
 
+@router.delete("/{case_id}")
+def delete_case(case_id: str):
+    """
+    Permanently deletes a case from the database.
+    """
+    global CASES_DB
+    before_len = len(CASES_DB)
+    CASES_DB = [
+        c for c in CASES_DB 
+        if c.get("id", "").upper() != case_id.upper() and c.get("caseNumber", "").upper() != case_id.upper()
+    ]
+    return {
+        "success": True,
+        "caseId": case_id,
+        "deleted": before_len - len(CASES_DB)
+    }
+

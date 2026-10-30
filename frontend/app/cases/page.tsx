@@ -7,11 +7,12 @@ import {
   MapPin, 
   User, 
   FileText,
-  Plus
+  Plus,
+  Trash2
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import TopHeader from "@/components/TopHeader";
-import { getStoredCases, CaseDetail } from "@/lib/casesService";
+import { getStoredCases, deleteCase, CaseDetail } from "@/lib/casesService";
 
 export default function CasesPage() {
   const [cases, setCases] = useState<CaseDetail[]>([]);
@@ -110,9 +111,26 @@ export default function CasesPage() {
                     </h2>
                   </div>
 
-                  {/* Framed Case ID Box */}
-                  <div className="px-3 py-1 rounded border border-slate-300 text-slate-700 text-xs font-mono font-semibold bg-slate-50 shrink-0">
-                    {caseItem.caseNumber}
+                  {/* Framed Case ID Box & Delete Action */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="px-3 py-1 rounded border border-slate-300 text-slate-700 text-xs font-mono font-semibold bg-slate-50 shrink-0">
+                      {caseItem.caseNumber}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (confirm(`Delete case "${caseItem.name}" (${caseItem.caseNumber})?`)) {
+                          const updated = deleteCase(caseItem.id);
+                          setCases([...updated]);
+                        }
+                      }}
+                      className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded border border-transparent hover:border-rose-200 transition"
+                      title="Delete Case"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
 

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { 
   ArrowLeft, 
   FileText, 
@@ -37,10 +37,12 @@ import {
   EvidenceRecord, 
   analyzeCaseEvidence, 
   addEvidenceToCase, 
-  deleteEvidenceFromCase 
+  deleteEvidenceFromCase,
+  deleteCase
 } from "@/lib/casesService";
 
 export default function CaseDetailsPage() {
+  const router = useRouter();
   const params = useParams();
   const caseId = params?.caseId as string;
 
@@ -277,8 +279,21 @@ export default function CaseDetailsPage() {
             </nav>
           </div>
 
-          {/* Bottom Dossier Confidence */}
-          <div className="p-3 border-t border-slate-100">
+          {/* Bottom Actions & Dossier Confidence */}
+          <div className="p-3 border-t border-slate-100 space-y-2.5">
+            <button
+              onClick={() => {
+                if (confirm(`Permanently delete case "${caseData.name}" (${caseData.caseNumber})?`)) {
+                  deleteCase(caseData.id);
+                  router.push("/cases");
+                }
+              }}
+              className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-md border border-rose-200 transition cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Delete This Case</span>
+            </button>
+
             <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-200/60">
               <div className="flex items-center justify-between text-[11px]">
                 <span className="font-semibold text-slate-600">Certainty Index</span>

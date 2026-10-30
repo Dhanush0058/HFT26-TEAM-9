@@ -266,6 +266,18 @@ export const INITIAL_CASE_DETAILS: CaseDetail[] = [
 
 const STORAGE_KEY = "rekishi_forensics_cases_store_v4";
 
+const PURGED_CASE_IDS = new Set([
+  "CASE-2026-9952",
+  "CASE-2026-6076",
+  "CASE-2026-6265"
+]);
+
+const PURGED_CASE_NAMES = new Set([
+  "car vs loory",
+  "sdfd",
+  "car into lorry"
+]);
+
 export function getStoredCases(): CaseDetail[] {
   if (typeof window === "undefined") return INITIAL_CASE_DETAILS;
   try {
@@ -274,7 +286,23 @@ export function getStoredCases(): CaseDetail[] {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_CASE_DETAILS));
       return INITIAL_CASE_DETAILS;
     }
-    return JSON.parse(item);
+    const parsed: CaseDetail[] = JSON.parse(item);
+
+    // Automatically purge unwanted test cases
+    const cleaned = parsed.filter(c => {
+      const idUpper = (c.id || "").trim().toUpperCase();
+      const numUpper = (c.caseNumber || "").trim().toUpperCase();
+      const nameLower = (c.name || "").trim().toLowerCase();
+      if (PURGED_CASE_IDS.has(idUpper) || PURGED_CASE_IDS.has(numUpper) || PURGED_CASE_NAMES.has(nameLower)) {
+        return false;
+      }
+      return true;
+    });
+
+    if (cleaned.length !== parsed.length) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
+    }
+    return cleaned;
   } catch (err) {
     console.error("Error reading cases from localStorage", err);
     return INITIAL_CASE_DETAILS;
@@ -288,6 +316,21 @@ export function saveStoredCases(cases: CaseDetail[]) {
   } catch (err) {
     console.error("Error saving cases to localStorage", err);
   }
+}
+
+export function deleteCase(caseId: string): CaseDetail[] {
+  const cases = getStoredCases();
+  const idToMatch = caseId.toLowerCase().trim();
+  const cleaned = cases.filter(
+    (c) => c.id.toLowerCase().trim() !== idToMatch && c.caseNumber.toLowerCase().trim() !== idToMatch
+  );
+  saveStoredCases(cleaned);
+  if (typeof window !== "undefined") {
+    fetch(`http://localhost:8000/api/cases/${encodeURIComponent(caseId)}`, {
+      method: "DELETE"
+    }).catch(() => {});
+  }
+  return cleaned;
 }
 
 export function getStoredCaseById(id: string): CaseDetail | undefined {
