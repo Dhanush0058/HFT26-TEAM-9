@@ -1097,7 +1097,7 @@ export default function ThreeForensicCanvas({
           <div className="bg-slate-950/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-800 flex items-center gap-3 shadow-lg pointer-events-auto">
             <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-white tracking-wide">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              REKISHI 3D DIGITAL TWIN
+              REKISHI 3D DIGITAL TWIN {caseTitle && <span className="text-slate-400 font-normal">| {caseTitle}</span>}
             </div>
             <div className="h-3.5 w-px bg-slate-700"></div>
             <div className="text-[11px] font-mono text-slate-300 flex items-center gap-2">
@@ -1112,6 +1112,10 @@ export default function ThreeForensicCanvas({
                   <>VEHICLE B: <strong className="text-blue-400">{scrubberTime < 2.6 ? "35 km/h" : "0 km/h"}</strong></>
                 )}
               </span>
+              <span className="text-slate-600">|</span>
+              <span>SIGNAL: <strong className={scrubberTime < 1.4 ? "text-emerald-400" : scrubberTime < 2.1 ? "text-amber-400" : "text-rose-400"}>
+                {scrubberTime < 1.4 ? "GREEN" : scrubberTime < 2.1 ? "AMBER" : "RED"}
+              </strong></span>
             </div>
           </div>
 

@@ -1,124 +1,72 @@
 import React from "react";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, Bell } from "lucide-react";
 
 interface TopHeaderProps {
   title: string;
-  showSearchAndFilter?: boolean;
+  showSearch?: boolean;
   searchQuery?: string;
   onSearchChange?: (val: string) => void;
-  activeFilter?: "ALL" | "FLAGGED" | "VERIFIED";
-  onFilterChange?: (val: "ALL" | "FLAGGED" | "VERIFIED") => void;
-  isFilterMenuOpen?: boolean;
-  setIsFilterMenuOpen?: (val: boolean) => void;
+  searchPlaceholder?: string;
 }
 
 export default function TopHeader({
   title,
-  showSearchAndFilter = false,
+  showSearch = true,
   searchQuery = "",
   onSearchChange,
-  activeFilter = "ALL",
-  onFilterChange,
-  isFilterMenuOpen = false,
-  setIsFilterMenuOpen,
+  searchPlaceholder = "Start searching here...",
 }: TopHeaderProps) {
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-slate-200/80">
-      <div className="w-full px-6 sm:px-8 h-16 flex items-center justify-between gap-4">
-        
-        {/* Page Title */}
-        <div>
-          <h1 className="text-sm font-bold text-slate-800">
-            {title}
-          </h1>
+    <header 
+      style={{ position: "fixed", top: 0, left: "260px", right: 0, height: "72px", margin: 0 }}
+      className="fixed top-0 left-[260px] right-0 h-[72px] m-0 z-20 bg-white border-b border-[#F0F0F0] px-6 sm:px-8 flex items-center justify-between"
+    >
+      {/* Title / Section Name */}
+      <div>
+        <h1 className="text-2xl font-extrabold tracking-tight text-[#111111] font-sans">
+          {title}
+        </h1>
+      </div>
+
+      {/* Right Search Bar & Utility Icons */}
+      <div className="flex items-center gap-3">
+        {showSearch && onSearchChange && (
+          <div className="relative w-72 sm:w-80">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+              <Search className="w-4 h-4 text-[#8A8A8A]" />
+            </div>
+            <input
+              type="text"
+              placeholder={searchPlaceholder}
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="w-full h-10 pl-10 pr-4 bg-[#F5F8FF] border border-[#E0E7FF] rounded-full text-xs text-[#111111] placeholder-[#8A8A8A] focus:outline-none focus:border-[#2A4BFF] transition"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => onSearchChange("")}
+                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-xs text-[#8A8A8A] hover:text-[#111111]"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Action icons */}
+        <div className="w-9 h-9 rounded-full bg-[#F5F5F3] flex items-center justify-center text-[#111111] hover:bg-[#EAEAEA] cursor-pointer transition">
+          <Bell className="w-4 h-4 text-[#8A8A8A]" />
         </div>
 
-        {/* Right Tools */}
-        <div className="flex items-center gap-3">
-          {showSearchAndFilter && (
-            <>
-              {/* Filter Button */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setIsFilterMenuOpen && setIsFilterMenuOpen(!isFilterMenuOpen)}
-                  className={`flex items-center gap-2 h-9 px-3 rounded-md border text-xs font-medium transition ${
-                    activeFilter !== "ALL"
-                      ? "bg-blue-50 border-blue-300 text-blue-700"
-                      : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
-                  }`}
-                >
-                  <SlidersHorizontal className="w-3.5 h-3.5 text-slate-600" />
-                  <span>Filter</span>
-                </button>
-
-                {isFilterMenuOpen && onFilterChange && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-50">
-                    <button
-                      onClick={() => { onFilterChange("ALL"); if (setIsFilterMenuOpen) setIsFilterMenuOpen(false); }}
-                      className={`w-full text-left px-3.5 py-2 text-xs font-medium ${
-                        activeFilter === "ALL" ? "text-blue-600 bg-blue-50/70 font-semibold" : "text-slate-700 hover:bg-slate-50"
-                      }`}
-                    >
-                      All Cases
-                    </button>
-                    <button
-                      onClick={() => { onFilterChange("FLAGGED"); if (setIsFilterMenuOpen) setIsFilterMenuOpen(false); }}
-                      className={`w-full text-left px-3.5 py-2 text-xs font-medium ${
-                        activeFilter === "FLAGGED" ? "text-rose-600 bg-rose-50/70 font-semibold" : "text-slate-700 hover:bg-slate-50"
-                      }`}
-                    >
-                      Flagged Contradictions
-                    </button>
-                    <button
-                      onClick={() => { onFilterChange("VERIFIED"); if (setIsFilterMenuOpen) setIsFilterMenuOpen(false); }}
-                      className={`w-full text-left px-3.5 py-2 text-xs font-medium ${
-                        activeFilter === "VERIFIED" ? "text-emerald-600 bg-emerald-50/70 font-semibold" : "text-slate-700 hover:bg-slate-50"
-                      }`}
-                    >
-                      Verified Consistent
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Search Bar */}
-              <div className="relative w-64 sm:w-72">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="w-4 h-4 text-slate-400" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Search cases, ID, officer..."
-                  value={searchQuery}
-                  onChange={(e) => onSearchChange && onSearchChange(e.target.value)}
-                  className="w-full h-9 pl-9 pr-3 bg-white border border-slate-200 rounded-md text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => onSearchChange && onSearchChange("")}
-                    className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-xs text-slate-400 hover:text-slate-600"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            </>
-          )}
-
-          {/* Demo Profile Account Icon */}
-          <div className="flex items-center pl-1">
-            <div 
-              title="Demo Account" 
-              className="w-8 h-8 rounded-full border border-slate-200 bg-slate-100 text-slate-700 flex items-center justify-center font-semibold text-xs cursor-pointer hover:bg-slate-200 transition"
-            >
-              JD
-            </div>
-          </div>
-
+        {/* User Avatar circle */}
+        <div 
+          title="Investigator Profile"
+          className="w-9 h-9 rounded-full bg-[#121212] text-white flex items-center justify-center text-xs font-bold select-none cursor-pointer"
+        >
+          JD
         </div>
       </div>
     </header>
   );
 }
-
