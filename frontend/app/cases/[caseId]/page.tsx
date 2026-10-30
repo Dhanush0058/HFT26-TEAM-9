@@ -25,7 +25,8 @@ import {
   RefreshCw,
   CheckCircle2,
   AlertTriangle,
-  HelpCircle
+  HelpCircle,
+  Info
 } from "lucide-react";
 import TopHeader from "@/components/TopHeader";
 import { 
@@ -409,22 +410,23 @@ export default function CaseDetailsPage() {
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                  <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 items-start">
                     
-                    {/* Left Column (40% width / span 5): Updates List */}
-                    <div className="lg:col-span-5 bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] space-y-4">
-                      <div className="flex items-center justify-between pb-1">
-                        <div>
-                          <span className="text-sm font-extrabold text-[#111111]">
-                            Evidence Timeline / Source Updates
-                          </span>
-                          <p className="text-[11px] text-[#8A8A8A] mt-0.5">
-                            {caseData.updates?.length || 0} sequential ingestion event(s)
-                          </p>
-                        </div>
+                    {/* Left Column (Sticky 340px): Updates List */}
+                    <div 
+                      style={{ position: "sticky", top: "96px" }}
+                      className="sticky top-[96px] bg-white rounded-[24px] p-5 shadow-soft border border-[#F0F0F0] space-y-4 max-h-[500px] overflow-y-auto"
+                    >
+                      <div className="pb-1">
+                        <span className="text-sm font-extrabold text-[#111111] block">
+                          Evidence Timeline / Source Updates
+                        </span>
+                        <p className="text-[11px] text-[#8A8A8A] mt-0.5">
+                          {caseData.updates?.length || 0} sequential ingestion event(s)
+                        </p>
                       </div>
 
-                      <div className="space-y-3 max-h-[620px] overflow-y-auto pr-1">
+                      <div className="space-y-2.5">
                         {caseData.updates && caseData.updates.length > 0 ? (
                           caseData.updates.map((update) => {
                             const isSelected = selectedUpdate?.id === update.id;
@@ -467,169 +469,235 @@ export default function CaseDetailsPage() {
                       </div>
                     </div>
 
-                    {/* Right Column (60% width / span 7): Detail View */}
-                    <div className="lg:col-span-7 space-y-5">
-                      {!selectedUpdate ? (
-                        <div className="bg-white rounded-[24px] p-12 text-center shadow-soft border border-[#F0F0F0] space-y-3">
-                          <div className="w-12 h-12 rounded-full bg-[#F5F5F3] flex items-center justify-center mx-auto text-[#8A8A8A]">
-                            <Clock className="w-6 h-6" />
-                          </div>
-                          <h4 className="text-base font-extrabold text-[#111111]">Select an update to view details</h4>
-                          <p className="text-xs text-[#8A8A8A]">
-                            Choose an update card from the left column to view its conflict analysis and reconstructed timeline.
-                          </p>
+                    {/* Right Column: ONE SINGLE UNIFIED CARD */}
+                    {!selectedUpdate ? (
+                      <div className="bg-white rounded-[24px] p-12 text-center shadow-soft border border-[#F0F0F0] space-y-3">
+                        <div className="w-12 h-12 rounded-full bg-[#F5F5F3] flex items-center justify-center mx-auto text-[#8A8A8A]">
+                          <Clock className="w-6 h-6" />
                         </div>
-                      ) : (
-                        <>
-                          {/* 1. Header Card */}
-                          <div className="bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] space-y-4">
-                            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#F0F0F0] pb-4">
-                              <div>
-                                <span className="text-[11px] font-bold text-[#8A8A8A] uppercase tracking-wider">
-                                  Selected Ingestion Batch
-                                </span>
-                                <h4 className="text-lg font-extrabold text-[#111111] mt-0.5">
-                                  Update on {selectedUpdate.dateTime}
-                                </h4>
-                              </div>
-                              <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#F5F8FF] text-[#0A66FF] border border-[#D0E2FF]">
-                                Batch #{selectedUpdate.updateNumber}
-                              </span>
-                            </div>
-
-                            {/* Files Uploaded */}
-                            <div className="space-y-2">
-                              <span className="text-xs font-bold text-[#111111] block">
-                                Files Uploaded in this Batch ({selectedUpdate.files.length})
-                              </span>
-                              <div className="flex flex-wrap gap-2">
-                                {selectedUpdate.files.map((file, fIdx) => (
-                                  <div
-                                    key={fIdx}
-                                    className="px-3.5 py-1.5 rounded-full bg-[#F5F8FF] border border-[#EEEEEC] flex items-center gap-2 text-xs"
-                                  >
-                                    {getDataTypeBadge(file.dataType)}
-                                    <span className="font-bold text-[#111111] max-w-[200px] truncate" title={file.name}>
-                                      {file.name}
-                                    </span>
-                                    <span className="text-[11px] font-mono text-[#8A8A8A]">{file.size}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* 2. Conflict Analysis Card - MOST IMPORTANT */}
-                          <div className="bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] space-y-4">
-                            <div className="flex items-center justify-between flex-wrap gap-2">
-                              <div className="flex items-center gap-2">
-                                <h4 className="text-base font-extrabold text-[#111111]">Conflict Check</h4>
-                                
-                                {/* Tooltip explaining what is a conflict */}
-                                <div className="group relative cursor-pointer">
-                                  <div className="w-5 h-5 rounded-full bg-[#F5F5F3] hover:bg-[#EAEAEA] flex items-center justify-center text-[#8A8A8A] hover:text-[#111111] transition">
-                                    <HelpCircle className="w-3.5 h-3.5" />
-                                  </div>
-                                  <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-72 p-3.5 bg-[#121212] text-white text-[11px] rounded-[14px] shadow-xl z-30 leading-relaxed animate-in fade-in">
-                                    <span className="font-bold block mb-1 text-white">What is a conflict?</span>
-                                    A conflict occurs when two or more independent sources report contradictory facts (e.g. conflicting signal phases, collision times, or vehicle speeds).
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Conflict Status Badge */}
-                              {selectedUpdate.conflict.hasConflict ? (
-                                <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#FFEAEA] text-[#E11D48] flex items-center gap-1.5 border border-[#FFD4D4]">
-                                  <AlertTriangle className="w-3.5 h-3.5" /> Conflict Observed
-                                </span>
-                              ) : (
-                                <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#DCF5E3] text-[#1A7A2E] flex items-center gap-1.5 border border-[#C3ECCB]">
-                                  <CheckCircle2 className="w-3.5 h-3.5" /> No Conflict Observed
-                                </span>
-                              )}
-                            </div>
-
-                            {/* Conflict Detail Body */}
-                            {selectedUpdate.conflict.hasConflict ? (
-                              <div className="p-4 rounded-[18px] bg-[#FFF5F5] border border-[#FFDADA] space-y-2">
-                                <div className="text-xs font-bold text-[#E11D48] flex items-center gap-1.5">
-                                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                                  <span>Contradiction Detected Across Ingested Material</span>
-                                </div>
-                                <p className="text-xs text-[#222222] leading-relaxed pl-5">
-                                  {selectedUpdate.conflict.explanation}
-                                </p>
-                              </div>
-                            ) : (
-                              <div className="p-4 rounded-[18px] bg-[#F5F8FF] border border-[#EEEEEC] space-y-1">
-                                <div className="text-xs font-bold text-[#1A7A2E] flex items-center gap-1.5">
-                                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                                  <span>All sources align on timeline and events</span>
-                                </div>
-                                <p className="text-xs text-[#555555] leading-relaxed pl-5">
-                                  {selectedUpdate.conflict.explanation || "No contradictory observations identified among the ingested evidence files for this update batch."}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* 3. Reconstructed Accident Timeline Card */}
-                          <div className="bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] space-y-6">
+                        <h4 className="text-base font-extrabold text-[#111111]">Select an update to view details</h4>
+                        <p className="text-xs text-[#8A8A8A]">
+                          Choose an update card from the left panel to examine conflict analysis and the chronological reconstruction.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="bg-white rounded-[24px] p-6 sm:p-7 shadow-soft border border-[#F0F0F0] space-y-6">
+                        
+                        {/* 1. TOP SECTION: Date, Source count, File pills */}
+                        <div className="space-y-3">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
                             <div>
-                              <h4 className="text-base font-extrabold text-[#111111]">
-                                Reconstructed Accident Timeline
-                              </h4>
-                              <p className="text-xs text-[#8A8A8A] mt-0.5">
-                                Synthesized chronological sequence based on all sources ingested up to Update {selectedUpdate.updateNumber}.
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-[#121212] text-white">
+                                  Update {selectedUpdate.updateNumber}
+                                </span>
+                                <span className="text-base font-extrabold text-[#111111]">
+                                  {selectedUpdate.dateTime}
+                                </span>
+                              </div>
+                              <p className="text-xs text-[#8A8A8A] mt-1">
+                                {selectedUpdate.files.length} source file(s) ingested • {selectedUpdate.summaryText}
                               </p>
                             </div>
 
-                            {/* Vertical timeline with 2px connecting line and 12px circle dots */}
-                            <div className="relative pl-7 space-y-6">
-                              {/* Vertical connecting line */}
-                              <div className="absolute left-[5px] top-2 bottom-2 w-[2px] bg-[#E4ECFB]" />
-
-                              {selectedUpdate.reconstructedTimeline.map((node, nIdx) => (
-                                <div key={nIdx} className="relative flex items-start group">
-                                  {/* Circle dot (12px = w-3 h-3): Red for conflict, Blue for normal */}
-                                  <div
-                                    className={`absolute -left-7 mt-1 w-3 h-3 rounded-full shrink-0 transition-transform ${
-                                      node.isConflict
-                                        ? "bg-[#FF3B30] ring-4 ring-[#FFEAEA]"
-                                        : "bg-[#0A66FF] ring-4 ring-[#EBF3FF]"
-                                    }`}
-                                  />
-
-                                  {/* Content for this node */}
-                                  <div className="space-y-1 w-full bg-[#F5F8FF] p-4 rounded-[18px] border border-[#EEEEEC] hover:border-[#111111] transition">
-                                    <div className="flex flex-wrap items-center justify-between gap-2">
-                                      <div className="flex items-center gap-2">
-                                        <span className="font-mono text-xs font-bold text-[#0A66FF] bg-white px-2.5 py-0.5 rounded-full border border-[#E4ECFB]">
-                                          {node.time}
-                                        </span>
-                                        <span className="text-xs font-bold text-[#111111]">
-                                          {node.label}
-                                        </span>
-                                      </div>
-
-                                      {node.isConflict && (
-                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FFEAEA] text-[#E11D48] border border-[#FFD4D4]">
-                                          Disputed Point
-                                        </span>
-                                      )}
-                                    </div>
-
-                                    <p className="text-xs text-[#555555] leading-relaxed pt-1">
-                                      {node.detail}
-                                    </p>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
+                            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#F5F8FF] text-[#0A66FF] border border-[#D0E2FF]">
+                              Batch #{selectedUpdate.updateNumber}
+                            </span>
                           </div>
-                        </>
-                      )}
-                    </div>
+
+                          {/* Files pills */}
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            {selectedUpdate.files.map((file, fIdx) => (
+                              <div
+                                key={fIdx}
+                                className="px-3.5 py-1.5 rounded-full bg-[#F5F8FF] border border-[#EEEEEC] flex items-center gap-2 text-xs"
+                              >
+                                {getDataTypeBadge(file.dataType)}
+                                <span className="font-bold text-[#111111] max-w-[200px] truncate" title={file.name}>
+                                  {file.name}
+                                </span>
+                                <span className="text-[11px] font-mono text-[#8A8A8A]">{file.size}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* DIVIDER 1 */}
+                        <div className="border-t border-[#F0F0F0]" />
+
+                        {/* 2. MIDDLE SECTION: Conflict Check */}
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-sm font-extrabold text-[#111111]">Conflict Check</h4>
+                              
+                              {/* Tooltip explaining what is a conflict */}
+                              <div className="group relative cursor-pointer">
+                                <div className="w-5 h-5 rounded-full bg-[#F5F5F3] hover:bg-[#EAEAEA] flex items-center justify-center text-[#8A8A8A] hover:text-[#111111] transition">
+                                  <HelpCircle className="w-3.5 h-3.5" />
+                                </div>
+                                <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-72 p-3.5 bg-[#121212] text-white text-[11px] rounded-[14px] shadow-xl z-30 leading-relaxed animate-in fade-in">
+                                  <span className="font-bold block mb-1 text-white">What is a conflict?</span>
+                                  A conflict occurs when two or more independent sources report contradictory facts (e.g. conflicting signal phases, collision times, or vehicle speeds).
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Conflict Status Badge */}
+                            {selectedUpdate.conflict.hasConflict ? (
+                              <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#FFEAEA] text-[#E11D48] flex items-center gap-1.5 border border-[#FFD4D4]">
+                                <AlertTriangle className="w-3.5 h-3.5" /> Conflict Observed
+                              </span>
+                            ) : (
+                              <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#DCF5E3] text-[#1A7A2E] flex items-center gap-1.5 border border-[#C3ECCB]">
+                                <CheckCircle2 className="w-3.5 h-3.5" /> No Conflict Observed
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Conflict Detail Box */}
+                          {selectedUpdate.conflict.hasConflict ? (
+                            <div className="p-4 rounded-[18px] bg-[#FFF5F5] border border-[#FFDADA] space-y-1.5">
+                              <div className="text-xs font-bold text-[#E11D48] flex items-center gap-1.5">
+                                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                                <span>Contradiction Detected Across Ingested Material</span>
+                              </div>
+                              <p className="text-xs text-[#222222] leading-relaxed pl-5">
+                                {selectedUpdate.conflict.explanation}
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="p-4 rounded-[18px] bg-[#F5F8FF] border border-[#EEEEEC] space-y-1">
+                              <div className="text-xs font-bold text-[#1A7A2E] flex items-center gap-1.5">
+                                <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                                <span>All sources align on timeline and events</span>
+                              </div>
+                              <p className="text-xs text-[#555555] leading-relaxed pl-5">
+                                {selectedUpdate.conflict.explanation || "No contradictory observations identified among the ingested evidence files for this update batch."}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* DIVIDER 2 */}
+                        <div className="border-t border-[#F0F0F0]" />
+
+                        {/* 3. BOTTOM SECTION: Timeline After This Update */}
+                        <div className="space-y-4">
+                          <div>
+                            <h4 className="text-sm font-extrabold text-[#111111]">
+                              Timeline After This Update
+                            </h4>
+                            <p className="text-xs text-[#8A8A8A] mt-0.5">
+                              Chronological sequence incorporating findings up to Update {selectedUpdate.updateNumber}.
+                            </p>
+                          </div>
+
+                          {/* Check if timeline is unchanged relative to previous update */}
+                          {(() => {
+                            const updateIdx = caseData.updates?.findIndex((u) => u.id === selectedUpdate.id) ?? -1;
+                            const isBaseline = updateIdx <= 0;
+                            const hasChanges = isBaseline || selectedUpdate.reconstructedTimeline.some(
+                              (node) => node.status === "NEW" || node.status === "UPDATED" || node.status === "CONFLICT" || node.isConflict
+                            );
+
+                            return (
+                              <>
+                                {!hasChanges && (
+                                  <div className="p-3.5 rounded-[16px] bg-[#F5F5F3] border border-[#EEEEEC] text-xs text-[#777777] flex items-center gap-2.5 mb-4">
+                                    <Info className="w-4 h-4 text-[#8A8A8A] shrink-0" />
+                                    <span>Timeline remains unchanged after this update. No new temporal data found.</span>
+                                  </div>
+                                )}
+
+                                {/* Vertical timeline with thin line and dots */}
+                                <div className="relative pl-7 space-y-5 pt-1">
+                                  {/* Thin vertical connecting line */}
+                                  <div className="absolute left-[5px] top-2 bottom-2 w-[2px] bg-[#E4ECFB]" />
+
+                                  {selectedUpdate.reconstructedTimeline.map((node, nIdx) => {
+                                    const isConflict = node.isConflict || node.status === "CONFLICT";
+                                    const isNew = node.status === "NEW";
+                                    const isUpdated = node.status === "UPDATED";
+
+                                    // Dot styling based on delta
+                                    let dotClass = "bg-[#8A8A8A] ring-4 ring-[#F0F0F0]";
+                                    if (isConflict) {
+                                      dotClass = "bg-[#FF3B30] ring-4 ring-[#FFEAEA]";
+                                    } else if (isNew) {
+                                      dotClass = "bg-[#10B981] ring-4 ring-[#DCF5E3]";
+                                    } else if (isUpdated) {
+                                      dotClass = "bg-[#F59E0B] ring-4 ring-[#FFF4D6]";
+                                    } else if (isBaseline) {
+                                      dotClass = "bg-[#0A66FF] ring-4 ring-[#EBF3FF]";
+                                    }
+
+                                    return (
+                                      <div key={nIdx} className="relative flex items-start group">
+                                        {/* 10px / 12px Circle Dot */}
+                                        <div
+                                          className={`absolute -left-7 mt-1 w-2.5 h-2.5 rounded-full shrink-0 transition-transform ${dotClass}`}
+                                        />
+
+                                        {/* Content Card */}
+                                        <div className="space-y-1 w-full bg-[#F5F8FF] p-3.5 rounded-[18px] border border-[#EEEEEC] hover:border-[#CCCCCC] transition">
+                                          <div className="flex flex-wrap items-center justify-between gap-2">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                              {/* Timestamp: Show old -> new with strikethrough if updated */}
+                                              {isUpdated && node.oldTime ? (
+                                                <div className="flex items-center gap-1.5 font-mono text-xs">
+                                                  <span className="text-[#8A8A8A] line-through">{node.oldTime}</span>
+                                                  <span className="text-[#B45309] font-bold">→</span>
+                                                  <span className="font-bold text-[#B45309] bg-[#FFF4D6] px-2 py-0.5 rounded-full border border-[#FDE68A]">
+                                                    {node.time}
+                                                  </span>
+                                                </div>
+                                              ) : (
+                                                <span className="font-mono text-xs font-bold text-[#0A66FF] bg-white px-2.5 py-0.5 rounded-full border border-[#E4ECFB]">
+                                                  {node.time}
+                                                </span>
+                                              )}
+
+                                              <span className="text-xs font-bold text-[#111111]">
+                                                {node.label}
+                                              </span>
+                                            </div>
+
+                                            {/* Delta Badges */}
+                                            <div className="flex items-center gap-1.5">
+                                              {isNew && (
+                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#DCF5E3] text-[#1A7A2E] border border-[#C3ECCB]">
+                                                  NEW
+                                                </span>
+                                              )}
+                                              {isUpdated && (
+                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FFF4D6] text-[#B45309] border border-[#FDE68A]">
+                                                  UPDATED
+                                                </span>
+                                              )}
+                                              {isConflict && (
+                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FFEAEA] text-[#E11D48] border border-[#FFD4D4]">
+                                                  CONFLICT
+                                                </span>
+                                              )}
+                                            </div>
+                                          </div>
+
+                                          <p className="text-xs text-[#555555] leading-relaxed pt-1">
+                                            {node.detail}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </>
+                            );
+                          })()}
+                        </div>
+
+                      </div>
+                    )}
                   </div>
                 </div>
 

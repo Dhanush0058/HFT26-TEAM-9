@@ -35,9 +35,11 @@ export interface TimelineEntry {
 
 export interface AccidentTimelineNode {
   time: string;
+  oldTime?: string;
   label: string;
   detail: string;
   isConflict?: boolean;
+  status?: "SAME" | "NEW" | "UPDATED" | "CONFLICT";
 }
 
 export interface SourceUpdate {
@@ -234,25 +236,29 @@ export const DEFAULT_INDIAN_CASES: CaseDetail[] = [
             time: "03:14:50 PM",
             label: "Corridor Steady Flow",
             detail: "Traffic along Hitec City corridor proceeds normally at 48 km/h.",
-            isConflict: false
+            isConflict: false,
+            status: "SAME"
           },
           {
             time: "03:14:58 PM",
             label: "Main Signal Green Confirmed",
             detail: "Optical frames confirm solid green signal on main carriageway.",
-            isConflict: false
+            isConflict: false,
+            status: "SAME"
           },
           {
             time: "03:15:00 PM",
             label: "Auto-Rickshaw Incursion",
             detail: "Commercial auto emerges from service lane towards intersection center.",
-            isConflict: false
+            isConflict: false,
+            status: "SAME"
           },
           {
             time: "03:15:02 PM",
             label: "Lateral Point of Impact",
             detail: "Collision occurs in northwest quadrant; SUV undergoes emergency deceleration.",
-            isConflict: false
+            isConflict: false,
+            status: "SAME"
           }
         ]
       },
@@ -273,25 +279,30 @@ export const DEFAULT_INDIAN_CASES: CaseDetail[] = [
             time: "03:14:58 PM",
             label: "Signal Phase Validation",
             detail: "Police signal cycle log aligns with CCTV optical verification.",
-            isConflict: false
+            isConflict: false,
+            status: "SAME"
           },
           {
-            time: "03:15:00 PM",
+            time: "03:15:01 PM",
+            oldTime: "03:15:00 PM",
             label: "Deceleration & Skid Scrub",
             detail: "Dry bituminous road provides standard friction; 6.4m skid initiated 0.8s before contact.",
-            isConflict: false
+            isConflict: false,
+            status: "UPDATED"
           },
           {
             time: "03:15:02 PM",
             label: "Resting Coordinates Verified",
             detail: "Vehicle resting positions recorded at northwest junction marker, matching optical footage.",
-            isConflict: false
+            isConflict: false,
+            status: "SAME"
           },
           {
             time: "03:15:04 PM",
             label: "Traffic Police Unit 14 Arrival",
             detail: "Field officers establish cordon and conduct preliminary breathalyzer screening.",
-            isConflict: false
+            isConflict: false,
+            status: "NEW"
           }
         ]
       },
@@ -312,25 +323,29 @@ export const DEFAULT_INDIAN_CASES: CaseDetail[] = [
             time: "03:14:50 PM",
             label: "Corridor Approach",
             detail: "SUV approaches intersection under 50 km/h limit with clear line of sight.",
-            isConflict: false
+            isConflict: false,
+            status: "SAME"
           },
           {
             time: "03:14:58 PM",
             label: "Active Green Signal Confirmed",
             detail: "Optical surveillance camera 04 establishes continuous green phase.",
-            isConflict: false
+            isConflict: false,
+            status: "SAME"
           },
           {
             time: "03:15:00 PM",
             label: "Signal Phase Contradiction",
             detail: "Auto driver claims SUV crossed on red amber light; disproven by optical CCTV ground truth.",
-            isConflict: true
+            isConflict: true,
+            status: "CONFLICT"
           },
           {
             time: "03:15:02 PM",
             label: "Collision & Vehicle Arrest",
             detail: "Impact occurs at junction center; skid mark analysis and footage establish immediate halt.",
-            isConflict: false
+            isConflict: false,
+            status: "SAME"
           }
         ]
       }
@@ -442,19 +457,22 @@ export const DEFAULT_INDIAN_CASES: CaseDetail[] = [
             time: "07:09:50 AM",
             label: "Highway Cruise Phase",
             detail: "Intercity coach cruising at steady 72 km/h in lane 2.",
-            isConflict: false
+            isConflict: false,
+            status: "SAME"
           },
           {
             time: "07:09:58 AM",
             label: "Emergency Brake Spike",
             detail: "Hydraulic brake line pressure spikes to 78 bar in response to median stationary hazard.",
-            isConflict: false
+            isConflict: false,
+            status: "SAME"
           },
           {
             time: "07:10:00 AM",
             label: "ABS Deceleration Wave",
             detail: "Vehicle slows aggressively at -0.78 G; ABS anti-lock system cycles continuously.",
-            isConflict: false
+            isConflict: false,
+            status: "SAME"
           }
         ]
       },
@@ -472,22 +490,90 @@ export const DEFAULT_INDIAN_CASES: CaseDetail[] = [
         },
         reconstructedTimeline: [
           {
+            time: "07:09:50 AM",
+            label: "Highway Cruise Phase",
+            detail: "Intercity coach cruising at steady 72 km/h in lane 2.",
+            isConflict: false,
+            status: "SAME"
+          },
+          {
             time: "07:09:55 AM",
             label: "Dense Morning Mist",
             detail: "Visibility decreases drastically along KM 48 stretch to under 35 meters.",
-            isConflict: false
+            isConflict: false,
+            status: "NEW"
           },
           {
-            time: "07:09:58 AM",
-            label: "Forward Hazard Lights",
+            time: "07:09:59 AM",
+            oldTime: "07:09:58 AM",
+            label: "Emergency Brake Spike & Hazard Lights",
             detail: "Dashcam records bus brake lamps illuminating immediately as telemetry pressure spikes.",
-            isConflict: false
+            isConflict: false,
+            status: "UPDATED"
+          },
+          {
+            time: "07:10:00 AM",
+            label: "ABS Deceleration Wave",
+            detail: "Vehicle slows aggressively at -0.78 G; ABS anti-lock system cycles continuously.",
+            isConflict: false,
+            status: "SAME"
           },
           {
             time: "07:10:02 AM",
             label: "Secondary Buffer Impact",
             detail: "Trailing vehicle impacts rear buffer due to inadequate stopping cushion in fog.",
-            isConflict: false
+            isConflict: false,
+            status: "NEW"
+          }
+        ]
+      },
+      {
+        id: "UPD-3180-03",
+        updateNumber: "03",
+        dateTime: "29 Oct 2026, 09:20 AM",
+        summaryText: "1 commercial insurance policy attached",
+        files: [
+          { name: "karnataka_srct_fleet_insurance.pdf", dataType: "PDF", size: "1.2 MB" }
+        ],
+        conflict: {
+          hasConflict: false,
+          explanation: "Fleet commercial insurance document verified. Policy active; no additional temporal or kinematic telemetry contained in policy."
+        },
+        reconstructedTimeline: [
+          {
+            time: "07:09:50 AM",
+            label: "Highway Cruise Phase",
+            detail: "Intercity coach cruising at steady 72 km/h in lane 2.",
+            isConflict: false,
+            status: "SAME"
+          },
+          {
+            time: "07:09:55 AM",
+            label: "Dense Morning Mist",
+            detail: "Visibility decreases drastically along KM 48 stretch to under 35 meters.",
+            isConflict: false,
+            status: "SAME"
+          },
+          {
+            time: "07:09:59 AM",
+            label: "Emergency Brake Spike & Hazard Lights",
+            detail: "Dashcam records bus brake lamps illuminating immediately as telemetry pressure spikes.",
+            isConflict: false,
+            status: "SAME"
+          },
+          {
+            time: "07:10:00 AM",
+            label: "ABS Deceleration Wave",
+            detail: "Vehicle slows aggressively at -0.78 G; ABS anti-lock system cycles continuously.",
+            isConflict: false,
+            status: "SAME"
+          },
+          {
+            time: "07:10:02 AM",
+            label: "Secondary Buffer Impact",
+            detail: "Trailing vehicle impacts rear buffer due to inadequate stopping cushion in fog.",
+            isConflict: false,
+            status: "SAME"
           }
         ]
       }
@@ -506,33 +592,31 @@ function ensureCaseUpdatesAndFields(cases: CaseDetail[]): CaseDetail[] {
     // Check if this matches a default case and ensure rich updates
     const defaultMatch = DEFAULT_INDIAN_CASES.find((d) => d.id === c.id || d.caseNumber === c.caseNumber);
     
-    // Ensure updates list
+    // Ensure updates list (always use rich defaultMatch updates if this is one of default Indian cases)
     let updates = c.updates;
-    if (!updates || updates.length === 0) {
-      if (defaultMatch?.updates) {
-        updates = defaultMatch.updates;
-      } else {
-        // Synthesize updates from evidenceList
-        updates = c.evidenceList.map((ev, i) => ({
-          id: `UPD-${c.caseNumber}-${String(i + 1).padStart(2, "0")}`,
-          updateNumber: String(i + 1).padStart(2, "0"),
-          dateTime: ev.uploadDate || c.filedDate,
-          summaryText: `1 source uploaded (${ev.dataType})`,
-          files: [{ name: ev.name, dataType: ev.dataType, size: ev.size }],
-          conflict: {
-            hasConflict: false,
-            explanation: "All sources align on timeline and events."
-          },
-          reconstructedTimeline: [
-            {
-              time: ev.accidentTime || "Incident Window",
-              label: `Observation: ${ev.name}`,
-              detail: ev.extractedData?.summary || "Evidence source recorded and verified.",
-              isConflict: false
-            }
-          ]
-        }));
-      }
+    if (defaultMatch?.updates) {
+      updates = defaultMatch.updates;
+    } else if (!updates || updates.length === 0) {
+      // Synthesize updates from evidenceList
+      updates = c.evidenceList.map((ev, i) => ({
+        id: `UPD-${c.caseNumber}-${String(i + 1).padStart(2, "0")}`,
+        updateNumber: String(i + 1).padStart(2, "0"),
+        dateTime: ev.uploadDate || c.filedDate,
+        summaryText: `1 source uploaded (${ev.dataType})`,
+        files: [{ name: ev.name, dataType: ev.dataType, size: ev.size }],
+        conflict: {
+          hasConflict: false,
+          explanation: "All sources align on timeline and events."
+        },
+        reconstructedTimeline: [
+          {
+            time: ev.accidentTime || "Incident Window",
+            label: `Observation: ${ev.name}`,
+            detail: ev.extractedData?.summary || "Evidence source recorded and verified.",
+            isConflict: false
+          }
+        ]
+      }));
     }
 
     // Ensure extractedData.fields on all evidence records
