@@ -17,17 +17,20 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F6F5F2] text-[#111111] p-4 sm:p-6 font-sans">
-      <div className="w-full flex gap-6">
-        
-        {/* Floating Sidebar */}
-        <Sidebar currentTab="settings" />
+    <div className="min-h-screen bg-[#F6F5F2] text-[#111111] font-sans">
+      
+      {/* Fixed Sidebar touching screen edges */}
+      <Sidebar currentTab="settings" />
 
-        <div className="flex-1 min-w-0">
-          
-          <TopHeader title="Settings" showSearch={false} />
+      {/* Fixed Topbar touching screen edges */}
+      <TopHeader title="Settings" showSearch={false} />
 
-          <main className="max-w-5xl space-y-6">
+      {/* Main Content Area starting after sidebar (260px) and topbar (72px) */}
+      <main 
+        style={{ marginLeft: "260px", paddingTop: "72px" }}
+        className="ml-[260px] pt-[72px] p-6 sm:p-8 min-h-screen"
+      >
+        <div className="max-w-5xl space-y-6">
             
             <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-soft border border-[#F0F0F0] space-y-6">
               
@@ -138,12 +141,8 @@ export default function SettingsPage() {
               </div>
 
             </div>
-
-          </main>
-
-        </div>
-
-      </div>
+          </div>
+      </main>
     </div>
   );
 }

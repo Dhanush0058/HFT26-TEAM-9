@@ -143,113 +143,115 @@ export default function CaseDetailsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F6F5F2] text-[#111111] p-4 sm:p-6 font-sans">
-      <div className="w-full flex gap-6">
-        
-        {/* Floating Left Sub-Sidebar for Case Navigation */}
-        <aside className="w-64 shrink-0 select-none">
-          <div className="bg-white rounded-[24px] p-5 shadow-soft border border-[#F0F0F0] flex flex-col justify-between min-h-[calc(100vh-48px)] sticky top-6">
-            <div className="space-y-4">
-              
-              {/* Back to Cases Button */}
-              <Link
-                href="/cases"
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-[#F5F5F3] hover:bg-[#EAEAEA] text-[#111111] text-xs font-bold transition shadow-2xs"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Back to Cases</span>
-              </Link>
+    <div className="min-h-screen bg-[#F6F5F2] text-[#111111] font-sans">
+      
+      {/* Fixed Left Sub-Sidebar touching screen edges */}
+      <aside 
+        style={{ position: "fixed", left: 0, top: 0, height: "100vh", width: "260px", margin: 0 }}
+        className="fixed left-0 top-0 h-screen w-[260px] m-0 z-30 bg-white border-r border-[#F0F0F0] flex flex-col justify-between p-5 select-none"
+      >
+        <div className="space-y-4">
+          
+          {/* Back to Cases Button */}
+          <Link
+            href="/cases"
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-[#F5F5F3] hover:bg-[#EAEAEA] text-[#111111] text-xs font-bold transition shadow-2xs"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Back to Cases</span>
+          </Link>
 
-              {/* Case Mini Summary Box */}
-              <div className="p-4 rounded-[18px] bg-[#F9F9F7] border border-[#EEEEEC] space-y-1.5">
-                <div className="text-[11px] font-medium text-[#8A8A8A] uppercase tracking-wider">
-                  Active Case
-                </div>
-                <div className="text-xs font-mono font-extrabold text-[#0A66FF] truncate">
-                  {caseData.caseNumber}
-                </div>
-                <div className="text-xs font-bold text-[#111111] line-clamp-2 leading-tight">
-                  {caseData.name}
-                </div>
-              </div>
-
-              {/* Case Internal Tabs: Details, Records, Visuals */}
-              <nav className="space-y-1.5 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("details")}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-full text-xs font-semibold transition-all duration-150 ${
-                    activeTab === "details"
-                      ? "bg-[#121212] text-white shadow-sm"
-                      : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F9F9F7]"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <FileText className={`w-4 h-4 ${activeTab === "details" ? "text-white" : "text-[#8A8A8A]"}`} />
-                    <span className="text-sm font-medium">Details</span>
-                  </div>
-                  {activeTab === "details" && <ChevronRight className="w-4 h-4 text-white/80" />}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("records")}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-full text-xs font-semibold transition-all duration-150 ${
-                    activeTab === "records"
-                      ? "bg-[#121212] text-white shadow-sm"
-                      : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F9F9F7]"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Database className={`w-4 h-4 ${activeTab === "records" ? "text-white" : "text-[#8A8A8A]"}`} />
-                    <span className="text-sm font-medium">Records</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-                      activeTab === "records" ? "bg-white/20 text-white" : "bg-[#F0F0F0] text-[#111111]"
-                    }`}>
-                      {caseData.evidenceList.length}
-                    </span>
-                    {activeTab === "records" && <ChevronRight className="w-4 h-4 text-white/80" />}
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("visuals")}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-full text-xs font-semibold transition-all duration-150 ${
-                    activeTab === "visuals"
-                      ? "bg-[#121212] text-white shadow-sm"
-                      : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F9F9F7]"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Eye className={`w-4 h-4 ${activeTab === "visuals" ? "text-white" : "text-[#8A8A8A]"}`} />
-                    <span className="text-sm font-medium">Visuals</span>
-                  </div>
-                  {activeTab === "visuals" && <ChevronRight className="w-4 h-4 text-white/80" />}
-                </button>
-              </nav>
-
+          {/* Case Mini Summary Box */}
+          <div className="p-4 rounded-[18px] bg-[#F9F9F7] border border-[#EEEEEC] space-y-1.5">
+            <div className="text-[11px] font-medium text-[#8A8A8A] uppercase tracking-wider">
+              Active Case
             </div>
-
-            {/* Bottom Status Pill */}
-            <div className="pt-4 border-t border-[#F0F0F0] text-[11px] text-[#8A8A8A]">
-              <span className="font-semibold text-[#111111]">{caseData.evidenceList.length}</span> files linked
+            <div className="text-xs font-mono font-extrabold text-[#0A66FF] truncate">
+              {caseData.caseNumber}
+            </div>
+            <div className="text-xs font-bold text-[#111111] line-clamp-2 leading-tight">
+              {caseData.name}
             </div>
           </div>
-        </aside>
 
-        {/* Main Case Content */}
-        <div className="flex-1 min-w-0">
-          
-          {/* Header */}
-          <TopHeader 
-            title={caseData.name} 
-            showSearch={false}
-          />
+          {/* Case Internal Tabs: Details, Records, Visuals */}
+          <nav className="space-y-1.5 pt-2">
+            <button
+              type="button"
+              onClick={() => setActiveTab("details")}
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-full text-xs font-semibold transition-all duration-150 ${
+                activeTab === "details"
+                  ? "bg-[#121212] text-white shadow-sm"
+                  : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F9F9F7]"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <FileText className={`w-4 h-4 ${activeTab === "details" ? "text-white" : "text-[#8A8A8A]"}`} />
+                <span className="text-sm font-medium">Details</span>
+              </div>
+              {activeTab === "details" && <ChevronRight className="w-4 h-4 text-white/80" />}
+            </button>
 
-          <div className="space-y-6">
+            <button
+              type="button"
+              onClick={() => setActiveTab("records")}
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-full text-xs font-semibold transition-all duration-150 ${
+                activeTab === "records"
+                  ? "bg-[#121212] text-white shadow-sm"
+                  : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F9F9F7]"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Database className={`w-4 h-4 ${activeTab === "records" ? "text-white" : "text-[#8A8A8A]"}`} />
+                <span className="text-sm font-medium">Records</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                  activeTab === "records" ? "bg-white/20 text-white" : "bg-[#F0F0F0] text-[#111111]"
+                }`}>
+                  {caseData.evidenceList.length}
+                </span>
+                {activeTab === "records" && <ChevronRight className="w-4 h-4 text-white/80" />}
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab("visuals")}
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-full text-xs font-semibold transition-all duration-150 ${
+                activeTab === "visuals"
+                  ? "bg-[#121212] text-white shadow-sm"
+                  : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F9F9F7]"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Eye className={`w-4 h-4 ${activeTab === "visuals" ? "text-white" : "text-[#8A8A8A]"}`} />
+                <span className="text-sm font-medium">Visuals</span>
+              </div>
+              {activeTab === "visuals" && <ChevronRight className="w-4 h-4 text-white/80" />}
+            </button>
+          </nav>
+
+        </div>
+
+        {/* Bottom Status Pill */}
+        <div className="pt-4 border-t border-[#F0F0F0] text-[11px] text-[#8A8A8A]">
+          <span className="font-semibold text-[#111111]">{caseData.evidenceList.length}</span> files linked
+        </div>
+      </aside>
+
+      {/* Fixed Topbar touching screen edges */}
+      <TopHeader 
+        title={caseData.name} 
+        showSearch={false}
+      />
+
+      {/* Main Content Area starting after sidebar (260px) and topbar (72px) */}
+      <main 
+        style={{ marginLeft: "260px", paddingTop: "72px" }}
+        className="ml-[260px] pt-[72px] p-6 sm:p-8 min-h-screen"
+      >
+        <div className="space-y-6">
             
             {/* ═══════════════════════════════════════════════════════════════
                 TAB 1: DETAILS TAB
@@ -659,9 +661,7 @@ export default function CaseDetailsPage() {
 
           </div>
 
-        </div>
-
-      </div>
+        </main>
 
       {/* VIEW EVIDENCE INSPECTION MODAL */}
       {viewingEvidence && (

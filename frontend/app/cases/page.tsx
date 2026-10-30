@@ -34,24 +34,26 @@ export default function CasesPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#F6F5F2] text-[#111111] p-4 sm:p-6 font-sans">
-      <div className="w-full flex gap-6">
-        
-        {/* Floating Sidebar */}
-        <Sidebar currentTab="cases" casesCount={cases.length} />
+    <div className="min-h-screen bg-[#F6F5F2] text-[#111111] font-sans">
+      
+      {/* Fixed Sidebar touching screen edges */}
+      <Sidebar currentTab="cases" casesCount={cases.length} />
 
-        <div className="flex-1 min-w-0">
-          
-          {/* Top Header */}
-          <TopHeader
-            title="Cases"
-            showSearch={true}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            searchPlaceholder="Search case name, ID, officer..."
-          />
+      {/* Fixed Topbar touching screen edges */}
+      <TopHeader
+        title="Cases"
+        showSearch={true}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Search case name, ID, officer..."
+      />
 
-          <div className="space-y-6">
+      {/* Main Content Area starting after sidebar (260px) and topbar (72px) */}
+      <main 
+        style={{ marginLeft: "260px", paddingTop: "72px" }}
+        className="ml-[260px] pt-[72px] p-6 sm:p-8 min-h-screen"
+      >
+        <div className="space-y-6">
             
             {/* New Case Card (24px radius, Black pill button, clean minimalist style) */}
             <div className="bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -144,10 +146,7 @@ export default function CasesPage() {
             </div>
 
           </div>
-
-        </div>
-
-      </div>
+      </main>
     </div>
   );
 }

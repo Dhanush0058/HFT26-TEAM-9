@@ -14,17 +14,19 @@ export default function DocsPage() {
   const [activeSection, setActiveSection] = useState<"overview" | "workflow" | "timeline" | "evidence">("overview");
 
   return (
-    <div className="min-h-screen bg-[#F6F5F2] text-[#111111] p-4 sm:p-6 font-sans">
-      <div className="w-full flex gap-6">
-        
-        {/* Floating Sidebar */}
-        <Sidebar currentTab="docs" />
+    <div className="min-h-screen bg-[#F6F5F2] text-[#111111] font-sans">
+      
+      {/* Fixed Sidebar touching screen edges */}
+      <Sidebar currentTab="docs" />
 
-        <div className="flex-1 min-w-0">
-          
-          <TopHeader title="Documentation" showSearch={false} />
+      {/* Fixed Topbar touching screen edges */}
+      <TopHeader title="Documentation" showSearch={false} />
 
-          <main className="space-y-6">
+      {/* Main Content Area starting after sidebar (260px) and topbar (72px) */}
+      <main 
+        style={{ marginLeft: "260px", paddingTop: "72px" }}
+        className="ml-[260px] pt-[72px] p-6 sm:p-8 min-h-screen space-y-6"
+      >
             
             {/* Pill Navigation Tabs matching Reference Aesthetic */}
             <div className="bg-white rounded-[24px] p-2.5 shadow-soft border border-[#F0F0F0] flex flex-wrap items-center gap-1.5">
@@ -324,11 +326,7 @@ export default function DocsPage() {
               </div>
             )}
 
-          </main>
-
-        </div>
-
-      </div>
+      </main>
     </div>
   );
 }
