@@ -148,9 +148,9 @@ export default function CaseDetailsPage() {
       {/* Fixed Left Sub-Sidebar touching screen edges */}
       <aside 
         style={{ position: "fixed", left: 0, top: 0, height: "100vh", width: "260px", margin: 0 }}
-        className="fixed left-0 top-0 h-screen w-[260px] m-0 z-30 bg-white flex flex-col justify-between select-none"
+        className="fixed left-0 top-0 h-screen w-[260px] m-0 z-30 bg-white flex flex-col justify-between select-none overflow-hidden"
       >
-        <div>
+        <div className="relative z-10">
           {/* Top header of sub-sidebar: 72px tall with border-b, merging seamlessly with TopHeader */}
           <div className="h-[72px] px-4 flex items-center border-b border-[#F0F0F0]">
             <Link
@@ -236,13 +236,16 @@ export default function CaseDetailsPage() {
           </div>
         </div>
 
+        {/* Bullish Diagonal Lines Gradient Effect at Bottom */}
+        <div className="sidebar-bottom-bullish" />
+
         {/* Bottom Status Pill */}
-        <div className="p-4 border-t border-[#F5F5F3] text-[11px] text-[#8A8A8A]">
-          <span className="font-semibold text-[#111111]">{caseData.evidenceList.length}</span> files linked
+        <div className="relative z-10 p-4 border-t border-white/10 text-[11px] text-white/80">
+          <span className="font-semibold text-white">{caseData.evidenceList.length}</span> files linked
         </div>
 
         {/* Vertical divider border line strictly below 72px */}
-        <div className="absolute right-0 top-[72px] bottom-0 w-[1px] bg-[#F0F0F0]" />
+        <div className="absolute right-0 top-[72px] bottom-0 w-[1px] bg-[#F0F0F0] z-20" />
       </aside>
 
       {/* Fixed Topbar touching screen edges */}

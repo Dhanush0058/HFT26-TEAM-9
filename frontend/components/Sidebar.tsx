@@ -46,10 +46,11 @@ export default function Sidebar({ currentTab, casesCount = 0 }: SidebarProps) {
   return (
     <aside 
       style={{ position: "fixed", left: 0, top: 0, height: "100vh", width: "260px", margin: 0 }}
-      className="fixed left-0 top-0 h-screen w-[260px] m-0 z-30 bg-white flex flex-col justify-between select-none"
+      className="fixed left-0 top-0 h-screen w-[260px] m-0 z-30 bg-white flex flex-col justify-between select-none overflow-hidden"
     >
-      <div>
-        {/* Top Header Section of Sidebar: exactly 72px tall with border-b, merging seamlessly with TopHeader without any vertical dividing line */}
+      {/* Top Header & Navigation Items (z-10 relative to stay above background effect) */}
+      <div className="relative z-10">
+        {/* Top Header Section of Sidebar: exactly 72px tall with border-b, merging seamlessly with TopHeader */}
         <div className="h-[72px] px-5 flex items-center gap-3 border-b border-[#F0F0F0]">
           <div className="w-10 h-10 rounded-full bg-[#121212] text-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
             <Shield className="w-5 h-5" />
@@ -99,14 +100,17 @@ export default function Sidebar({ currentTab, casesCount = 0 }: SidebarProps) {
         </div>
       </div>
 
-      {/* Minimalist Bottom Info Card */}
-      <div className="p-5 border-t border-[#F5F5F3]">
-        <div className="text-xs font-bold text-[#111111]">System Active</div>
-        <div className="text-[11px] text-[#8A8A8A] mt-0.5">Version 2.0 • Online</div>
+      {/* Bullish Diagonal Lines Gradient Effect at Bottom */}
+      <div className="sidebar-bottom-bullish" />
+
+      {/* Minimalist Bottom Info Card with sharp white text over the blue bullish gradient */}
+      <div className="relative z-10 p-5 border-t border-white/10">
+        <div className="text-xs font-bold text-white">System Active</div>
+        <div className="text-[11px] text-white/80 mt-0.5">Version 2.0 • Online</div>
       </div>
 
       {/* Vertical divider border line strictly starting below the 72px merged header */}
-      <div className="absolute right-0 top-[72px] bottom-0 w-[1px] bg-[#F0F0F0]" />
+      <div className="absolute right-0 top-[72px] bottom-0 w-[1px] bg-[#F0F0F0] z-20" />
     </aside>
   );
 }
