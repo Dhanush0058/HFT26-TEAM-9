@@ -400,14 +400,32 @@ export function createNewCase(data: {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: data.name,
+        caseNumber: data.caseNumber,
         location: data.address,
+        address: data.address,
         date: data.accidentDate,
+        accidentDate: data.accidentDate,
         officer: data.filedBy,
-        witnessStatement: data.description
+        filedBy: data.filedBy,
+        witnessStatement: data.description,
+        description: data.description,
+        sources: data.sources || []
       })
-    }).catch(() => {
-      // Offline fallback: handled by local storage seamlessly
-    });
+    })
+    .then(async (res) => {
+      if (res.ok) {
+        const backendCase = await res.json();
+        const stored = getStoredCases();
+        const target = stored.find(c => c.id === newCase.id || c.caseNumber === newCase.caseNumber);
+        if (target) {
+          if (backendCase.summary) target.summary = typeof backendCase.summary === "string" ? backendCase.summary : backendCase.summary.executive;
+          if (backendCase.timeline && backendCase.timeline.length > 0) target.timeline = backendCase.timeline;
+          if (backendCase.status) target.status = backendCase.status;
+          saveStoredCases(stored);
+        }
+      }
+    })
+    .catch(() => {});
   }
 
   return newCase;

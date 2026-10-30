@@ -30,6 +30,7 @@ import {
   Pause
 } from "lucide-react";
 import TopHeader from "@/components/TopHeader";
+import ThreeForensicCanvas from "@/components/3d/ThreeForensicCanvas";
 import { 
   getStoredCaseById, 
   CaseDetail, 
@@ -712,100 +713,14 @@ export default function CaseDetailsPage() {
                   </div>
                 </div>
 
-                {/* 2D / 3D Reconstruction Canvas Viewport */}
-                <div className="relative w-full h-80 bg-slate-950 rounded-lg overflow-hidden border border-slate-800 flex flex-col justify-between p-4 shadow-inner">
-                  
-                  {/* Viewport Top HUD */}
-                  <div className="flex items-center justify-between z-10 text-[11px] font-mono text-slate-300">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                      <span>INTERSECTION: {caseData.address}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span>TIME: {scrubberTime.toFixed(2)}s</span>
-                      <span className={scrubberTime >= 2.6 && scrubberTime <= 3.0 ? "text-rose-400 font-bold" : "text-slate-400"}>
-                        {scrubberTime >= 2.6 && scrubberTime <= 3.0 ? "💥 IMPACT WINDOW" : "APPROACH PHASE"}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Visual Accident Simulation Diagram */}
-                  <div className="relative flex-1 flex items-center justify-center my-2">
-                    {/* Road Intersection Diagram */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-40">
-                      {/* Vertical Road */}
-                      <div className="w-24 h-full bg-slate-800 border-x border-slate-600 flex justify-center">
-                        <div className="w-0.5 h-full border-r border-dashed border-yellow-400"></div>
-                      </div>
-                      {/* Horizontal Road */}
-                      <div className="absolute h-24 w-full bg-slate-800 border-y border-slate-600 flex items-center">
-                        <div className="h-0.5 w-full border-b border-dashed border-yellow-400"></div>
-                      </div>
-                    </div>
-
-                    {/* Vehicle A (Red Sedan - Moving Westbound across timeline) */}
-                    <div 
-                      className="absolute transition-all duration-100 flex flex-col items-center"
-                      style={{
-                        transform: `translate(${-120 + (scrubberTime * 42)}px, ${scrubberTime >= 2.8 ? 8 : 0}px)`
-                      }}
-                    >
-                      <div className="px-2 py-0.5 rounded bg-rose-600 text-white font-mono text-[9px] font-bold shadow-md">
-                        Vehicle A (Red)
-                      </div>
-                      <div className="w-8 h-4 rounded bg-rose-500 border border-white/80 mt-0.5 shadow-lg"></div>
-                      <div className="text-[9px] text-rose-300 font-mono mt-0.5">
-                        {scrubberTime >= 2.8 ? "18 km/h" : `${(48 - scrubberTime * 5).toFixed(0)} km/h`}
-                      </div>
-                    </div>
-
-                    {/* Vehicle B (Blue SUV - Moving Southbound across timeline) */}
-                    <div 
-                      className="absolute transition-all duration-100 flex flex-col items-center"
-                      style={{
-                        transform: `translate(${scrubberTime >= 2.8 ? 12 : 0}px, ${-90 + (scrubberTime * 32)}px)`
-                      }}
-                    >
-                      <div className="px-2 py-0.5 rounded bg-blue-600 text-white font-mono text-[9px] font-bold shadow-md">
-                        Vehicle B (Blue)
-                      </div>
-                      <div className="w-8 h-5 rounded bg-blue-500 border border-white/80 mt-0.5 shadow-lg"></div>
-                      <div className="text-[9px] text-blue-300 font-mono mt-0.5">36 km/h</div>
-                    </div>
-
-                    {/* Impact Marker at T=2.8s */}
-                    {scrubberTime >= 2.6 && scrubberTime <= 3.2 && (
-                      <div className="absolute w-16 h-16 rounded-full border-2 border-rose-500/80 bg-rose-500/20 animate-ping flex items-center justify-center">
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Viewport Bottom Scrubber Controls */}
-                  <div className="z-10 bg-slate-900/90 backdrop-blur-sm p-2.5 rounded-lg border border-slate-800 flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setIsPlaying(!isPlaying)}
-                      className="p-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white transition shrink-0"
-                    >
-                      {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-                    </button>
-
-                    <input
-                      type="range"
-                      min="0.0"
-                      max="6.0"
-                      step="0.1"
-                      value={scrubberTime}
-                      onChange={(e) => setScrubberTime(parseFloat(e.target.value))}
-                      className="flex-1 accent-blue-500 h-1.5 bg-slate-700 rounded-lg cursor-pointer"
-                    />
-
-                    <span className="font-mono text-xs font-bold text-white shrink-0">
-                      T+0{scrubberTime.toFixed(1)}s
-                    </span>
-                  </div>
-
-                </div>
+                {/* Three.js Real-Time 3D Forensic Simulation & Video Canvas */}
+                <ThreeForensicCanvas
+                  scrubberTime={scrubberTime}
+                  onTimeChange={setScrubberTime}
+                  isPlaying={isPlaying}
+                  onTogglePlay={() => setIsPlaying(!isPlaying)}
+                  caseTitle={caseData.name}
+                />
 
                 {/* Secondary Visual Charts: Kinematics & Contradiction Graph */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
