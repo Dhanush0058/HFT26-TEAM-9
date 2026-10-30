@@ -5,7 +5,7 @@ import Link from "next/link";
 import { 
   FolderKanban, 
   AlertTriangle, 
-  CheckCircle2, 
+
   Video, 
   Mic, 
   Activity, 

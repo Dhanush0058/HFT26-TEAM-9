@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import TopHeader from "@/components/TopHeader";
-import { Key, Save, CheckCircle2, ShieldAlert } from "lucide-react";
+import { Key, Save, CheckCircle2 } from "lucide-react";
 
 export default function SettingsPage() {
   const [featherlessKey, setFeatherlessKey] = useState("");

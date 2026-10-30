@@ -55,7 +55,7 @@ export default function TopHeader({
                 {isFilterMenuOpen && onFilterChange && (
                   <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-50">
                     <button
-                      onClick={() => { onFilterChange("ALL"); setIsFilterMenuOpen && setIsFilterMenuOpen(false); }}
+                      onClick={() => { onFilterChange("ALL"); if (setIsFilterMenuOpen) setIsFilterMenuOpen(false); }}
                       className={`w-full text-left px-3.5 py-2 text-xs font-medium ${
                         activeFilter === "ALL" ? "text-blue-600 bg-blue-50/70 font-semibold" : "text-slate-700 hover:bg-slate-50"
                       }`}
@@ -63,7 +63,7 @@ export default function TopHeader({
                       All Cases
                     </button>
                     <button
-                      onClick={() => { onFilterChange("FLAGGED"); setIsFilterMenuOpen && setIsFilterMenuOpen(false); }}
+                      onClick={() => { onFilterChange("FLAGGED"); if (setIsFilterMenuOpen) setIsFilterMenuOpen(false); }}
                       className={`w-full text-left px-3.5 py-2 text-xs font-medium ${
                         activeFilter === "FLAGGED" ? "text-rose-600 bg-rose-50/70 font-semibold" : "text-slate-700 hover:bg-slate-50"
                       }`}
@@ -71,7 +71,7 @@ export default function TopHeader({
                       Flagged Contradictions
                     </button>
                     <button
-                      onClick={() => { onFilterChange("VERIFIED"); setIsFilterMenuOpen && setIsFilterMenuOpen(false); }}
+                      onClick={() => { onFilterChange("VERIFIED"); if (setIsFilterMenuOpen) setIsFilterMenuOpen(false); }}
                       className={`w-full text-left px-3.5 py-2 text-xs font-medium ${
                         activeFilter === "VERIFIED" ? "text-emerald-600 bg-emerald-50/70 font-semibold" : "text-slate-700 hover:bg-slate-50"
                       }`}
