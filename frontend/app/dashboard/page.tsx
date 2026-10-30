@@ -66,13 +66,10 @@ export default function DashboardMetricsPage() {
               
               {/* Card 1: Total Cases */}
               <div className="bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-4">
+                <div className="mb-4">
                   <span className="text-[13px] font-medium text-[#8A8A8A]">
                     Total Registered Cases
                   </span>
-                  <button className="w-8 h-8 rounded-full bg-[#F5F5F3] flex items-center justify-center text-[#8A8A8A] hover:text-[#111111] transition">
-                    <MoreHorizontal className="w-4 h-4" />
-                  </button>
                 </div>
 
                 <div className="flex items-baseline gap-3 my-2">
@@ -91,13 +88,10 @@ export default function DashboardMetricsPage() {
 
               {/* Card 2: Active Investigations */}
               <div className="bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-4">
+                <div className="mb-4">
                   <span className="text-[13px] font-medium text-[#8A8A8A]">
                     Active Investigations
                   </span>
-                  <button className="w-8 h-8 rounded-full bg-[#F5F5F3] flex items-center justify-center text-[#8A8A8A] hover:text-[#111111] transition">
-                    <MoreHorizontal className="w-4 h-4" />
-                  </button>
                 </div>
 
                 <div className="flex items-baseline gap-3 my-2">
@@ -116,13 +110,10 @@ export default function DashboardMetricsPage() {
 
               {/* Card 3: Evidence Files */}
               <div className="bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-4">
+                <div className="mb-4">
                   <span className="text-[13px] font-medium text-[#8A8A8A]">
                     Total Evidence Ingested
                   </span>
-                  <button className="w-8 h-8 rounded-full bg-[#F5F5F3] flex items-center justify-center text-[#8A8A8A] hover:text-[#111111] transition">
-                    <MoreHorizontal className="w-4 h-4" />
-                  </button>
                 </div>
 
                 <div className="flex items-baseline gap-3 my-2">
@@ -150,23 +141,13 @@ export default function DashboardMetricsPage() {
               
               {/* Capsule Chart Card (Span 7) */}
               <div className="lg:col-span-7 bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <span className="text-[13px] font-medium text-[#8A8A8A]">
-                      Intake Volume Over Time
-                    </span>
-                    <h2 className="text-xl font-extrabold text-[#111111] mt-0.5">
-                      Case Analysis Activity
-                    </h2>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold px-3 py-1 bg-[#F5F5F3] rounded-full text-[#111111]">
-                      Weekly
-                    </span>
-                    <button className="w-8 h-8 rounded-full bg-[#F5F5F3] flex items-center justify-center text-[#8A8A8A] hover:text-[#111111]">
-                      <MoreHorizontal className="w-4 h-4" />
-                    </button>
-                  </div>
+                <div className="mb-4">
+                  <span className="text-[13px] font-medium text-[#8A8A8A]">
+                    Intake Volume Over Time
+                  </span>
+                  <h2 className="text-xl font-extrabold text-[#111111] mt-0.5">
+                    Case Analysis Activity
+                  </h2>
                 </div>
 
                 {/* Capsule-shaped Bar Chart (Reference Design) */}

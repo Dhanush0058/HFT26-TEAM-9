@@ -22,8 +22,10 @@ import {
   Activity,
   X,
   ChevronRight,
-  MoreHorizontal,
-  RefreshCw
+  RefreshCw,
+  CheckCircle2,
+  AlertTriangle,
+  HelpCircle
 } from "lucide-react";
 import TopHeader from "@/components/TopHeader";
 import { 
@@ -42,6 +44,8 @@ export default function CaseDetailsPage() {
   const [activeTab, setActiveTab] = useState<"details" | "records" | "visuals">("details");
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [viewingEvidence, setViewingEvidence] = useState<EvidenceRecord | null>(null);
+  const [extractedDrawerRecord, setExtractedDrawerRecord] = useState<EvidenceRecord | null>(null);
+  const [selectedUpdateId, setSelectedUpdateId] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
@@ -49,8 +53,19 @@ export default function CaseDetailsPage() {
     const found = getStoredCaseById(caseId);
     if (found) {
       setCaseData(found);
+      if (found.updates && found.updates.length > 0) {
+        setSelectedUpdateId((prev) => prev || found.updates![0].id);
+      }
     }
   }, [caseId]);
+
+  useEffect(() => {
+    if (caseData?.updates && caseData.updates.length > 0) {
+      if (!selectedUpdateId || !caseData.updates.some((u) => u.id === selectedUpdateId)) {
+        setSelectedUpdateId(caseData.updates[0].id);
+      }
+    }
+  }, [caseData, selectedUpdateId]);
 
   if (!caseData) {
     return (
@@ -77,7 +92,6 @@ export default function CaseDetailsPage() {
   }
 
   // Handle uploading new evidence in Records:
-  // Data extraction and dynamic summary regeneration happen automatically!
   const handleUploadNewEvidence = (files: FileList | null) => {
     if (!files || files.length === 0) return;
     setIsGeneratingSummary(true);
@@ -141,6 +155,9 @@ export default function CaseDetailsPage() {
         return <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#F5F5F3] text-[#555555]"><FileText className="w-3 h-3" /> {type}</span>;
     }
   };
+
+  // Find currently selected update
+  const selectedUpdate = caseData.updates?.find((u) => u.id === selectedUpdateId) || caseData.updates?.[0] || null;
 
   return (
     <div className="min-h-screen bg-[#F0F4FF] text-[#111111] font-sans">
@@ -283,9 +300,6 @@ export default function CaseDetailsPage() {
                       <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#F5F5F3] text-[#111111]">
                         {caseData.caseNumber}
                       </span>
-                      <button className="w-8 h-8 rounded-full bg-[#F5F5F3] flex items-center justify-center text-[#8A8A8A] hover:text-[#111111] transition">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
                     </div>
                   </div>
 
@@ -381,65 +395,242 @@ export default function CaseDetailsPage() {
                   </div>
                 </div>
 
-                {/* Block 3: Dual Timeline Concept */}
-                <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-soft border border-[#F0F0F0] space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-[13px] font-medium text-[#8A8A8A]">
-                        Chronological Reconstruction
-                      </span>
-                      <h3 className="text-lg font-extrabold text-[#111111] mt-0.5">
-                        Evidence Timeline
-                      </h3>
-                      <p className="text-xs text-[#8A8A8A] mt-0.5">
-                        Dual timeline correlating physical accident events with ingestion timestamps.
-                      </p>
-                    </div>
-
-                    <button className="w-8 h-8 rounded-full bg-[#F5F5F3] flex items-center justify-center text-[#8A8A8A] hover:text-[#111111] transition">
-                      <MoreHorizontal className="w-4 h-4" />
-                    </button>
+                {/* Block 3: Redesigned Evidence Timeline & Source Updates (2-Column Layout) */}
+                <div className="space-y-4">
+                  <div>
+                    <span className="text-[13px] font-medium text-[#8A8A8A]">
+                      Multi-Source Sequential Reconstruction
+                    </span>
+                    <h3 className="text-xl font-extrabold text-[#111111] mt-0.5">
+                      Evidence Timeline & Source Updates
+                    </h3>
+                    <p className="text-xs text-[#8A8A8A] mt-0.5">
+                      Select an update batch from the timeline list to review conflict checks and the reconstructed chronology.
+                    </p>
                   </div>
 
-                  {caseData.timeline.length > 0 ? (
-                    <div className="space-y-4">
-                      {caseData.timeline.map((event, idx) => (
-                        <div 
-                          key={event.id || idx} 
-                          className="p-5 rounded-[20px] bg-[#F5F8FF] border border-[#EEEEEC] hover:border-[#111111] transition-all duration-150 space-y-3"
-                        >
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="w-6 h-6 rounded-full bg-[#121212] text-white flex items-center justify-center text-[10px] font-bold">
-                                {idx + 1}
-                              </span>
-                              <span className="text-xs font-bold text-[#111111]">
-                                Evidence: <span className="text-[#0A66FF] font-mono">{event.evidenceName}</span>
-                              </span>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                              <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#EBF3FF] text-[#0A66FF]">
-                                Accident Time: {event.accidentTime}
-                              </span>
-                              <span className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-[#FFFFFF] text-[#8A8A8A] border border-[#EEEEEC]">
-                                Ingested: {event.uploadedTime}
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="pl-8 space-y-1">
-                            <div className="text-xs font-bold text-[#111111]">{event.title}</div>
-                            <p className="text-xs text-[#555555] leading-relaxed">{event.description}</p>
-                          </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    
+                    {/* Left Column (40% width / span 5): Updates List */}
+                    <div className="lg:col-span-5 bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] space-y-4">
+                      <div className="flex items-center justify-between pb-1">
+                        <div>
+                          <span className="text-sm font-extrabold text-[#111111]">
+                            Evidence Timeline / Source Updates
+                          </span>
+                          <p className="text-[11px] text-[#8A8A8A] mt-0.5">
+                            {caseData.updates?.length || 0} sequential ingestion event(s)
+                          </p>
                         </div>
-                      ))}
+                      </div>
+
+                      <div className="space-y-3 max-h-[620px] overflow-y-auto pr-1">
+                        {caseData.updates && caseData.updates.length > 0 ? (
+                          caseData.updates.map((update) => {
+                            const isSelected = selectedUpdate?.id === update.id;
+                            return (
+                              <div
+                                key={update.id}
+                                onClick={() => setSelectedUpdateId(update.id)}
+                                className={`rounded-[16px] p-4 cursor-pointer transition-all duration-150 flex items-center justify-between border ${
+                                  isSelected
+                                    ? "bg-[#121212] text-white border-[#121212] shadow-sm"
+                                    : "bg-white text-[#111111] border-[#F0F0F0] hover:border-[#CCCCCC] hover:bg-[#F9F9F7]"
+                                }`}
+                              >
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className={`text-sm font-extrabold ${isSelected ? "text-white" : "text-[#111111]"}`}>
+                                      {update.updateNumber}
+                                    </span>
+                                    <span className={`text-xs ${isSelected ? "text-white/40" : "text-[#CCCCCC]"}`}>•</span>
+                                    <span className={`text-sm font-bold ${isSelected ? "text-white" : "text-[#111111]"}`}>
+                                      {update.dateTime}
+                                    </span>
+                                  </div>
+                                  <div className={`text-xs ${isSelected ? "text-white/70" : "text-[#8A8A8A]"}`}>
+                                    {update.summaryText}
+                                  </div>
+                                </div>
+
+                                <div className="shrink-0 ml-2">
+                                  <ChevronRight className={`w-4 h-4 ${isSelected ? "text-white" : "text-[#8A8A8A]"}`} />
+                                </div>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div className="text-center py-10 text-xs text-[#8A8A8A]">
+                            No updates recorded yet. Upload files in Records to create updates.
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  ) : (
-                    <div className="text-center py-12 text-xs text-[#8A8A8A]">
-                      No evidence timeline entries yet. Upload evidence in the Records tab to construct the timeline.
+
+                    {/* Right Column (60% width / span 7): Detail View */}
+                    <div className="lg:col-span-7 space-y-5">
+                      {!selectedUpdate ? (
+                        <div className="bg-white rounded-[24px] p-12 text-center shadow-soft border border-[#F0F0F0] space-y-3">
+                          <div className="w-12 h-12 rounded-full bg-[#F5F5F3] flex items-center justify-center mx-auto text-[#8A8A8A]">
+                            <Clock className="w-6 h-6" />
+                          </div>
+                          <h4 className="text-base font-extrabold text-[#111111]">Select an update to view details</h4>
+                          <p className="text-xs text-[#8A8A8A]">
+                            Choose an update card from the left column to view its conflict analysis and reconstructed timeline.
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          {/* 1. Header Card */}
+                          <div className="bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] space-y-4">
+                            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#F0F0F0] pb-4">
+                              <div>
+                                <span className="text-[11px] font-bold text-[#8A8A8A] uppercase tracking-wider">
+                                  Selected Ingestion Batch
+                                </span>
+                                <h4 className="text-lg font-extrabold text-[#111111] mt-0.5">
+                                  Update on {selectedUpdate.dateTime}
+                                </h4>
+                              </div>
+                              <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#F5F8FF] text-[#0A66FF] border border-[#D0E2FF]">
+                                Batch #{selectedUpdate.updateNumber}
+                              </span>
+                            </div>
+
+                            {/* Files Uploaded */}
+                            <div className="space-y-2">
+                              <span className="text-xs font-bold text-[#111111] block">
+                                Files Uploaded in this Batch ({selectedUpdate.files.length})
+                              </span>
+                              <div className="flex flex-wrap gap-2">
+                                {selectedUpdate.files.map((file, fIdx) => (
+                                  <div
+                                    key={fIdx}
+                                    className="px-3.5 py-1.5 rounded-full bg-[#F5F8FF] border border-[#EEEEEC] flex items-center gap-2 text-xs"
+                                  >
+                                    {getDataTypeBadge(file.dataType)}
+                                    <span className="font-bold text-[#111111] max-w-[200px] truncate" title={file.name}>
+                                      {file.name}
+                                    </span>
+                                    <span className="text-[11px] font-mono text-[#8A8A8A]">{file.size}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* 2. Conflict Analysis Card - MOST IMPORTANT */}
+                          <div className="bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] space-y-4">
+                            <div className="flex items-center justify-between flex-wrap gap-2">
+                              <div className="flex items-center gap-2">
+                                <h4 className="text-base font-extrabold text-[#111111]">Conflict Check</h4>
+                                
+                                {/* Tooltip explaining what is a conflict */}
+                                <div className="group relative cursor-pointer">
+                                  <div className="w-5 h-5 rounded-full bg-[#F5F5F3] hover:bg-[#EAEAEA] flex items-center justify-center text-[#8A8A8A] hover:text-[#111111] transition">
+                                    <HelpCircle className="w-3.5 h-3.5" />
+                                  </div>
+                                  <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-72 p-3.5 bg-[#121212] text-white text-[11px] rounded-[14px] shadow-xl z-30 leading-relaxed animate-in fade-in">
+                                    <span className="font-bold block mb-1 text-white">What is a conflict?</span>
+                                    A conflict occurs when two or more independent sources report contradictory facts (e.g. conflicting signal phases, collision times, or vehicle speeds).
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Conflict Status Badge */}
+                              {selectedUpdate.conflict.hasConflict ? (
+                                <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#FFEAEA] text-[#E11D48] flex items-center gap-1.5 border border-[#FFD4D4]">
+                                  <AlertTriangle className="w-3.5 h-3.5" /> Conflict Observed
+                                </span>
+                              ) : (
+                                <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#DCF5E3] text-[#1A7A2E] flex items-center gap-1.5 border border-[#C3ECCB]">
+                                  <CheckCircle2 className="w-3.5 h-3.5" /> No Conflict Observed
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Conflict Detail Body */}
+                            {selectedUpdate.conflict.hasConflict ? (
+                              <div className="p-4 rounded-[18px] bg-[#FFF5F5] border border-[#FFDADA] space-y-2">
+                                <div className="text-xs font-bold text-[#E11D48] flex items-center gap-1.5">
+                                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                                  <span>Contradiction Detected Across Ingested Material</span>
+                                </div>
+                                <p className="text-xs text-[#222222] leading-relaxed pl-5">
+                                  {selectedUpdate.conflict.explanation}
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="p-4 rounded-[18px] bg-[#F5F8FF] border border-[#EEEEEC] space-y-1">
+                                <div className="text-xs font-bold text-[#1A7A2E] flex items-center gap-1.5">
+                                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                                  <span>All sources align on timeline and events</span>
+                                </div>
+                                <p className="text-xs text-[#555555] leading-relaxed pl-5">
+                                  {selectedUpdate.conflict.explanation || "No contradictory observations identified among the ingested evidence files for this update batch."}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* 3. Reconstructed Accident Timeline Card */}
+                          <div className="bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] space-y-6">
+                            <div>
+                              <h4 className="text-base font-extrabold text-[#111111]">
+                                Reconstructed Accident Timeline
+                              </h4>
+                              <p className="text-xs text-[#8A8A8A] mt-0.5">
+                                Synthesized chronological sequence based on all sources ingested up to Update {selectedUpdate.updateNumber}.
+                              </p>
+                            </div>
+
+                            {/* Vertical timeline with 2px connecting line and 12px circle dots */}
+                            <div className="relative pl-7 space-y-6">
+                              {/* Vertical connecting line */}
+                              <div className="absolute left-[5px] top-2 bottom-2 w-[2px] bg-[#E4ECFB]" />
+
+                              {selectedUpdate.reconstructedTimeline.map((node, nIdx) => (
+                                <div key={nIdx} className="relative flex items-start group">
+                                  {/* Circle dot (12px = w-3 h-3): Red for conflict, Blue for normal */}
+                                  <div
+                                    className={`absolute -left-7 mt-1 w-3 h-3 rounded-full shrink-0 transition-transform ${
+                                      node.isConflict
+                                        ? "bg-[#FF3B30] ring-4 ring-[#FFEAEA]"
+                                        : "bg-[#0A66FF] ring-4 ring-[#EBF3FF]"
+                                    }`}
+                                  />
+
+                                  {/* Content for this node */}
+                                  <div className="space-y-1 w-full bg-[#F5F8FF] p-4 rounded-[18px] border border-[#EEEEEC] hover:border-[#111111] transition">
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-mono text-xs font-bold text-[#0A66FF] bg-white px-2.5 py-0.5 rounded-full border border-[#E4ECFB]">
+                                          {node.time}
+                                        </span>
+                                        <span className="text-xs font-bold text-[#111111]">
+                                          {node.label}
+                                        </span>
+                                      </div>
+
+                                      {node.isConflict && (
+                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FFEAEA] text-[#E11D48] border border-[#FFD4D4]">
+                                          Disputed Point
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    <p className="text-xs text-[#555555] leading-relaxed pt-1">
+                                      {node.detail}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
 
               </div>
@@ -482,6 +673,7 @@ export default function CaseDetailsPage() {
                           <th className="px-5 py-3.5 font-bold">Upload Date</th>
                           <th className="px-5 py-3.5 font-bold">File Size</th>
                           <th className="px-5 py-3.5 font-bold">Data Type</th>
+                          <th className="px-5 py-3.5 font-bold">Extracted Data</th>
                           <th className="px-5 py-3.5 font-bold text-right">Actions</th>
                         </tr>
                       </thead>
@@ -497,6 +689,22 @@ export default function CaseDetailsPage() {
                             <td className="px-5 py-4 text-[#8A8A8A] whitespace-nowrap">{ev.uploadDate}</td>
                             <td className="px-5 py-4 text-[#111111] font-mono font-medium">{ev.size}</td>
                             <td className="px-5 py-4 text-[#111111] font-medium">{ev.dataType}</td>
+                            <td className="px-5 py-4 whitespace-nowrap">
+                              {ev.is_data_extracted ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setExtractedDrawerRecord(ev)}
+                                  className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#F5F8FF] hover:bg-[#EBF3FF] text-[#0A66FF] border border-[#D0E2FF] transition flex items-center gap-1.5 shadow-2xs"
+                                >
+                                  <Database className="w-3.5 h-3.5" />
+                                  <span>View Extracted Data</span>
+                                </button>
+                              ) : (
+                                <span className="px-3 py-1 rounded-full text-xs font-medium bg-[#F5F5F3] text-[#8A8A8A] inline-block">
+                                  No data extracted
+                                </span>
+                              )}
+                            </td>
                             <td className="px-5 py-4 text-right whitespace-nowrap">
                               <div className="inline-flex items-center gap-1.5">
                                 <button
@@ -532,7 +740,7 @@ export default function CaseDetailsPage() {
 
                         {caseData.evidenceList.length === 0 && (
                           <tr>
-                            <td colSpan={5} className="text-center py-12 text-xs text-[#8A8A8A]">
+                            <td colSpan={6} className="text-center py-12 text-xs text-[#8A8A8A]">
                               No evidence files uploaded yet. Add files using the uploader below.
                             </td>
                           </tr>
@@ -583,14 +791,12 @@ export default function CaseDetailsPage() {
                       className="hidden"
                       onChange={(e) => handleUploadNewEvidence(e.target.files)}
                     />
-                    <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center mx-auto mb-3 shadow-2xs">
+                    <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center mx-auto mb-3 shadow-xs text-[#111111]">
                       <Upload className="w-5 h-5 text-[#0A66FF]" />
                     </div>
-                    <div className="text-sm font-extrabold text-[#111111]">
-                      Click or drag files here to upload evidence
-                    </div>
-                    <p className="text-xs text-[#8A8A8A] mt-1 max-w-md mx-auto">
-                      Files are analyzed upon intake to reconstruct the dual timeline and synthesize the brief summary.
+                    <p className="text-sm font-bold text-[#111111]">Click or drag & drop files here to upload</p>
+                    <p className="text-xs text-[#8A8A8A] mt-1">
+                      MP4, MOV, MP3, WAV, PDF, CSV, PNG, JPG, PY supported
                     </p>
                   </div>
                 </div>
@@ -608,45 +814,39 @@ export default function CaseDetailsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="text-[13px] font-medium text-[#8A8A8A]">
-                        Spatial & Telemetry Mapping
+                        Spatial & Chronological Verification
                       </span>
                       <h2 className="text-xl font-extrabold text-[#111111] mt-0.5">
-                        Visual Reconstruction
+                        Scene Visuals & Geospatial Verification
                       </h2>
                       <p className="text-xs text-[#8A8A8A] mt-0.5">
-                        Spatial coordinates and telemetry synchrony for this case.
+                        Correlated geospatial coordinates and scene overview for this case.
                       </p>
                     </div>
 
-                    <button className="w-8 h-8 rounded-full bg-[#F5F5F3] flex items-center justify-center text-[#8A8A8A] hover:text-[#111111] transition">
-                      <MoreHorizontal className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  {/* Spatial Map Graphic */}
-                  <div className="w-full h-80 bg-[#121212] rounded-[20px] p-6 flex flex-col justify-between text-white relative overflow-hidden">
-                    <div className="flex items-center justify-between text-xs font-mono text-white/60 z-10">
-                      <span>LOCATION: {caseData.address}</span>
-                      <span className="px-3 py-1 rounded-full bg-white/10 text-white">
-                        {caseData.latitude ? `${caseData.latitude}, ${caseData.longitude}` : "Standard Grid"}
+                    <div className="flex items-center gap-2">
+                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#DCF5E3] text-[#1A7A2E]">
+                        GPS Synced
                       </span>
                     </div>
+                  </div>
 
-                    <div className="relative flex-1 flex items-center justify-center pointer-events-none">
-                      <div className="w-40 h-40 rounded-full border border-white/10 flex items-center justify-center animate-pulse">
-                        <div className="w-24 h-24 rounded-full border border-[#0A66FF]/40 flex items-center justify-center">
-                          <MapPin className="w-8 h-8 text-[#0A66FF]" />
-                        </div>
+                  {/* Satellite / Schematic Map Mockup */}
+                  <div className="h-72 rounded-[20px] bg-[#EBF3FF] border border-[#D0E2FF] relative overflow-hidden flex items-center justify-center">
+                    <div className="absolute inset-0 bg-[radial-gradient(#0A66FF_1px,transparent_1px)] [background-size:20px_20px] opacity-25" />
+                    <div className="text-center z-10 space-y-2 p-6">
+                      <div className="w-12 h-12 rounded-full bg-[#121212] text-white flex items-center justify-center mx-auto shadow-md">
+                        <MapPin className="w-6 h-6 text-white" />
                       </div>
-                    </div>
-
-                    <div className="flex items-center justify-between text-xs text-white/60 font-mono z-10">
-                      <span>Event Time: {caseData.accidentDate}</span>
-                      <span>{caseData.evidenceList.length} Ingested Streams</span>
+                      <div className="text-sm font-bold text-[#111111]">
+                        {caseData.address}
+                      </div>
+                      <div className="text-xs font-mono text-[#0A66FF]">
+                        {caseData.latitude ? `${caseData.latitude}° N, ${caseData.longitude}° E` : "Coordinates verified by territorial jurisdiction"}
+                      </div>
                     </div>
                   </div>
 
-                  {/* 2 Metric Summary Cards */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="p-5 rounded-[20px] bg-[#F5F8FF] border border-[#EEEEEC] space-y-1">
                       <span className="text-xs font-bold text-[#111111] block">Spatial Mapping Coordinates</span>
@@ -670,6 +870,167 @@ export default function CaseDetailsPage() {
           </div>
 
         </main>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          SLIDE-IN RIGHT DRAWER FOR EXTRACTED DATA (40% width)
+      ═══════════════════════════════════════════════════════════════ */}
+      {extractedDrawerRecord && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-xs animate-in fade-in duration-150">
+          {/* Backdrop click outside to close */}
+          <div 
+            className="absolute inset-0" 
+            onClick={() => setExtractedDrawerRecord(null)} 
+          />
+
+          {/* Drawer Container (40% width on desktop, rounded-l-[28px]) */}
+          <div className="relative w-full sm:w-[500px] lg:w-[40%] max-w-xl bg-white h-full z-10 shadow-2xl rounded-l-[28px] border-l border-[#F0F0F0] flex flex-col justify-between overflow-hidden animate-in slide-in-from-right duration-200">
+            
+            {/* Header */}
+            <div className="px-6 py-5 border-b border-[#EEEEEC] bg-[#F5F8FF] flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {getDataTypeBadge(extractedDrawerRecord.dataType)}
+                <div>
+                  <h3 className="text-base font-extrabold text-[#111111]">
+                    Extracted Data Record
+                  </h3>
+                  <p className="text-[11px] text-[#8A8A8A] truncate max-w-[240px]" title={extractedDrawerRecord.name}>
+                    {extractedDrawerRecord.name}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setExtractedDrawerRecord(null)}
+                className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-[#8A8A8A] hover:text-[#111111] transition shadow-xs"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Body: Scrollable */}
+            <div className="p-6 space-y-6 overflow-y-auto flex-1 text-xs">
+              
+              {/* Section A: Raw Extracted Key-Value Fields */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-[#8A8A8A] uppercase tracking-wider">
+                    Section A: Raw Extracted Key-Value Fields
+                  </span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#DCF5E3] text-[#1A7A2E]">
+                    Extracted
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  {extractedDrawerRecord.extractedData?.fields && Object.keys(extractedDrawerRecord.extractedData.fields).length > 0 ? (
+                    Object.entries(extractedDrawerRecord.extractedData.fields).map(([label, val], idx) => (
+                      <div
+                        key={idx}
+                        className="p-3.5 rounded-[14px] bg-[#F5F8FF] border border-[#EEEEEC] flex items-center justify-between gap-3"
+                      >
+                        <span className="text-xs text-[#8A8A8A] font-medium shrink-0">
+                          {label}
+                        </span>
+                        <span className="text-xs font-bold text-[#111111] text-right font-mono sm:font-sans">
+                          {String(val)}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-4 rounded-[14px] bg-[#F5F8FF] border border-[#EEEEEC] text-xs text-[#8A8A8A]">
+                      No structured key-value fields extracted.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Analytical Summary */}
+              {extractedDrawerRecord.extractedData?.summary && (
+                <div className="space-y-2">
+                  <span className="text-[11px] font-bold text-[#8A8A8A] uppercase tracking-wider">
+                    Analytical Summary
+                  </span>
+                  <div className="p-4 rounded-[16px] bg-[#F5F8FF] border border-[#EEEEEC] text-xs text-[#222222] leading-relaxed">
+                    {extractedDrawerRecord.extractedData.summary}
+                  </div>
+                </div>
+              )}
+
+              {/* Transcript block if audio/video */}
+              {extractedDrawerRecord.extractedData?.transcript && (
+                <div className="space-y-2">
+                  <span className="text-[11px] font-bold text-[#8A8A8A] uppercase tracking-wider">
+                    Recorded Deposition Transcript
+                  </span>
+                  <div className="p-4 rounded-[16px] bg-[#EBF3FF] border border-[#D0E2FF] text-xs text-[#0A66FF] italic leading-relaxed">
+                    &ldquo;{extractedDrawerRecord.extractedData.transcript}&rdquo;
+                  </div>
+                </div>
+              )}
+
+              {/* Section B: Original Source Preview & Download */}
+              <div className="space-y-3 pt-2 border-t border-[#EEEEEC]">
+                <span className="text-[11px] font-bold text-[#8A8A8A] uppercase tracking-wider">
+                  Section B: Original Source File
+                </span>
+
+                <div className="p-4 rounded-[18px] bg-[#F5F8FF] border border-[#EEEEEC] space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <div className="font-bold text-xs text-[#111111] truncate max-w-[220px]" title={extractedDrawerRecord.name}>
+                        {extractedDrawerRecord.name}
+                      </div>
+                      <div className="text-[11px] text-[#8A8A8A] font-mono">
+                        {extractedDrawerRecord.size} • {extractedDrawerRecord.dataType}
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F5F5F3] text-[#111111]">
+                      Original File
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadEvidence(extractedDrawerRecord)}
+                      className="flex-1 h-9 px-4 rounded-full bg-[#121212] hover:bg-black text-white text-xs font-semibold flex items-center justify-center gap-2 transition shadow-sm"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download Source</span>
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={() => setViewingEvidence(extractedDrawerRecord)}
+                      className="h-9 px-4 rounded-full bg-white hover:bg-[#F5F5F3] text-[#111111] border border-[#EEEEEC] text-xs font-semibold flex items-center justify-center gap-2 transition"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>Inspect</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-[#EEEEEC] bg-[#F5F8FF] flex items-center justify-between">
+              <span className="text-[11px] text-[#8A8A8A] font-mono">
+                ID: {extractedDrawerRecord.id}
+              </span>
+              <button
+                type="button"
+                onClick={() => setExtractedDrawerRecord(null)}
+                className="h-9 px-5 bg-[#121212] hover:bg-black text-white text-xs font-semibold rounded-full transition shadow-sm"
+              >
+                Close Drawer
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
       {/* VIEW EVIDENCE INSPECTION MODAL */}
       {viewingEvidence && (

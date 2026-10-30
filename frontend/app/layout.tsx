@@ -14,7 +14,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "RIKESHI | Forensic Intelligence System",
+  title: "REKISHI | Forensic Intelligence System",
   description: "Multi-Source Forensic Reconstruction and Case Dossier Management",
 };
 

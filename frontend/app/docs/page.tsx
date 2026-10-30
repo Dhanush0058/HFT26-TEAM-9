@@ -89,7 +89,7 @@ export default function DocsPage() {
                         Forensics Architecture
                       </span>
                       <h2 className="text-xl font-extrabold text-[#111111] mt-0.5">
-                        About RIKESHI Intelligence System
+                        About REKISHI Intelligence System
                       </h2>
                     </div>
                     <button className="w-8 h-8 rounded-full bg-[#F5F5F3] flex items-center justify-center text-[#8A8A8A] hover:text-[#111111] transition">
@@ -98,7 +98,7 @@ export default function DocsPage() {
                   </div>
 
                   <p className="text-xs text-[#555555] leading-relaxed">
-                    RIKESHI is an incident investigation and multi-source evidence reconstruction system designed for traffic safety teams, law enforcement investigators, and forensic claims analysts. It resolves the problem of fragmented evidence by merging dashcam video, eyewitness audio recordings, police panchnama documents, and vehicle sensor logs into a single synchronized case dossier.
+                    REKISHI is an incident investigation and multi-source evidence reconstruction system designed for traffic safety teams, law enforcement investigators, and forensic claims analysts. It resolves the problem of fragmented evidence by merging dashcam video, eyewitness audio recordings, police panchnama documents, and vehicle sensor logs into a single synchronized case dossier.
                   </p>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -183,7 +183,7 @@ export default function DocsPage() {
                       <div>
                         <h3 className="text-xs font-bold text-[#111111]">Continuous Auto-Synthesis</h3>
                         <p className="text-xs text-[#555555] mt-1 leading-relaxed">
-                          As each piece of evidence is verified, RIKESHI updates the Brief Summary and adds chronological milestones to the dual timeline. Contradictions between witness testimony and objective sensor logs are flagged automatically.
+                          As each piece of evidence is verified, REKISHI updates the Brief Summary and adds chronological milestones to the dual timeline. Contradictions between witness testimony and objective sensor logs are flagged automatically.
                         </p>
                       </div>
                     </div>
@@ -211,7 +211,7 @@ export default function DocsPage() {
                   </div>
 
                   <p className="text-xs text-[#555555] leading-relaxed">
-                    Forensic investigations frequently fail in legal proceedings when evidence timestamps are confused with incident occurrence timestamps. RIKESHI strictly enforces a dual-track timeline architecture:
+                    Forensic investigations frequently fail in legal proceedings when evidence timestamps are confused with incident occurrence timestamps. REKISHI strictly enforces a dual-track timeline architecture:
                   </p>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -235,7 +235,7 @@ export default function DocsPage() {
                         <span className="text-xs font-bold text-[#111111]">System Ingestion Ledger</span>
                       </div>
                       <p className="text-xs text-[#8A8A8A] leading-relaxed">
-                        The cryptographic intake timestamp recorded when an evidence file was uploaded to RIKESHI. Guarantees non-repudiation and proves chain-of-custody compliance for court admissibility.
+                        The cryptographic intake timestamp recorded when an evidence file was uploaded to REKISHI. Guarantees non-repudiation and proves chain-of-custody compliance for court admissibility.
                       </p>
                     </div>
                   </div>

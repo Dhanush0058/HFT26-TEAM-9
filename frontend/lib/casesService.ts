@@ -14,6 +14,7 @@ export interface EvidenceRecord {
     brakePressure?: string;
     transcript?: string;
     cameraAngle?: string;
+    fields?: Record<string, string>; // Structured key-value fields for drawer
     metadata?: Record<string, unknown>;
   };
   fileUrl?: string;
@@ -30,6 +31,30 @@ export interface TimelineEntry {
   dataType: string;
   classification: "OBSERVATION" | "INFERENCE";
   confidence: number;
+}
+
+export interface AccidentTimelineNode {
+  time: string;
+  label: string;
+  detail: string;
+  isConflict?: boolean;
+}
+
+export interface SourceUpdate {
+  id: string;
+  updateNumber: string; // "01", "02", "03", etc.
+  dateTime: string;
+  summaryText: string;
+  files: {
+    name: string;
+    dataType: EvidenceRecord["dataType"];
+    size: string;
+  }[];
+  conflict: {
+    hasConflict: boolean;
+    explanation?: string;
+  };
+  reconstructedTimeline: AccidentTimelineNode[];
 }
 
 export interface CaseDetail {
@@ -50,6 +75,7 @@ export interface CaseDetail {
   confidence: number;
   evidenceList: EvidenceRecord[];
   timeline: TimelineEntry[];
+  updates?: SourceUpdate[];
 }
 
 export interface ActivityFeedItem {
@@ -91,7 +117,17 @@ export const DEFAULT_INDIAN_CASES: CaseDetail[] = [
           keyObservations: [
             "Green signal verified at 03:14:58 PM",
             "Vehicle deceleration observed 0.8 seconds prior to impact point"
-          ]
+          ],
+          fields: {
+            "Incident Date": "28 Oct 2026",
+            "Time of Incident": "03:15:02 PM IST",
+            "Location Coordinates": "17.4401° N, 78.3489° E (Gachibowli ORR)",
+            "Signal Status": "Green (Corridor Open, Verified Optical)",
+            "Primary Vehicle": "TS 09 UB 4412 (Compact SUV)",
+            "Secondary Vehicle": "TS 07 UA 9104 (Commercial Auto)",
+            "Calculated Velocity": "38 km/h (Decelerating)",
+            "Road Conditions": "Dry Bituminous Asphalt, Clear Daylight"
+          }
         }
       },
       {
@@ -108,7 +144,17 @@ export const DEFAULT_INDIAN_CASES: CaseDetail[] = [
           keyObservations: [
             "Road surface: Dry bituminous asphalt",
             "Visibility: Clear daylight"
-          ]
+          ],
+          fields: {
+            "Panchnama Reference": "P-CYB-2026-881",
+            "Investigating Officer": "Inspector R. K. Sharma (Cyberabad PS)",
+            "Time of Inspection": "03:45 PM IST",
+            "Point of Impact": "Northwest quadrant lane intersection",
+            "Skid Mark Length": "6.4 meters (Dual front tire scrub)",
+            "Breathalyzer Test": "0.00 BAC (Both drivers negative)",
+            "Damage Evaluation": "Right fender collapse on SUV; passenger canopy sheared on auto",
+            "Surface Defect Check": "No potholes or oil slicks reported"
+          }
         }
       },
       {
@@ -122,7 +168,16 @@ export const DEFAULT_INDIAN_CASES: CaseDetail[] = [
         status: "Extracted",
         extractedData: {
           transcript: "The SUV was speeding towards the junction and ignored the red amber signal transition while crossing.",
-          summary: "Driver statement disputes junction entry timing."
+          summary: "Driver statement disputes junction entry timing.",
+          fields: {
+            "Deponent Name": "Mohammed R. (Auto Driver)",
+            "Recording Duration": "02 min 45 sec",
+            "Statement Language": "Telugu / Urdu translated to English",
+            "Claimed Speed": "20 km/h (Slow junction entry)",
+            "Alleged Signal Phase": "Red Amber Transition (Directly Disputed by CCTV)",
+            "Corroboration Rating": "Unverified - Contradicts Optical Feed",
+            "Deposition Officer": "Sub-Inspector V. Rao"
+          }
         }
       }
     ],
@@ -160,6 +215,125 @@ export const DEFAULT_INDIAN_CASES: CaseDetail[] = [
         classification: "OBSERVATION",
         confidence: 96
       }
+    ],
+    updates: [
+      {
+        id: "UPD-1042-01",
+        updateNumber: "01",
+        dateTime: "28 Oct 2026, 04:35 PM",
+        summaryText: "1 video source uploaded (CCTV Stream)",
+        files: [
+          { name: "junction_cctv_camera_stream_04.mp4", dataType: "Video", size: "18.4 MB" }
+        ],
+        conflict: {
+          hasConflict: false,
+          explanation: "Single optical baseline established. Main carriageway signal confirmed active green."
+        },
+        reconstructedTimeline: [
+          {
+            time: "03:14:50 PM",
+            label: "Corridor Steady Flow",
+            detail: "Traffic along Hitec City corridor proceeds normally at 48 km/h.",
+            isConflict: false
+          },
+          {
+            time: "03:14:58 PM",
+            label: "Main Signal Green Confirmed",
+            detail: "Optical frames confirm solid green signal on main carriageway.",
+            isConflict: false
+          },
+          {
+            time: "03:15:00 PM",
+            label: "Auto-Rickshaw Incursion",
+            detail: "Commercial auto emerges from service lane towards intersection center.",
+            isConflict: false
+          },
+          {
+            time: "03:15:02 PM",
+            label: "Lateral Point of Impact",
+            detail: "Collision occurs in northwest quadrant; SUV undergoes emergency deceleration.",
+            isConflict: false
+          }
+        ]
+      },
+      {
+        id: "UPD-1042-02",
+        updateNumber: "02",
+        dateTime: "28 Oct 2026, 04:40 PM",
+        summaryText: "1 police panchnama report ingested",
+        files: [
+          { name: "traffic_police_field_panchnama.pdf", dataType: "PDF", size: "2.1 MB" }
+        ],
+        conflict: {
+          hasConflict: false,
+          explanation: "Physical site inspection, 6.4m skid measurements, and road surface conditions match CCTV camera alignment."
+        },
+        reconstructedTimeline: [
+          {
+            time: "03:14:58 PM",
+            label: "Signal Phase Validation",
+            detail: "Police signal cycle log aligns with CCTV optical verification.",
+            isConflict: false
+          },
+          {
+            time: "03:15:00 PM",
+            label: "Deceleration & Skid Scrub",
+            detail: "Dry bituminous road provides standard friction; 6.4m skid initiated 0.8s before contact.",
+            isConflict: false
+          },
+          {
+            time: "03:15:02 PM",
+            label: "Resting Coordinates Verified",
+            detail: "Vehicle resting positions recorded at northwest junction marker, matching optical footage.",
+            isConflict: false
+          },
+          {
+            time: "03:15:04 PM",
+            label: "Traffic Police Unit 14 Arrival",
+            detail: "Field officers establish cordon and conduct preliminary breathalyzer screening.",
+            isConflict: false
+          }
+        ]
+      },
+      {
+        id: "UPD-1042-03",
+        updateNumber: "03",
+        dateTime: "28 Oct 2026, 04:42 PM",
+        summaryText: "1 witness audio deposition uploaded",
+        files: [
+          { name: "auto_driver_audio_statement.wav", dataType: "Audio", size: "3.5 MB" }
+        ],
+        conflict: {
+          hasConflict: true,
+          explanation: "Contradiction detected: CCTV optical feed timestamp (03:14:58 PM) confirms an active green signal along the main carriageway, whereas the Auto Driver audio statement alleges that the SUV jumped a red amber light transition."
+        },
+        reconstructedTimeline: [
+          {
+            time: "03:14:50 PM",
+            label: "Corridor Approach",
+            detail: "SUV approaches intersection under 50 km/h limit with clear line of sight.",
+            isConflict: false
+          },
+          {
+            time: "03:14:58 PM",
+            label: "Active Green Signal Confirmed",
+            detail: "Optical surveillance camera 04 establishes continuous green phase.",
+            isConflict: false
+          },
+          {
+            time: "03:15:00 PM",
+            label: "Signal Phase Contradiction",
+            detail: "Auto driver claims SUV crossed on red amber light; disproven by optical CCTV ground truth.",
+            isConflict: true
+          },
+          {
+            time: "03:15:02 PM",
+            label: "Collision & Vehicle Arrest",
+            detail: "Impact occurs at junction center; skid mark analysis and footage establish immediate halt.",
+            isConflict: false
+          }
+        ]
+      }
     ]
   },
   {
@@ -192,7 +366,16 @@ export const DEFAULT_INDIAN_CASES: CaseDetail[] = [
           keyObservations: [
             "Speed before braking: 72 km/h",
             "Emergency deceleration: -0.78 G"
-          ]
+          ],
+          fields: {
+            "Vehicle Registration": "KA 01 F 9821 (Intercity Luxury Coach)",
+            "Timestamp": "07:09:58 AM IST",
+            "Initial Velocity": "72.4 km/h (Lane 2)",
+            "Hydraulic Brake Pressure": "78.2 Bar (Full emergency engagement)",
+            "Deceleration G-Force": "-0.78 G (Immediate ABS deployment)",
+            "Braking Duration": "2.8 seconds to complete standstill",
+            "GPS Coordinate": "12.7209° N, 77.2799° E (KM 48.2 Expressway)"
+          }
         }
       },
       {
@@ -205,7 +388,15 @@ export const DEFAULT_INDIAN_CASES: CaseDetail[] = [
         is_data_extracted: 1,
         status: "Extracted",
         extractedData: {
-          summary: "Dashcam records dense morning haze and sudden brake lights illumination on forward vehicle."
+          summary: "Dashcam records dense morning haze and sudden brake lights illumination on forward vehicle.",
+          fields: {
+            "Camera Sensor": "Wide-Angle Dashcam (1080p @ 60 FPS)",
+            "Vehicle Registration": "KA 05 MN 1184 (Trailing Sedan)",
+            "Ambient Visibility": "Heavy Mist / Fog (<35 meters forward range)",
+            "Hazard Light Activation": "07:09:58 AM (Bus hazard lights visible)",
+            "Trailing Distance": "14.2 meters (Deficient safety cushion)",
+            "Impact Point": "Rear bumper underride at 31 km/h"
+          }
         }
       }
     ],
@@ -232,27 +423,175 @@ export const DEFAULT_INDIAN_CASES: CaseDetail[] = [
         classification: "OBSERVATION",
         confidence: 95
       }
+    ],
+    updates: [
+      {
+        id: "UPD-3180-01",
+        updateNumber: "01",
+        dateTime: "29 Oct 2026, 08:50 AM",
+        summaryText: "1 sensor telemetry stream uploaded",
+        files: [
+          { name: "bus_telemetry_ecu_log.csv", dataType: "Sensor", size: "1.4 MB" }
+        ],
+        conflict: {
+          hasConflict: false,
+          explanation: "ECU telemetry baseline establishes sudden braking (-0.78 G) and emergency ABS trigger."
+        },
+        reconstructedTimeline: [
+          {
+            time: "07:09:50 AM",
+            label: "Highway Cruise Phase",
+            detail: "Intercity coach cruising at steady 72 km/h in lane 2.",
+            isConflict: false
+          },
+          {
+            time: "07:09:58 AM",
+            label: "Emergency Brake Spike",
+            detail: "Hydraulic brake line pressure spikes to 78 bar in response to median stationary hazard.",
+            isConflict: false
+          },
+          {
+            time: "07:10:00 AM",
+            label: "ABS Deceleration Wave",
+            detail: "Vehicle slows aggressively at -0.78 G; ABS anti-lock system cycles continuously.",
+            isConflict: false
+          }
+        ]
+      },
+      {
+        id: "UPD-3180-02",
+        updateNumber: "02",
+        dateTime: "29 Oct 2026, 09:00 AM",
+        summaryText: "1 forward dashcam stream uploaded",
+        files: [
+          { name: "dashcam_car_front_facing.mp4", dataType: "Video", size: "24.6 MB" }
+        ],
+        conflict: {
+          hasConflict: false,
+          explanation: "Dashcam optical capture synchronizes with ECU telemetry timing to millisecond precision with zero contradiction."
+        },
+        reconstructedTimeline: [
+          {
+            time: "07:09:55 AM",
+            label: "Dense Morning Mist",
+            detail: "Visibility decreases drastically along KM 48 stretch to under 35 meters.",
+            isConflict: false
+          },
+          {
+            time: "07:09:58 AM",
+            label: "Forward Hazard Lights",
+            detail: "Dashcam records bus brake lamps illuminating immediately as telemetry pressure spikes.",
+            isConflict: false
+          },
+          {
+            time: "07:10:02 AM",
+            label: "Secondary Buffer Impact",
+            detail: "Trailing vehicle impacts rear buffer due to inadequate stopping cushion in fog.",
+            isConflict: false
+          }
+        ]
+      }
     ]
   }
 ];
 
-const STORAGE_KEY = "rikeshi_cases_store_v3";
-const ACTIVITY_KEY = "rikeshi_activity_feed_v3";
+const STORAGE_KEY = "rekishi_cases_store_v3";
+const LEGACY_STORAGE_KEY = "rikeshi_cases_store_v3";
+const ACTIVITY_KEY = "rekishi_activity_feed_v3";
+const LEGACY_ACTIVITY_KEY = "rikeshi_activity_feed_v3";
+
+// Helper to ensure every case has valid updates and extracted fields
+function ensureCaseUpdatesAndFields(cases: CaseDetail[]): CaseDetail[] {
+  return cases.map((c) => {
+    // Check if this matches a default case and ensure rich updates
+    const defaultMatch = DEFAULT_INDIAN_CASES.find((d) => d.id === c.id || d.caseNumber === c.caseNumber);
+    
+    // Ensure updates list
+    let updates = c.updates;
+    if (!updates || updates.length === 0) {
+      if (defaultMatch?.updates) {
+        updates = defaultMatch.updates;
+      } else {
+        // Synthesize updates from evidenceList
+        updates = c.evidenceList.map((ev, i) => ({
+          id: `UPD-${c.caseNumber}-${String(i + 1).padStart(2, "0")}`,
+          updateNumber: String(i + 1).padStart(2, "0"),
+          dateTime: ev.uploadDate || c.filedDate,
+          summaryText: `1 source uploaded (${ev.dataType})`,
+          files: [{ name: ev.name, dataType: ev.dataType, size: ev.size }],
+          conflict: {
+            hasConflict: false,
+            explanation: "All sources align on timeline and events."
+          },
+          reconstructedTimeline: [
+            {
+              time: ev.accidentTime || "Incident Window",
+              label: `Observation: ${ev.name}`,
+              detail: ev.extractedData?.summary || "Evidence source recorded and verified.",
+              isConflict: false
+            }
+          ]
+        }));
+      }
+    }
+
+    // Ensure extractedData.fields on all evidence records
+    const evidenceList = c.evidenceList.map((ev) => {
+      const matchEv = defaultMatch?.evidenceList.find((de) => de.name === ev.name || de.id === ev.id);
+      if (!ev.extractedData?.fields) {
+        return {
+          ...ev,
+          extractedData: {
+            ...ev.extractedData,
+            fields: matchEv?.extractedData?.fields || {
+              "File Name": ev.name,
+              "Data Classification": ev.dataType,
+              "Ingestion Timestamp": ev.uploadDate,
+              "Event Timestamp": ev.accidentTime,
+              "Storage Footprint": ev.size,
+              "Extraction Status": ev.status
+            }
+          }
+        };
+      }
+      return ev;
+    });
+
+    return {
+      ...c,
+      updates,
+      evidenceList
+    };
+  });
+}
 
 export function getStoredCases(): CaseDetail[] {
   if (typeof window === "undefined") return DEFAULT_INDIAN_CASES;
   try {
-    const item = localStorage.getItem(STORAGE_KEY);
+    let item = localStorage.getItem(STORAGE_KEY);
+    if (!item) {
+      // Check legacy key
+      const legacyItem = localStorage.getItem(LEGACY_STORAGE_KEY);
+      if (legacyItem) {
+        item = legacyItem;
+      }
+    }
+
     if (!item) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_INDIAN_CASES));
       return DEFAULT_INDIAN_CASES;
     }
+
     const parsed = JSON.parse(item);
     if (!Array.isArray(parsed) || parsed.length === 0) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_INDIAN_CASES));
       return DEFAULT_INDIAN_CASES;
     }
-    return parsed;
+
+    // Ensure all cases have updates and fields
+    const enriched = ensureCaseUpdatesAndFields(parsed);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(enriched));
+    return enriched;
   } catch (err) {
     console.error("Error reading cases from localStorage", err);
     return DEFAULT_INDIAN_CASES;
@@ -297,7 +636,10 @@ export function getRecentActivities(): ActivityFeedItem[] {
     }
   ];
   try {
-    const item = localStorage.getItem(ACTIVITY_KEY);
+    let item = localStorage.getItem(ACTIVITY_KEY);
+    if (!item) {
+      item = localStorage.getItem(LEGACY_ACTIVITY_KEY);
+    }
     if (!item) {
       const defaults = [
         {
@@ -393,7 +735,14 @@ export function createNewCase(data: {
         keyObservations: [
           `File format verified as ${dataType}`,
           `Timestamp correlated with incident timeline`
-        ]
+        ],
+        fields: {
+          "Source File": src.name,
+          "Data Classification": dataType,
+          "Extracted At": nowStr,
+          "Recorded Location": data.address,
+          "Integrity Check": "SHA-256 Validated"
+        }
       }
     };
   });
@@ -414,6 +763,26 @@ export function createNewCase(data: {
     ? `Case initialized with ${evidenceList.length} evidence file(s). Automated analysis evaluates initial reports regarding the incident at ${data.address}. Kinematic and temporal data indicate sequential event occurrence around ${data.accidentDate}.`
     : `Case registered without initial source files. Upload evidence files in the Records tab to automatically generate an incident reconstruction summary.`;
 
+  const initialUpdate: SourceUpdate[] = evidenceList.length > 0 ? [
+    {
+      id: `UPD-${data.caseNumber}-01`,
+      updateNumber: "01",
+      dateTime: nowStr,
+      summaryText: `${evidenceList.length} source(s) uploaded at case creation`,
+      files: evidenceList.map((e) => ({ name: e.name, dataType: e.dataType, size: e.size })),
+      conflict: {
+        hasConflict: false,
+        explanation: "Initial source intake established. All records align."
+      },
+      reconstructedTimeline: evidenceList.map((e) => ({
+        time: e.accidentTime,
+        label: `Ingested ${e.name}`,
+        detail: e.extractedData?.summary || "Initial evidence recorded.",
+        isConflict: false
+      }))
+    }
+  ] : [];
+
   const newCase: CaseDetail = {
     id: data.caseNumber,
     name: data.name,
@@ -430,7 +799,8 @@ export function createNewCase(data: {
     status: "In Review",
     confidence: evidenceList.length > 0 ? 88 : 0,
     evidenceList: evidenceList,
-    timeline: timeline
+    timeline: timeline,
+    updates: initialUpdate
   };
 
   const updatedCases = [newCase, ...currentCases];
@@ -511,7 +881,15 @@ export function addEvidenceToCase(
       keyObservations: [
         `File size: ${file.size}`,
         `Data classification: ${dataType}`
-      ]
+      ],
+      fields: {
+        "File Name": file.name,
+        "Data Classification": dataType,
+        "Extraction Timestamp": nowStr,
+        "Case Dossier": caseItem.caseNumber,
+        "Storage Size": file.size || "1.8 MB",
+        "Integrity Status": "Processed & Verified"
+      }
     }
   };
 
@@ -529,6 +907,32 @@ export function addEvidenceToCase(
     classification: newEv.dataType === "Video" || newEv.dataType === "Sensor" ? "OBSERVATION" : "INFERENCE",
     confidence: newEv.dataType === "Video" ? 98 : newEv.dataType === "Sensor" ? 99 : 85
   });
+
+  // Create new SourceUpdate
+  if (!caseItem.updates) {
+    caseItem.updates = [];
+  }
+  const updateIdx = caseItem.updates.length + 1;
+  const newUpdate: SourceUpdate = {
+    id: `UPD-${caseItem.caseNumber}-${String(updateIdx).padStart(2, "0")}`,
+    updateNumber: String(updateIdx).padStart(2, "0"),
+    dateTime: nowStr,
+    summaryText: `1 source uploaded (${dataType})`,
+    files: [{ name: newEv.name, dataType: newEv.dataType, size: newEv.size }],
+    conflict: {
+      hasConflict: false,
+      explanation: "New source integrated into timeline. Observations align with existing records."
+    },
+    reconstructedTimeline: [
+      {
+        time: newEv.accidentTime,
+        label: `Ingested ${newEv.name}`,
+        detail: `New ${newEv.dataType} source synchronized into case reconstruction.`,
+        isConflict: false
+      }
+    ]
+  };
+  caseItem.updates.push(newUpdate);
 
   // Automatically update dynamic summary = f(all_evidence_files)
   caseItem.summary = autoGenerateSummary(caseItem);
@@ -549,6 +953,11 @@ export function deleteEvidenceFromCase(caseId: string, evidenceId: string): Case
   const removed = caseItem.evidenceList.find((e) => e.id === evidenceId);
   caseItem.evidenceList = caseItem.evidenceList.filter((e) => e.id !== evidenceId);
   caseItem.timeline = caseItem.timeline.filter((t) => t.evidenceName !== removed?.name);
+
+  // Clean updates referencing this file if needed
+  if (caseItem.updates && removed) {
+    caseItem.updates = caseItem.updates.filter((u) => !u.files.some((f) => f.name === removed.name));
+  }
 
   // Auto-regenerate summary
   caseItem.summary = autoGenerateSummary(caseItem);

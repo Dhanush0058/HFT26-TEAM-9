@@ -57,7 +57,7 @@ export default function Sidebar({ currentTab, casesCount = 0 }: SidebarProps) {
           </div>
           <div>
             <div className="text-base font-extrabold tracking-tight text-[#111111] leading-none">
-              RIKESHI
+              REKISHI
             </div>
             <div className="text-[11px] text-[#8A8A8A] font-medium mt-1">
               Forensics Intelligence
