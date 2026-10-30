@@ -34,7 +34,7 @@ export default function CasesPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#F6F5F2] text-[#111111] font-sans">
+    <div className="min-h-screen bg-[#F0F4FF] text-[#111111] font-sans">
       
       {/* Fixed Sidebar touching screen edges */}
       <Sidebar currentTab="cases" casesCount={cases.length} />

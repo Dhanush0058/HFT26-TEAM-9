@@ -54,7 +54,7 @@ export default function CaseDetailsPage() {
 
   if (!caseData) {
     return (
-      <div className="min-h-screen bg-[#F6F5F2] text-[#111111] p-4 sm:p-6 font-sans">
+      <div className="min-h-screen bg-[#F0F4FF] text-[#111111] p-4 sm:p-6 font-sans">
         <div className="max-w-4xl mx-auto pt-16">
           <div className="bg-white rounded-[24px] p-8 shadow-soft border border-[#F0F0F0] text-center space-y-4">
             <div className="w-12 h-12 rounded-full bg-[#F5F5F3] flex items-center justify-center mx-auto text-[#8A8A8A]">
@@ -143,7 +143,7 @@ export default function CaseDetailsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F6F5F2] text-[#111111] font-sans">
+    <div className="min-h-screen bg-[#F0F4FF] text-[#111111] font-sans">
       
       {/* Fixed Left Sub-Sidebar touching screen edges */}
       <aside 
@@ -164,7 +164,7 @@ export default function CaseDetailsPage() {
 
           <div className="p-4 space-y-4">
             {/* Case Mini Summary Box */}
-            <div className="p-3.5 rounded-[18px] bg-[#F9F9F7] border border-[#EEEEEC] space-y-1">
+            <div className="p-3.5 rounded-[18px] bg-[#F5F8FF] border border-[#EEEEEC] space-y-1">
               <div className="text-[10px] font-medium text-[#8A8A8A] uppercase tracking-wider">
                 Active Case
               </div>
@@ -184,7 +184,7 @@ export default function CaseDetailsPage() {
                 className={`w-full flex items-center justify-between px-4 py-2.5 rounded-full text-xs font-semibold transition-all duration-150 ${
                   activeTab === "details"
                     ? "bg-[#121212] text-white shadow-sm"
-                    : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F9F9F7]"
+                    : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F5F8FF]"
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -200,7 +200,7 @@ export default function CaseDetailsPage() {
                 className={`w-full flex items-center justify-between px-4 py-2.5 rounded-full text-xs font-semibold transition-all duration-150 ${
                   activeTab === "records"
                     ? "bg-[#121212] text-white shadow-sm"
-                    : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F9F9F7]"
+                    : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F5F8FF]"
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -223,7 +223,7 @@ export default function CaseDetailsPage() {
                 className={`w-full flex items-center justify-between px-4 py-2.5 rounded-full text-xs font-semibold transition-all duration-150 ${
                   activeTab === "visuals"
                     ? "bg-[#121212] text-white shadow-sm"
-                    : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F9F9F7]"
+                    : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F5F8FF]"
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -292,38 +292,38 @@ export default function CaseDetailsPage() {
                   {/* 6-box Info Grid */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     
-                    <div className="p-4 rounded-[18px] bg-[#F9F9F7] border border-[#EEEEEC]">
+                    <div className="p-4 rounded-[18px] bg-[#F5F8FF] border border-[#EEEEEC]">
                       <div className="text-[11px] font-medium text-[#8A8A8A]">Case Name</div>
                       <div className="font-bold text-sm text-[#111111] mt-1">{caseData.name}</div>
                     </div>
 
-                    <div className="p-4 rounded-[18px] bg-[#F9F9F7] border border-[#EEEEEC]">
+                    <div className="p-4 rounded-[18px] bg-[#F5F8FF] border border-[#EEEEEC]">
                       <div className="text-[11px] font-medium text-[#8A8A8A]">Case Number</div>
                       <div className="font-mono font-bold text-sm text-[#0A66FF] mt-1">{caseData.caseNumber}</div>
                     </div>
 
-                    <div className="p-4 rounded-[18px] bg-[#F9F9F7] border border-[#EEEEEC]">
+                    <div className="p-4 rounded-[18px] bg-[#F5F8FF] border border-[#EEEEEC]">
                       <div className="text-[11px] font-medium text-[#8A8A8A] flex items-center gap-1.5">
                         <User className="w-3 h-3 text-[#8A8A8A]" /> Filed By
                       </div>
                       <div className="font-bold text-sm text-[#111111] mt-1">{caseData.filedBy}</div>
                     </div>
 
-                    <div className="p-4 rounded-[18px] bg-[#F9F9F7] border border-[#EEEEEC]">
+                    <div className="p-4 rounded-[18px] bg-[#F5F8FF] border border-[#EEEEEC]">
                       <div className="text-[11px] font-medium text-[#8A8A8A] flex items-center gap-1.5">
                         <Clock className="w-3 h-3 text-[#8A8A8A]" /> Filed Date & Time
                       </div>
                       <div className="font-semibold text-sm text-[#111111] mt-1">{caseData.filedDate}</div>
                     </div>
 
-                    <div className="p-4 rounded-[18px] bg-[#F9F9F7] border border-[#EEEEEC]">
+                    <div className="p-4 rounded-[18px] bg-[#F5F8FF] border border-[#EEEEEC]">
                       <div className="text-[11px] font-medium text-[#0A66FF] flex items-center gap-1.5">
                         <Calendar className="w-3 h-3 text-[#0A66FF]" /> Accident Date & Time
                       </div>
                       <div className="font-extrabold text-sm text-[#111111] mt-1">{caseData.accidentDate}</div>
                     </div>
 
-                    <div className="p-4 rounded-[18px] bg-[#F9F9F7] border border-[#EEEEEC]">
+                    <div className="p-4 rounded-[18px] bg-[#F5F8FF] border border-[#EEEEEC]">
                       <div className="text-[11px] font-medium text-[#8A8A8A] flex items-center gap-1.5">
                         <MapPin className="w-3 h-3 text-[#8A8A8A]" /> Assigned Location
                       </div>
@@ -335,7 +335,7 @@ export default function CaseDetailsPage() {
                   </div>
 
                   {caseData.description && (
-                    <div className="p-4 rounded-[18px] bg-[#F9F9F7] border border-[#EEEEEC] text-xs text-[#555555] leading-relaxed">
+                    <div className="p-4 rounded-[18px] bg-[#F5F8FF] border border-[#EEEEEC] text-xs text-[#555555] leading-relaxed">
                       <span className="font-bold text-[#111111]">Initial Remarks: </span>
                       {caseData.description}
                     </div>
@@ -369,7 +369,7 @@ export default function CaseDetailsPage() {
                     )}
                   </div>
 
-                  <div className="p-5 rounded-[18px] bg-[#F9F9F7] border border-[#EEEEEC] text-xs text-[#222222] leading-relaxed">
+                  <div className="p-5 rounded-[18px] bg-[#F5F8FF] border border-[#EEEEEC] text-xs text-[#222222] leading-relaxed">
                     {caseData.summary}
                   </div>
 
@@ -406,7 +406,7 @@ export default function CaseDetailsPage() {
                       {caseData.timeline.map((event, idx) => (
                         <div 
                           key={event.id || idx} 
-                          className="p-5 rounded-[20px] bg-[#F9F9F7] border border-[#EEEEEC] hover:border-[#111111] transition-all duration-150 space-y-3"
+                          className="p-5 rounded-[20px] bg-[#F5F8FF] border border-[#EEEEEC] hover:border-[#111111] transition-all duration-150 space-y-3"
                         >
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="flex items-center gap-2 flex-wrap">
@@ -476,7 +476,7 @@ export default function CaseDetailsPage() {
 
                   <div className="overflow-x-auto rounded-[18px] border border-[#EEEEEC]">
                     <table className="w-full text-left text-xs">
-                      <thead className="bg-[#F9F9F7] border-b border-[#EEEEEC] text-[#8A8A8A] uppercase tracking-wider text-[10px]">
+                      <thead className="bg-[#F5F8FF] border-b border-[#EEEEEC] text-[#8A8A8A] uppercase tracking-wider text-[10px]">
                         <tr>
                           <th className="px-5 py-3.5 font-bold">File Name</th>
                           <th className="px-5 py-3.5 font-bold">Upload Date</th>
@@ -487,7 +487,7 @@ export default function CaseDetailsPage() {
                       </thead>
                       <tbody className="divide-y divide-[#EEEEEC] bg-white">
                         {caseData.evidenceList.map((ev) => (
-                          <tr key={ev.id} className="hover:bg-[#F9F9F7] transition">
+                          <tr key={ev.id} className="hover:bg-[#F5F8FF] transition">
                             <td className="px-5 py-4 font-semibold text-[#111111] max-w-xs truncate">
                               <div className="flex items-center gap-2.5">
                                 {getDataTypeBadge(ev.dataType)}
@@ -573,7 +573,7 @@ export default function CaseDetailsPage() {
                     className={`p-10 rounded-[20px] text-center cursor-pointer transition border-2 border-dashed ${
                       isDragging
                         ? "border-[#0A66FF] bg-[#EBF3FF]"
-                        : "border-[#E5E5E0] hover:border-[#111111] bg-[#F9F9F7] hover:bg-[#F5F5F3]"
+                        : "border-[#E5E5E0] hover:border-[#111111] bg-[#F5F8FF] hover:bg-[#F5F5F3]"
                     }`}
                   >
                     <input
@@ -648,14 +648,14 @@ export default function CaseDetailsPage() {
 
                   {/* 2 Metric Summary Cards */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-5 rounded-[20px] bg-[#F9F9F7] border border-[#EEEEEC] space-y-1">
+                    <div className="p-5 rounded-[20px] bg-[#F5F8FF] border border-[#EEEEEC] space-y-1">
                       <span className="text-xs font-bold text-[#111111] block">Spatial Mapping Coordinates</span>
                       <p className="text-[#8A8A8A] text-xs">
                         {caseData.latitude ? `${caseData.latitude}° N, ${caseData.longitude}° E` : "Assigned by territorial jurisdiction."}
                       </p>
                     </div>
 
-                    <div className="p-5 rounded-[20px] bg-[#F9F9F7] border border-[#EEEEEC] space-y-1">
+                    <div className="p-5 rounded-[20px] bg-[#F5F8FF] border border-[#EEEEEC] space-y-1">
                       <span className="text-xs font-bold text-[#111111] block">Evidence Synchrony</span>
                       <p className="text-[#8A8A8A] text-xs">
                         {caseData.evidenceList.length} evidence file(s) synchronized to incident timeline.
@@ -675,7 +675,7 @@ export default function CaseDetailsPage() {
       {viewingEvidence && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
           <div className="bg-white rounded-[28px] border border-[#F0F0F0] shadow-soft-hover w-full max-w-xl overflow-hidden animate-in fade-in duration-150">
-            <div className="flex items-center justify-between px-6 py-5 border-b border-[#EEEEEC] bg-[#F9F9F7]">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-[#EEEEEC] bg-[#F5F8FF]">
               <div className="flex items-center gap-2.5">
                 {getDataTypeBadge(viewingEvidence.dataType)}
                 <h3 className="text-sm font-extrabold text-[#111111] truncate max-w-xs">{viewingEvidence.name}</h3>
@@ -690,7 +690,7 @@ export default function CaseDetailsPage() {
             </div>
 
             <div className="p-6 sm:p-8 space-y-5 max-h-[70vh] overflow-y-auto text-xs">
-              <div className="grid grid-cols-2 gap-3 p-4 bg-[#F9F9F7] rounded-[18px] border border-[#EEEEEC]">
+              <div className="grid grid-cols-2 gap-3 p-4 bg-[#F5F8FF] rounded-[18px] border border-[#EEEEEC]">
                 <div>
                   <span className="text-[#8A8A8A] text-[10px] uppercase font-bold">File Size</span>
                   <div className="font-mono font-bold text-[#111111] mt-0.5">{viewingEvidence.size}</div>
@@ -711,7 +711,7 @@ export default function CaseDetailsPage() {
 
               <div>
                 <span className="font-bold text-[#111111] block mb-1.5">Extracted Details:</span>
-                <p className="p-4 bg-[#F9F9F7] border border-[#EEEEEC] rounded-[18px] text-[#222222] leading-relaxed">
+                <p className="p-4 bg-[#F5F8FF] border border-[#EEEEEC] rounded-[18px] text-[#222222] leading-relaxed">
                   {viewingEvidence.extractedData?.summary || "File structure validated."}
                 </p>
               </div>
@@ -726,7 +726,7 @@ export default function CaseDetailsPage() {
               )}
             </div>
 
-            <div className="px-6 py-4 border-t border-[#EEEEEC] bg-[#F9F9F7] flex items-center justify-between">
+            <div className="px-6 py-4 border-t border-[#EEEEEC] bg-[#F5F8FF] flex items-center justify-between">
               <span className="text-[11px] text-[#8A8A8A] font-mono">ID: {viewingEvidence.id}</span>
               <button
                 type="button"

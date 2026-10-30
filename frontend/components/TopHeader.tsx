@@ -40,7 +40,7 @@ export default function TopHeader({
               placeholder={searchPlaceholder}
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full h-10 pl-10 pr-4 bg-[#F9F9F7] border border-[#EAEAEA] rounded-full text-xs text-[#111111] placeholder-[#8A8A8A] focus:outline-none focus:border-[#111111] transition"
+              className="w-full h-10 pl-10 pr-4 bg-[#F5F8FF] border border-[#E0E7FF] rounded-full text-xs text-[#111111] placeholder-[#8A8A8A] focus:outline-none focus:border-[#2A4BFF] transition"
             />
             {searchQuery && (
               <button

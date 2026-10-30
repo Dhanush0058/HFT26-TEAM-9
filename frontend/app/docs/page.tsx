@@ -14,7 +14,7 @@ export default function DocsPage() {
   const [activeSection, setActiveSection] = useState<"overview" | "workflow" | "timeline" | "evidence">("overview");
 
   return (
-    <div className="min-h-screen bg-[#F6F5F2] text-[#111111] font-sans">
+    <div className="min-h-screen bg-[#F0F4FF] text-[#111111] font-sans">
       
       {/* Fixed Sidebar touching screen edges */}
       <Sidebar currentTab="docs" />
@@ -36,7 +36,7 @@ export default function DocsPage() {
                 className={`h-9 px-5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-2 ${
                   activeSection === "overview"
                     ? "bg-[#121212] text-white shadow-sm"
-                    : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F9F9F7]"
+                    : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F5F8FF]"
                 }`}
               >
                 <span>System Overview</span>
@@ -48,7 +48,7 @@ export default function DocsPage() {
                 className={`h-9 px-5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-2 ${
                   activeSection === "workflow"
                     ? "bg-[#121212] text-white shadow-sm"
-                    : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F9F9F7]"
+                    : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F5F8FF]"
                 }`}
               >
                 <span>Case Workflow</span>
@@ -60,7 +60,7 @@ export default function DocsPage() {
                 className={`h-9 px-5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-2 ${
                   activeSection === "timeline"
                     ? "bg-[#121212] text-white shadow-sm"
-                    : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F9F9F7]"
+                    : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F5F8FF]"
                 }`}
               >
                 <span>Dual Timeline Methodology</span>
@@ -72,7 +72,7 @@ export default function DocsPage() {
                 className={`h-9 px-5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-2 ${
                   activeSection === "evidence"
                     ? "bg-[#121212] text-white shadow-sm"
-                    : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F9F9F7]"
+                    : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F5F8FF]"
                 }`}
               >
                 <span>Supported Formats & Ingestion</span>
@@ -102,7 +102,7 @@ export default function DocsPage() {
                   </p>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="p-5 rounded-[20px] bg-[#F9F9F7] border border-[#EEEEEC] space-y-2">
+                    <div className="p-5 rounded-[20px] bg-[#F5F8FF] border border-[#EEEEEC] space-y-2">
                       <div className="text-xs font-bold text-[#111111] flex items-center gap-2">
                         <Database className="w-4 h-4 text-[#0A66FF]" /> Multi-Source Intake
                       </div>
@@ -111,7 +111,7 @@ export default function DocsPage() {
                       </p>
                     </div>
 
-                    <div className="p-5 rounded-[20px] bg-[#F9F9F7] border border-[#EEEEEC] space-y-2">
+                    <div className="p-5 rounded-[20px] bg-[#F5F8FF] border border-[#EEEEEC] space-y-2">
                       <div className="text-xs font-bold text-[#111111] flex items-center gap-2">
                         <Clock className="w-4 h-4 text-[#1A7A2E]" /> Dual Timeline Sync
                       </div>
@@ -120,7 +120,7 @@ export default function DocsPage() {
                       </p>
                     </div>
 
-                    <div className="p-5 rounded-[20px] bg-[#F9F9F7] border border-[#EEEEEC] space-y-2">
+                    <div className="p-5 rounded-[20px] bg-[#F5F8FF] border border-[#EEEEEC] space-y-2">
                       <div className="text-xs font-bold text-[#111111] flex items-center gap-2">
                         <FileCheck2 className="w-4 h-4 text-[#6366F1]" /> Dynamic Auto-Summary
                       </div>
@@ -152,7 +152,7 @@ export default function DocsPage() {
                   </div>
 
                   <div className="space-y-4">
-                    <div className="p-5 rounded-[20px] bg-[#F9F9F7] border border-[#EEEEEC] flex items-start gap-4">
+                    <div className="p-5 rounded-[20px] bg-[#F5F8FF] border border-[#EEEEEC] flex items-start gap-4">
                       <span className="w-7 h-7 rounded-full bg-[#121212] text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
                         1
                       </span>
@@ -164,7 +164,7 @@ export default function DocsPage() {
                       </div>
                     </div>
 
-                    <div className="p-5 rounded-[20px] bg-[#F9F9F7] border border-[#EEEEEC] flex items-start gap-4">
+                    <div className="p-5 rounded-[20px] bg-[#F5F8FF] border border-[#EEEEEC] flex items-start gap-4">
                       <span className="w-7 h-7 rounded-full bg-[#121212] text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
                         2
                       </span>
@@ -176,7 +176,7 @@ export default function DocsPage() {
                       </div>
                     </div>
 
-                    <div className="p-5 rounded-[20px] bg-[#F9F9F7] border border-[#EEEEEC] flex items-start gap-4">
+                    <div className="p-5 rounded-[20px] bg-[#F5F8FF] border border-[#EEEEEC] flex items-start gap-4">
                       <span className="w-7 h-7 rounded-full bg-[#121212] text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
                         3
                       </span>
@@ -215,7 +215,7 @@ export default function DocsPage() {
                   </p>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-5 rounded-[20px] bg-[#F9F9F7] border border-[#EEEEEC] space-y-2">
+                    <div className="p-5 rounded-[20px] bg-[#F5F8FF] border border-[#EEEEEC] space-y-2">
                       <div className="flex items-center gap-2">
                         <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#EBF3FF] text-[#0A66FF]">
                           Track A
@@ -227,7 +227,7 @@ export default function DocsPage() {
                       </p>
                     </div>
 
-                    <div className="p-5 rounded-[20px] bg-[#F9F9F7] border border-[#EEEEEC] space-y-2">
+                    <div className="p-5 rounded-[20px] bg-[#F5F8FF] border border-[#EEEEEC] space-y-2">
                       <div className="flex items-center gap-2">
                         <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#F5F5F3] text-[#111111] border border-[#EEEEEC]">
                           Track B
@@ -262,7 +262,7 @@ export default function DocsPage() {
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="p-5 rounded-[20px] bg-[#F9F9F7] border border-[#EEEEEC] space-y-1.5">
+                    <div className="p-5 rounded-[20px] bg-[#F5F8FF] border border-[#EEEEEC] space-y-1.5">
                       <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#EBF3FF] text-[#0A66FF] inline-block">
                         Video
                       </span>
@@ -272,7 +272,7 @@ export default function DocsPage() {
                       </p>
                     </div>
 
-                    <div className="p-5 rounded-[20px] bg-[#F9F9F7] border border-[#EEEEEC] space-y-1.5">
+                    <div className="p-5 rounded-[20px] bg-[#F5F8FF] border border-[#EEEEEC] space-y-1.5">
                       <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#E8F8FD] text-[#0284C7] inline-block">
                         Audio
                       </span>
@@ -282,7 +282,7 @@ export default function DocsPage() {
                       </p>
                     </div>
 
-                    <div className="p-5 rounded-[20px] bg-[#F9F9F7] border border-[#EEEEEC] space-y-1.5">
+                    <div className="p-5 rounded-[20px] bg-[#F5F8FF] border border-[#EEEEEC] space-y-1.5">
                       <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#FFEAEA] text-[#E11D48] inline-block">
                         Documents
                       </span>
@@ -292,7 +292,7 @@ export default function DocsPage() {
                       </p>
                     </div>
 
-                    <div className="p-5 rounded-[20px] bg-[#F9F9F7] border border-[#EEEEEC] space-y-1.5">
+                    <div className="p-5 rounded-[20px] bg-[#F5F8FF] border border-[#EEEEEC] space-y-1.5">
                       <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#EDE9FE] text-[#6366F1] inline-block">
                         Telemetry
                       </span>
@@ -302,7 +302,7 @@ export default function DocsPage() {
                       </p>
                     </div>
 
-                    <div className="p-5 rounded-[20px] bg-[#F9F9F7] border border-[#EEEEEC] space-y-1.5">
+                    <div className="p-5 rounded-[20px] bg-[#F5F8FF] border border-[#EEEEEC] space-y-1.5">
                       <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#FAF5FF] text-[#9333EA] inline-block">
                         Images
                       </span>
@@ -312,7 +312,7 @@ export default function DocsPage() {
                       </p>
                     </div>
 
-                    <div className="p-5 rounded-[20px] bg-[#F9F9F7] border border-[#EEEEEC] space-y-1.5">
+                    <div className="p-5 rounded-[20px] bg-[#F5F8FF] border border-[#EEEEEC] space-y-1.5">
                       <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#FFFBEB] text-[#D97706] inline-block">
                         Scripts
                       </span>

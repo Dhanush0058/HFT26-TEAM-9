@@ -130,14 +130,14 @@ export default function CreateNewCasePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F6F5F2] text-[#111111] p-4 sm:p-6 font-sans">
+    <div className="min-h-screen bg-[#F0F4FF] text-[#111111] p-4 sm:p-6 font-sans">
       <div className="max-w-6xl mx-auto space-y-6">
         
         {/* Top Header & Back Button */}
         <div className="flex items-center justify-between">
           <Link
             href="/cases"
-            className="inline-flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-full bg-white text-[#111111] border border-[#EAEAEA] hover:bg-[#F9F9F7] transition shadow-2xs"
+            className="inline-flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-full bg-white text-[#111111] border border-[#EAEAEA] hover:bg-[#F5F8FF] transition shadow-2xs"
           >
             <ArrowLeft className="w-3.5 h-3.5" /> Back to Cases
           </Link>
@@ -172,7 +172,7 @@ export default function CreateNewCasePage() {
                   placeholder="e.g. Outer Ring Road Intersection Incident"
                   value={caseName}
                   onChange={(e) => setCaseName(e.target.value)}
-                  className="w-full h-11 px-4 bg-[#F9F9F7] border border-[#EAEAEA] rounded-[14px] text-xs text-[#111111] placeholder-[#8A8A8A] focus:outline-none focus:border-[#111111] transition"
+                  className="w-full h-11 px-4 bg-[#F5F8FF] border border-[#EAEAEA] rounded-[14px] text-xs text-[#111111] placeholder-[#8A8A8A] focus:outline-none focus:border-[#111111] transition"
                 />
               </div>
 
@@ -197,7 +197,7 @@ export default function CreateNewCasePage() {
                   placeholder="Officer name"
                   value={filedBy}
                   onChange={(e) => setFiledBy(e.target.value)}
-                  className="w-full h-11 px-4 bg-[#F9F9F7] border border-[#EAEAEA] rounded-[14px] text-xs text-[#111111] focus:outline-none focus:border-[#111111] transition"
+                  className="w-full h-11 px-4 bg-[#F5F8FF] border border-[#EAEAEA] rounded-[14px] text-xs text-[#111111] focus:outline-none focus:border-[#111111] transition"
                 />
               </div>
 
@@ -209,7 +209,7 @@ export default function CreateNewCasePage() {
                   type="datetime-local"
                   value={filedDate}
                   onChange={(e) => setFiledDate(e.target.value)}
-                  className="w-full h-11 px-4 bg-[#F9F9F7] border border-[#EAEAEA] rounded-[14px] text-xs text-[#111111] focus:outline-none focus:border-[#111111] transition"
+                  className="w-full h-11 px-4 bg-[#F5F8FF] border border-[#EAEAEA] rounded-[14px] text-xs text-[#111111] focus:outline-none focus:border-[#111111] transition"
                 />
               </div>
 
@@ -221,7 +221,7 @@ export default function CreateNewCasePage() {
                   type="datetime-local"
                   value={accidentDate}
                   onChange={(e) => setAccidentDate(e.target.value)}
-                  className="w-full h-11 px-4 bg-[#F9F9F7] border border-[#EAEAEA] rounded-[14px] text-xs text-[#111111] focus:outline-none focus:border-[#111111] transition"
+                  className="w-full h-11 px-4 bg-[#F5F8FF] border border-[#EAEAEA] rounded-[14px] text-xs text-[#111111] focus:outline-none focus:border-[#111111] transition"
                 />
               </div>
 
@@ -248,12 +248,12 @@ export default function CreateNewCasePage() {
                     placeholder="Enter street, road junction, or landmark"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                    className="w-full h-11 pl-10 pr-4 bg-[#F9F9F7] border border-[#EAEAEA] rounded-[14px] text-xs text-[#111111] placeholder-[#8A8A8A] focus:outline-none focus:border-[#111111] transition"
+                    className="w-full h-11 pl-10 pr-4 bg-[#F5F8FF] border border-[#EAEAEA] rounded-[14px] text-xs text-[#111111] placeholder-[#8A8A8A] focus:outline-none focus:border-[#111111] transition"
                   />
                 </div>
 
                 {showCoordinatePicker && (
-                  <div className="p-4 bg-[#F9F9F7] rounded-[18px] border border-[#EAEAEA] space-y-3">
+                  <div className="p-4 bg-[#F5F8FF] rounded-[18px] border border-[#EAEAEA] space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-[#111111]">GPS Coordinates</span>
                       <button
@@ -304,7 +304,7 @@ export default function CreateNewCasePage() {
                   placeholder="Enter initial incident description, conditions, or vehicles involved..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full p-4 bg-[#F9F9F7] border border-[#EAEAEA] rounded-[16px] text-xs text-[#111111] placeholder-[#8A8A8A] focus:outline-none focus:border-[#111111] transition"
+                  className="w-full p-4 bg-[#F5F8FF] border border-[#EAEAEA] rounded-[16px] text-xs text-[#111111] placeholder-[#8A8A8A] focus:outline-none focus:border-[#111111] transition"
                 />
               </div>
 
@@ -338,7 +338,7 @@ export default function CreateNewCasePage() {
               className={`p-8 border-2 border-dashed rounded-[20px] text-center transition cursor-pointer ${
                 isDragging
                   ? "border-[#0A66FF] bg-blue-50/40"
-                  : "border-[#EAEAEA] hover:border-[#111111] bg-[#F9F9F7] hover:bg-white"
+                  : "border-[#EAEAEA] hover:border-[#111111] bg-[#F5F8FF] hover:bg-white"
               }`}
             >
               <input
@@ -362,7 +362,7 @@ export default function CreateNewCasePage() {
                 {sources.map((src, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between p-3 rounded-[14px] bg-[#F9F9F7] border border-[#EAEAEA] text-xs"
+                    className="flex items-center justify-between p-3 rounded-[14px] bg-[#F5F8FF] border border-[#EAEAEA] text-xs"
                   >
                     <div className="flex items-center gap-2 overflow-hidden pr-2">
                       {getSourceIcon(src.name)}

@@ -37,7 +37,7 @@ export default function DashboardMetricsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F6F5F2] text-[#111111] font-sans">
+    <div className="min-h-screen bg-[#F0F4FF] text-[#111111] font-sans">
       
       {/* Fixed Sidebar touching screen edges */}
       <Sidebar currentTab="dashboard" casesCount={cases.length} />
@@ -233,7 +233,7 @@ export default function DashboardMetricsPage() {
                   </p>
 
                   <div className="space-y-2 pt-2">
-                    <div className="p-3 bg-[#F9F9F7] rounded-[16px] flex items-center gap-3">
+                    <div className="p-3 bg-[#F5F8FF] border border-[#E4ECFB] rounded-[16px] flex items-center gap-3">
                       <div className="w-7 h-7 rounded-full bg-[#121212] text-white flex items-center justify-center text-xs font-bold shrink-0">
                         1
                       </div>
@@ -243,7 +243,7 @@ export default function DashboardMetricsPage() {
                       </div>
                     </div>
 
-                    <div className="p-3 bg-[#F9F9F7] rounded-[16px] flex items-center gap-3">
+                    <div className="p-3 bg-[#F5F8FF] border border-[#E4ECFB] rounded-[16px] flex items-center gap-3">
                       <div className="w-7 h-7 rounded-full bg-[#121212] text-white flex items-center justify-center text-xs font-bold shrink-0">
                         2
                       </div>

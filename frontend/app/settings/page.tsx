@@ -17,7 +17,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F6F5F2] text-[#111111] font-sans">
+    <div className="min-h-screen bg-[#F0F4FF] text-[#111111] font-sans">
       
       {/* Fixed Sidebar touching screen edges */}
       <Sidebar currentTab="settings" />
@@ -55,7 +55,7 @@ export default function SettingsPage() {
               <div className="space-y-4 pt-2">
                 
                 {/* Auto Metadata Extraction */}
-                <div className="flex items-center justify-between p-4 rounded-[18px] bg-[#F9F9F7] border border-[#EEEEEC] hover:border-[#111111] transition">
+                <div className="flex items-center justify-between p-4 rounded-[18px] bg-[#F5F8FF] border border-[#EEEEEC] hover:border-[#111111] transition">
                   <div className="pr-4">
                     <label className="text-xs font-bold text-[#111111] block">
                       Automatic Evidence Extraction
@@ -76,7 +76,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Timeline Display Mode */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-[18px] bg-[#F9F9F7] border border-[#EEEEEC] hover:border-[#111111] transition">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-[18px] bg-[#F5F8FF] border border-[#EEEEEC] hover:border-[#111111] transition">
                   <div>
                     <label className="text-xs font-bold text-[#111111] block">
                       Default Timeline Format
@@ -97,7 +97,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Audit Logging */}
-                <div className="flex items-center justify-between p-4 rounded-[18px] bg-[#F9F9F7] border border-[#EEEEEC] hover:border-[#111111] transition">
+                <div className="flex items-center justify-between p-4 rounded-[18px] bg-[#F5F8FF] border border-[#EEEEEC] hover:border-[#111111] transition">
                   <div className="pr-4">
                     <label className="text-xs font-bold text-[#111111] block">
                       Chain of Custody Audit Logging
