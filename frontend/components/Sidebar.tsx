@@ -4,7 +4,9 @@ import {
   FolderKanban, 
   BarChart3, 
   FileText, 
-  Settings
+  Settings,
+  Shield,
+  ChevronRight
 } from "lucide-react";
 
 interface SidebarProps {
@@ -12,7 +14,7 @@ interface SidebarProps {
   casesCount?: number;
 }
 
-export default function Sidebar({ currentTab, casesCount = 3 }: SidebarProps) {
+export default function Sidebar({ currentTab, casesCount = 0 }: SidebarProps) {
   const navItems = [
     {
       id: "dashboard",
@@ -25,11 +27,11 @@ export default function Sidebar({ currentTab, casesCount = 3 }: SidebarProps) {
       label: "Cases",
       icon: FolderKanban,
       href: "/cases",
-      badge: casesCount,
+      badge: casesCount > 0 ? casesCount : undefined,
     },
     {
       id: "docs",
-      label: "Docs",
+      label: "Documentation",
       icon: FileText,
       href: "/docs",
     },
@@ -42,61 +44,73 @@ export default function Sidebar({ currentTab, casesCount = 3 }: SidebarProps) {
   ];
 
   return (
-    <aside className="w-60 bg-white border-r border-slate-200/80 flex flex-col justify-between shrink-0 min-h-screen sticky top-0 h-screen select-none">
-      <div>
-        {/* Brand Header */}
-        <div className="h-16 flex items-center gap-2.5 px-6 border-b border-slate-100">
-          <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
-            R
+    <aside 
+      style={{ position: "fixed", left: 0, top: 0, height: "100vh", width: "260px", margin: 0 }}
+      className="fixed left-0 top-0 h-screen w-[260px] m-0 z-30 bg-white flex flex-col justify-between select-none overflow-hidden"
+    >
+      {/* Top Header & Navigation Items (z-10 relative to stay above background effect) */}
+      <div className="relative z-10">
+        {/* Top Header Section of Sidebar: exactly 72px tall with border-b, merging seamlessly with TopHeader */}
+        <div className="h-[72px] px-5 flex items-center gap-3 border-b border-[#F0F0F0]">
+          <div className="w-10 h-10 rounded-full bg-[#121212] text-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
+            <Shield className="w-5 h-5" />
           </div>
-          <span className="text-xl font-bold tracking-tight text-slate-950 font-sans">
-            rekishi
-          </span>
+          <div>
+            <div className="text-base font-extrabold tracking-tight text-[#111111] leading-none">
+              REKISHI
+            </div>
+            <div className="text-[11px] text-[#8A8A8A] font-medium mt-1">
+              Forensics Intelligence
+            </div>
+          </div>
         </div>
 
-        {/* 4 Clean Navigation Links */}
-        <nav className="p-3 space-y-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = currentTab === item.id;
-            return (
-              <Link
-                key={item.id}
-                href={item.href}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-semibold transition ${
-                  isActive
-                    ? "bg-blue-50 text-blue-700 font-bold"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                }`}
-              >
-                <Icon className={`w-4 h-4 ${isActive ? "text-blue-600" : "text-slate-400"}`} />
-                <span>{item.label}</span>
-                {item.badge !== undefined && (
-                  <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded font-mono ${
-                    isActive ? "bg-blue-100 text-blue-700 font-bold" : "bg-slate-100 text-slate-600"
-                  }`}>
-                    {item.badge}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
+        {/* Menu items list */}
+        <div className="p-4">
+          <nav className="space-y-1.5">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = currentTab === item.id;
+              return (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-full text-xs font-semibold transition-all duration-150 ${
+                    isActive
+                      ? "bg-[#121212] text-white shadow-sm"
+                      : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F9F9F7]"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-[#8A8A8A]"}`} />
+                    <span className="text-sm font-medium">{item.label}</span>
+                  </div>
 
-      {/* Bottom AI Status Indicator */}
-      <div className="p-4 border-t border-slate-100">
-        <div className="p-3 bg-slate-50 border border-slate-200/70 rounded-lg">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span className="text-xs font-semibold text-slate-800">Forensic Core</span>
-          </div>
-          <p className="text-[10px] text-slate-400 mt-1">
-            Featherless VLM + Groq Active
-          </p>
+                  {isActive ? (
+                    <ChevronRight className="w-4 h-4 text-white/80" />
+                  ) : item.badge !== undefined ? (
+                    <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-[#F5F5F3] text-[#8A8A8A]">
+                      {item.badge}
+                    </span>
+                  ) : null}
+                </Link>
+              );
+            })}
+          </nav>
         </div>
       </div>
+
+      {/* Bullish Diagonal Lines Gradient Effect at Bottom */}
+      <div className="sidebar-bottom-bullish" />
+
+      {/* Minimalist Bottom Info Card with sharp white text over the blue bullish gradient */}
+      <div className="relative z-10 p-5 border-t border-white/10">
+        <div className="text-xs font-bold text-white">System Active</div>
+        <div className="text-[11px] text-white/80 mt-0.5">Version 2.0 • Online</div>
+      </div>
+
+      {/* Vertical divider border line strictly starting below the 72px merged header */}
+      <div className="absolute right-0 top-[72px] bottom-0 w-[1px] bg-[#F0F0F0] z-20" />
     </aside>
   );
 }
-
