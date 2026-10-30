@@ -377,7 +377,9 @@ export function createNewCase(data: {
   const firstVideo = evidenceList.find(e => (e.dataType === "Video" || /\.(mp4|mov|avi|webm)$/i.test(e.name)) && e.fileUrl)?.fileUrl;
   const combined = `${data.name} ${data.description} ${data.sources.map(s => s.name).join(" ")}`.toLowerCase();
   let scenario = "CAR_VS_BIKE";
-  if (/rear|highway|interstate|trailing/i.test(combined)) {
+  if (/lorry|truck|semi|trailer|hauler|container|heavy/i.test(combined)) {
+    scenario = "CAR_VS_LORRY";
+  } else if (/rear|highway|interstate|trailing/i.test(combined)) {
     scenario = "HIGHWAY_REAR_END";
   } else if (/head|opposite|oncoming/i.test(combined)) {
     scenario = "HEAD_ON";
@@ -494,8 +496,9 @@ export function analyzeCaseEvidence(caseId: string): CaseDetail {
   }
 
   const combinedText = `${caseItem.name} ${caseItem.description} ${caseItem.evidenceList.map(e => `${e.name} ${e.extractedData?.summary || ""}`).join(" ")}`.toLowerCase();
+  const isLorry = /lorry|truck|semi|trailer|hauler|container|heavy/i.test(combinedText);
   const isMotorcycle = /bike|motorcycle|moto|two-wheel|scooter|rider/i.test(combinedText);
-  const vehicleBName = isMotorcycle ? "Vehicle B (Sport Motorcycle)" : "Vehicle B (Blue SUV)";
+  const vehicleBName = isLorry ? "Vehicle B (Commercial Heavy Lorry / Truck)" : isMotorcycle ? "Vehicle B (Sport Motorcycle)" : "Vehicle B (Blue SUV)";
 
   let newSummary = "";
   if (totalFiles === 0) {

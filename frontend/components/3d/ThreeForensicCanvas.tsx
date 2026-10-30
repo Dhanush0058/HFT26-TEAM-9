@@ -11,11 +11,10 @@ import {
   Compass, 
   Camera, 
   Layers, 
-  Upload,
-  CheckCircle2
+  Upload
 } from "lucide-react";
 
-export type ScenarioType = "CAR_VS_BIKE" | "HIGHWAY_REAR_END" | "HEAD_ON" | "INTERSECTION_TBONE";
+export type ScenarioType = "CAR_VS_LORRY" | "CAR_VS_BIKE" | "HIGHWAY_REAR_END" | "HEAD_ON" | "INTERSECTION_TBONE";
 
 interface ThreeForensicCanvasProps {
   scrubberTime: number;
@@ -51,12 +50,19 @@ export default function ThreeForensicCanvas({
     if (defaultScenario) return defaultScenario;
     const combined = `${caseTitle} ${caseDescription} ${srcUrlOrName || ""} ${evidenceList.map(e => `${e.name} ${e.extractedData?.summary || ""}`).join(" ")}`.toLowerCase();
 
+    // Priority 1: Lorry / Heavy Commercial Truck Crash
+    if (/lorry|truck|semi|trailer|hauler|container|heavy/i.test(combined)) {
+      return "CAR_VS_LORRY";
+    }
+    // Priority 2: Highway Rear-End
     if (/rear[\s_-]?end|highway|interstate|trailing|102/i.test(combined)) {
       return "HIGHWAY_REAR_END";
     }
+    // Priority 3: Head-On Collision
     if (/head[\s_-]?on|opposite|oncoming|crossover/i.test(combined)) {
       return "HEAD_ON";
     }
+    // Priority 4: Motorcycle
     if (/bike|motorcycle|moto|two[\s_-]?wheel|scooter|rider/i.test(combined)) {
       return "CAR_VS_BIKE";
     }
@@ -85,7 +91,7 @@ export default function ThreeForensicCanvas({
       onVideoUploaded(file);
     }
 
-    setExportNotice(`Analyzed ${file.name}: Synced 3D reconstruction model to evidence video.`);
+    setExportNotice(`Analyzed ${file.name}: Synced 3D digital twin to ${detected.replace(/_/g, " ")}.`);
     setTimeout(() => setExportNotice(null), 4000);
   };
 
@@ -113,6 +119,7 @@ export default function ThreeForensicCanvas({
   const vehicleBGroupRef = useRef<THREE.Group | null>(null);
   const motorcycleMeshRef = useRef<THREE.Group | null>(null);
   const suvMeshRef = useRef<THREE.Group | null>(null);
+  const lorryMeshRef = useRef<THREE.Group | null>(null);
 
   // Road environment groups
   const intersectionRoadGroupRef = useRef<THREE.Group | null>(null);
@@ -137,7 +144,6 @@ export default function ThreeForensicCanvas({
     sceneRef.current = scene;
 
     // 2. Camera: Cinematic unobstructed isometric perspective
-    // Looking from South-East towards North-West collision quadrant
     const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 1000);
     camera.position.set(16, 14, 20);
     camera.lookAt(0, 0.5, 0);
@@ -165,7 +171,7 @@ export default function ThreeForensicCanvas({
     controls.dampingFactor = 0.05;
     controls.maxPolarAngle = Math.PI / 2 - 0.04;
     controls.minDistance = 4;
-    controls.maxDistance = 70;
+    controls.maxDistance = 75;
     controls.target.set(0, 0.5, 0);
     controlsRef.current = controls;
 
@@ -193,7 +199,7 @@ export default function ThreeForensicCanvas({
     scene.add(ground);
 
     // ─────────────────────────────────────────────────────────────
-    // ROAD ENVIRONMENT A: 4-WAY INTERSECTION (For CAR_VS_BIKE & TBONE)
+    // ROAD ENVIRONMENT A: 4-WAY INTERSECTION (For LORRY, BIKE & TBONE)
     // ─────────────────────────────────────────────────────────────
     const intersectionGroup = new THREE.Group();
     intersectionRoadGroupRef.current = intersectionGroup;
@@ -280,7 +286,7 @@ export default function ThreeForensicCanvas({
       intersectionGroup.add(zS);
     }
 
-    // Streetlamps moved to corner sidewalks where they don't block camera
+    // Streetlamps on outer perimeter (zero camera obstruction)
     const lampPostMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.8, roughness: 0.3 });
     const addStreetLamp = (x: number, z: number, rotY: number) => {
       const g = new THREE.Group();
@@ -311,13 +317,11 @@ export default function ThreeForensicCanvas({
       intersectionGroup.add(g);
     };
 
-    // Position lamps cleanly on sidewalk perimeters (zero camera obstruction)
     addStreetLamp(-14.0, -14.0, Math.PI / 4);
     addStreetLamp(14.0, -14.0, -Math.PI / 4);
     addStreetLamp(-14.0, 14.0, (3 * Math.PI) / 4);
 
     // Traffic Signal Mast Arm (Corner NW)
-    // Directly visualizes the forensic finding: GREEN for Vehicle A, RED for Vehicle B
     const signalMastGroup = new THREE.Group();
     signalMastGroup.position.set(-6.5, 0, -6.5);
 
@@ -330,7 +334,7 @@ export default function ThreeForensicCanvas({
     mastArm.position.set(2.0, 5.2, 0);
     signalMastGroup.add(mastArm);
 
-    // Signal Head for Westbound Vehicle A (Facing East): SOLID GREEN
+    // Green lens for Vehicle A
     const signalHeadA = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.9, 0.3), new THREE.MeshStandardMaterial({ color: 0x0f172a }));
     signalHeadA.position.set(3.6, 4.8, 0);
     const greenLens = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 16), new THREE.MeshBasicMaterial({ color: 0x22c55e }));
@@ -338,7 +342,7 @@ export default function ThreeForensicCanvas({
     signalHeadA.add(greenLens);
     signalMastGroup.add(signalHeadA);
 
-    // Signal Head for Southbound Vehicle B (Facing North): SOLID RED
+    // Red lens for Vehicle B
     const signalHeadB = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.9, 0.35), new THREE.MeshStandardMaterial({ color: 0x0f172a }));
     signalHeadB.position.set(0, 4.8, 3.2);
     const redLens = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 16), new THREE.MeshBasicMaterial({ color: 0xef4444 }));
@@ -419,7 +423,7 @@ export default function ThreeForensicCanvas({
     cabinA.castShadow = true;
     carAGroup.add(cabinA);
 
-    // 4 Wheels with rubber tires and chrome alloy rims
+    // Wheels
     const tireMat = new THREE.MeshStandardMaterial({ color: 0x141416, roughness: 0.92 });
     const rimMat = new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.92, roughness: 0.18 });
 
@@ -442,7 +446,7 @@ export default function ThreeForensicCanvas({
     carAGroup.add(createCarWheel(-1.4, 1.02));
     carAGroup.add(createCarWheel(-1.4, -1.02));
 
-    // LED Xenon Headlights
+    // LED Headlights & Brake Lights
     const hlMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
     const hl1 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.2, 0.35), hlMat);
     hl1.position.set(2.3, 0.62, 0.68);
@@ -451,7 +455,6 @@ export default function ThreeForensicCanvas({
     carAGroup.add(hl1);
     carAGroup.add(hl2);
 
-    // LED Brake Lights (glow intensely during emergency deceleration)
     const tailMat = new THREE.MeshStandardMaterial({ color: 0x991b1b, emissive: 0x7f1d1d, emissiveIntensity: 0.4 });
     const bl1 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.18, 0.42), tailMat);
     bl1.position.set(-2.3, 0.65, 0.68);
@@ -465,20 +468,106 @@ export default function ThreeForensicCanvas({
     carARef.current = carAGroup;
 
     // ─────────────────────────────────────────────────────────────
-    // VEHICLE B: SPORT MOTORCYCLE & RIDER (or SUV)
+    // VEHICLE B: LORRY (TRUCK), MOTORCYCLE, or SUV
     // ─────────────────────────────────────────────────────────────
     const vehicleBGroup = new THREE.Group();
     vehicleBGroupRef.current = vehicleBGroup;
 
-    // Sub-Model 1: Sport Motorcycle with Rider
+    // Sub-Model 1: Heavy Commercial Lorry / Semi-Truck
+    const lorryGroup = new THREE.Group();
+    lorryMeshRef.current = lorryGroup;
+
+    const cabPaintMat = new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.8, roughness: 0.25 });
+    const trailerMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.65, roughness: 0.45 });
+    const chassisTruckMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.9, roughness: 0.4 });
+    const chromeMat = new THREE.MeshStandardMaterial({ color: 0xe4e4e7, metalness: 0.95, roughness: 0.1 });
+    const truckTireMat = new THREE.MeshStandardMaterial({ color: 0x111317, roughness: 0.95 });
+    const truckRimMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9, roughness: 0.2 });
+
+    const createTruckWheel = (x: number, y: number, z: number, dual: boolean = false) => {
+      const g = new THREE.Group();
+      const t = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.58, dual ? 0.65 : 0.38, 24), truckTireMat);
+      t.rotation.x = Math.PI / 2;
+      t.castShadow = true;
+      g.add(t);
+
+      const r = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, dual ? 0.67 : 0.4, 16), truckRimMat);
+      r.rotation.x = Math.PI / 2;
+      g.add(r);
+
+      g.position.set(x, y, z);
+      return g;
+    };
+
+    // Front Cab
+    const cab = new THREE.Mesh(new THREE.BoxGeometry(2.6, 2.6, 2.5), cabPaintMat);
+    cab.position.set(3.4, 1.9, 0);
+    cab.castShadow = true;
+    lorryGroup.add(cab);
+
+    const cabWindshield = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.1, 2.3), glassMat);
+    cabWindshield.position.set(4.71, 2.3, 0);
+    lorryGroup.add(cabWindshield);
+
+    const grille = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.0, 2.0), chromeMat);
+    grille.position.set(4.71, 1.1, 0);
+    lorryGroup.add(grille);
+
+    const bumper = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.45, 2.6), chassisTruckMat);
+    bumper.position.set(4.8, 0.5, 0);
+    lorryGroup.add(bumper);
+
+    const stack1 = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 3.2, 16), chromeMat);
+    stack1.position.set(2.0, 2.8, 1.25);
+    lorryGroup.add(stack1);
+    const stack2 = stack1.clone();
+    stack2.position.set(2.0, 2.8, -1.25);
+    lorryGroup.add(stack2);
+
+    const deflector = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.6, 2.3), cabPaintMat);
+    deflector.position.set(3.0, 3.4, 0);
+    lorryGroup.add(deflector);
+
+    // Large Freight Cargo Container
+    const trailer = new THREE.Mesh(new THREE.BoxGeometry(6.6, 3.2, 2.6), trailerMat);
+    trailer.position.set(-1.2, 2.2, 0);
+    trailer.castShadow = true;
+    lorryGroup.add(trailer);
+
+    // Reflective Chevron Hazard Safety Striping
+    const chevronMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+    const stripLeft = new THREE.Mesh(new THREE.BoxGeometry(6.5, 0.12, 0.02), chevronMat);
+    stripLeft.position.set(-1.2, 0.7, 1.31);
+    lorryGroup.add(stripLeft);
+    const stripRight = stripLeft.clone();
+    stripRight.position.set(-1.2, 0.7, -1.31);
+    lorryGroup.add(stripRight);
+
+    // Fuel Tank
+    const fuelTank = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 1.6, 16), chromeMat);
+    fuelTank.rotation.z = Math.PI / 2;
+    fuelTank.position.set(1.1, 0.65, 1.2);
+    lorryGroup.add(fuelTank);
+
+    // Front Steering Wheels
+    lorryGroup.add(createTruckWheel(3.4, 0.58, 1.18));
+    lorryGroup.add(createTruckWheel(3.4, 0.58, -1.18));
+
+    // Rear Dual Tandem Wheels
+    lorryGroup.add(createTruckWheel(-2.6, 0.58, 1.1, true));
+    lorryGroup.add(createTruckWheel(-2.6, 0.58, -1.1, true));
+    lorryGroup.add(createTruckWheel(-4.0, 0.58, 1.1, true));
+    lorryGroup.add(createTruckWheel(-4.0, 0.58, -1.1, true));
+
+    lorryGroup.visible = false;
+    vehicleBGroup.add(lorryGroup);
+
+    // Sub-Model 2: Sport Motorcycle with Rider
     const motoGroup = new THREE.Group();
     motorcycleMeshRef.current = motoGroup;
-
-    const chromeMat = new THREE.MeshStandardMaterial({ color: 0xe4e4e7, metalness: 0.95, roughness: 0.1 });
     const darkSteelMat = new THREE.MeshStandardMaterial({ color: 0x27272a, metalness: 0.82, roughness: 0.28 });
     const bikePaintMat = new THREE.MeshStandardMaterial({ color: 0x2563eb, metalness: 0.88, roughness: 0.18 });
 
-    // Front & Rear spoked wheels
     const frontMotoWheel = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.44, 0.14, 24), tireMat);
     frontMotoWheel.rotation.x = Math.PI / 2;
     frontMotoWheel.position.set(1.25, 0.44, 0);
@@ -491,7 +580,6 @@ export default function ThreeForensicCanvas({
     rearMotoWheel.castShadow = true;
     motoGroup.add(rearMotoWheel);
 
-    // Front Forks & Triple Clamp
     const forkLeft = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.25, 16), chromeMat);
     forkLeft.rotation.z = -Math.PI / 6.5;
     forkLeft.position.set(1.0, 0.9, 0.14);
@@ -500,19 +588,16 @@ export default function ThreeForensicCanvas({
     forkRight.position.z = -0.14;
     motoGroup.add(forkRight);
 
-    // Handlebar & Mirrors
     const handlebar = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.95, 16), chromeMat);
     handlebar.rotation.x = Math.PI / 2;
     handlebar.position.set(0.72, 1.45, 0);
     motoGroup.add(handlebar);
 
-    // Sculpted Aerodynamic Sport Gas Tank
     const gasTank = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.48, 0.52), bikePaintMat);
     gasTank.position.set(0.22, 1.22, 0);
     gasTank.castShadow = true;
     motoGroup.add(gasTank);
 
-    // Engine Block & Exhaust
     const engine = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.6, 0.42), darkSteelMat);
     engine.position.set(0.12, 0.68, 0);
     motoGroup.add(engine);
@@ -526,7 +611,7 @@ export default function ThreeForensicCanvas({
     seat.position.set(-0.42, 1.1, 0);
     motoGroup.add(seat);
 
-    // Rider Figure with Aerodynamic Helmet and Racing Suit
+    // Rider Figure
     const riderGroup = new THREE.Group();
     const riderSuitMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.65 });
     const helmetMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.8, roughness: 0.2 });
@@ -546,9 +631,10 @@ export default function ThreeForensicCanvas({
     riderGroup.add(visor);
 
     motoGroup.add(riderGroup);
+    motoGroup.visible = false;
     vehicleBGroup.add(motoGroup);
 
-    // Sub-Model 2: 3D SUV (for TBONE / REAR_END)
+    // Sub-Model 3: 3D SUV (for TBONE)
     const suvGroup = new THREE.Group();
     suvMeshRef.current = suvGroup;
     const chassisSUV = new THREE.Mesh(new THREE.BoxGeometry(4.8, 0.95, 2.2), bikePaintMat);
@@ -577,7 +663,6 @@ export default function ThreeForensicCanvas({
     scene.add(skidPlaneA);
     skidMarksARef.current = skidPlaneA;
 
-    // Motorcycle pavement friction slide mark
     const motoSlideMat = new THREE.MeshBasicMaterial({ color: 0x05070a, transparent: true, opacity: 0, side: THREE.DoubleSide });
     const motoSlidePlane = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 0.4), motoSlideMat);
     motoSlidePlane.rotation.x = -Math.PI / 2;
@@ -598,18 +683,27 @@ export default function ThreeForensicCanvas({
     if (activeScenario === "HIGHWAY_REAR_END") {
       intersectionGroup.visible = false;
       highwayGroup.visible = true;
-      motoGroup.visible = false;
-      suvGroup.visible = true;
+      if (lorryMeshRef.current) lorryMeshRef.current.visible = false;
+      if (motorcycleMeshRef.current) motorcycleMeshRef.current.visible = false;
+      if (suvMeshRef.current) suvMeshRef.current.visible = true;
+    } else if (activeScenario === "CAR_VS_LORRY") {
+      intersectionGroup.visible = true;
+      highwayGroup.visible = false;
+      if (lorryMeshRef.current) lorryMeshRef.current.visible = true;
+      if (motorcycleMeshRef.current) motorcycleMeshRef.current.visible = false;
+      if (suvMeshRef.current) suvMeshRef.current.visible = false;
     } else if (activeScenario === "CAR_VS_BIKE") {
       intersectionGroup.visible = true;
       highwayGroup.visible = false;
-      motoGroup.visible = true;
-      suvGroup.visible = false;
+      if (lorryMeshRef.current) lorryMeshRef.current.visible = false;
+      if (motorcycleMeshRef.current) motorcycleMeshRef.current.visible = true;
+      if (suvMeshRef.current) suvMeshRef.current.visible = false;
     } else {
       intersectionGroup.visible = true;
       highwayGroup.visible = false;
-      motoGroup.visible = false;
-      suvGroup.visible = true;
+      if (lorryMeshRef.current) lorryMeshRef.current.visible = false;
+      if (motorcycleMeshRef.current) motorcycleMeshRef.current.visible = false;
+      if (suvMeshRef.current) suvMeshRef.current.visible = true;
     }
 
     // Animation Render Loop
@@ -647,27 +741,111 @@ export default function ThreeForensicCanvas({
     if (activeScenario === "HIGHWAY_REAR_END") {
       if (intersectionRoadGroupRef.current) intersectionRoadGroupRef.current.visible = false;
       if (highwayRoadGroupRef.current) highwayRoadGroupRef.current.visible = true;
+      if (lorryMeshRef.current) lorryMeshRef.current.visible = false;
       if (motorcycleMeshRef.current) motorcycleMeshRef.current.visible = false;
       if (suvMeshRef.current) suvMeshRef.current.visible = true;
-    } else if (activeScenario === "CAR_VS_BIKE") {
+    } else if (activeScenario === "CAR_VS_LORRY") {
       if (intersectionRoadGroupRef.current) intersectionRoadGroupRef.current.visible = true;
       if (highwayRoadGroupRef.current) highwayRoadGroupRef.current.visible = false;
+      if (lorryMeshRef.current) lorryMeshRef.current.visible = true;
+      if (motorcycleMeshRef.current) motorcycleMeshRef.current.visible = false;
+      if (suvMeshRef.current) suvMeshRef.current.visible = false;
+    } else if (activeScenario === "CAR_VS_BIKE") {
+      intersectionRoadGroupRef.current && (intersectionRoadGroupRef.current.visible = true);
+      highwayRoadGroupRef.current && (highwayRoadGroupRef.current.visible = false);
+      if (lorryMeshRef.current) lorryMeshRef.current.visible = false;
       if (motorcycleMeshRef.current) motorcycleMeshRef.current.visible = true;
       if (suvMeshRef.current) suvMeshRef.current.visible = false;
     } else {
-      if (intersectionRoadGroupRef.current) intersectionRoadGroupRef.current.visible = true;
-      if (highwayRoadGroupRef.current) highwayRoadGroupRef.current.visible = false;
+      intersectionRoadGroupRef.current && (intersectionRoadGroupRef.current.visible = true);
+      highwayRoadGroupRef.current && (highwayRoadGroupRef.current.visible = false);
+      if (lorryMeshRef.current) lorryMeshRef.current.visible = false;
       if (motorcycleMeshRef.current) motorcycleMeshRef.current.visible = false;
       if (suvMeshRef.current) suvMeshRef.current.visible = true;
     }
   }, [activeScenario]);
 
   // Update Kinematics based on Scrubber Time & Active Scenario
-  // Faithfully reconstructs the exact parameters from the Rekishi forensic case report
   useEffect(() => {
     const t = scrubberTime;
 
-    if (activeScenario === "HIGHWAY_REAR_END") {
+    if (activeScenario === "CAR_VS_LORRY") {
+      // ─────────────────────────────────────────────────────────────
+      // CAR DASHED INTO HEAVY COMMERCIAL LORRY / TRUCK
+      // ─────────────────────────────────────────────────────────────
+      // Vehicle A (Red Sedan): Westbound along Boulevard, dashes into lorry flank at T=2.7s
+      let xA = -26.0;
+      const zA = 1.6;
+      let rotA = 0;
+      let pitchA = 0;
+      let isBrakingA = false;
+
+      if (t < 2.0) {
+        xA = -26.0 + (t * 11.5);
+        isBrakingA = false;
+      } else if (t < 2.7) {
+        const dtBrake = t - 2.0;
+        xA = -3.0 + (dtBrake * 5.4);
+        isBrakingA = true;
+        pitchA = -0.025; // ABS nose dive
+      } else {
+        // Impact at T=2.7s: Car front bumper impacts lorry side and halts
+        const dtPost = t - 2.7;
+        xA = 0.8 + Math.min(0.2, dtPost * 0.1);
+        rotA = -Math.min(0.18, dtPost * 0.2); // Rebound deflection
+        isBrakingA = true;
+        pitchA = 0;
+      }
+
+      if (carARef.current) {
+        carARef.current.position.set(xA, 0, zA);
+        carARef.current.rotation.set(0, rotA, pitchA);
+      }
+
+      brakeLightsARef.current.forEach((bl) => {
+        const mat = bl.material as THREE.MeshStandardMaterial;
+        mat.emissive.setHex(isBrakingA ? 0xff0020 : 0x550000);
+        mat.emissiveIntensity = isBrakingA ? 3.0 : 0.3;
+      });
+
+      if (skidMarksARef.current) {
+        const mat = skidMarksARef.current.material as THREE.MeshBasicMaterial;
+        mat.opacity = t >= 2.0 ? Math.min(0.85, (t - 2.0) * 1.3) : 0;
+      }
+
+      // Vehicle B (Heavy Lorry / Truck): Traveling Southbound down Avenue
+      // Starts at Z = -26.0, X = 1.6, moving at 32 km/h (~8.9 m/s)
+      let xB = 1.6;
+      let zB = -26.0;
+      let rollLorry = 0;
+
+      if (t < 2.7) {
+        zB = -26.0 + (t * 8.9);
+      } else {
+        const dt = t - 2.7;
+        zB = -1.97 + Math.min(3.8, dt * 2.4); // Heavy momentum carries forward slightly then stops
+        rollLorry = Math.sin(dt * 7.0) * 0.04 * Math.exp(-dt * 2.5); // Suspension shudder from side impact
+      }
+
+      if (vehicleBGroupRef.current) {
+        vehicleBGroupRef.current.position.set(xB, 0, zB);
+        vehicleBGroupRef.current.rotation.set(0, -Math.PI / 2, rollLorry);
+      }
+
+      // Heavy collision shockwave at impact point
+      if (impactRingRef.current) {
+        const ringMat = impactRingRef.current.material as THREE.MeshBasicMaterial;
+        impactRingRef.current.position.set(1.6, 0.1, 1.6);
+        if (t >= 2.6 && t <= 3.4) {
+          const factor = (t - 2.6) / 0.8;
+          ringMat.opacity = Math.max(0, 0.95 - factor);
+          impactRingRef.current.scale.set(1 + factor * 4.0, 1 + factor * 4.0, 1);
+        } else {
+          ringMat.opacity = 0;
+        }
+      }
+
+    } else if (activeScenario === "HIGHWAY_REAR_END") {
       let xB = 2.0;
       let isBrakingB = false;
       if (t < 1.0) {
@@ -757,13 +935,8 @@ export default function ThreeForensicCanvas({
 
     } else {
       // ─────────────────────────────────────────────────────────────
-      // FORENSIC GROUND TRUTH: CAR VS MOTORCYCLE ANGLE COLLISION
+      // CAR VS MOTORCYCLE ANGLE COLLISION
       // ─────────────────────────────────────────────────────────────
-      // Vehicle A (Red Sedan): Traveling Westbound along East-West Boulevard
-      // - Starts at X = -26.0, Z = 1.6, cruising at 48 km/h (~13.3 m/s)
-      // - At T = 2.0s: Emergency ABS braking triggered (85 bar), brake lights blaze red
-      // - Velocity drops 48 km/h -> 18 km/h at impact (T = 2.8s)
-      // - Halts at collision point X = 0.6
       let xA = -26.0;
       const zA = 1.6;
       let rotA = 0;
@@ -778,11 +951,11 @@ export default function ThreeForensicCanvas({
         const dtBrake = t - 2.0;
         xA = -3.0 + (dtBrake * 4.5);
         isBrakingA = true;
-        pitchA = -0.022; // ABS braking nose dive
+        pitchA = -0.022;
       } else {
         const dtPost = t - 2.8;
         xA = 0.6 + Math.min(0.4, dtPost * 0.3);
-        rotA = -Math.min(0.12, dtPost * 0.15); // Lateral deflection from impact
+        rotA = -Math.min(0.12, dtPost * 0.15);
         isBrakingA = true;
         pitchA = 0;
       }
@@ -792,40 +965,33 @@ export default function ThreeForensicCanvas({
         carARef.current.rotation.set(0, rotA, pitchA);
       }
 
-      // Brake light actuation
       brakeLightsARef.current.forEach((bl) => {
         const mat = bl.material as THREE.MeshStandardMaterial;
         mat.emissive.setHex(isBrakingA ? 0xff0020 : 0x550000);
         mat.emissiveIntensity = isBrakingA ? 3.0 : 0.3;
       });
 
-      // Tire skid marks behind Vehicle A
       if (skidMarksARef.current) {
         const mat = skidMarksARef.current.material as THREE.MeshBasicMaterial;
         mat.opacity = t >= 2.0 ? Math.min(0.85, (t - 2.0) * 1.3) : 0;
       }
 
-      // Vehicle B (Sport Motorcycle with Rider): Traveling Southbound down Avenue
-      // - Starts at Z = -26.0, X = 1.8, approaching at 36 km/h (~10 m/s)
-      // - Enters intersection on transitional signal
-      // - Impact at T = 2.8s: struck laterally by sedan front bumper
-      // - Banks onto side, deflects across asphalt to rest (X = 5.2, Z = 3.6)
       let xB = 1.8;
       let yB = 0;
       let zB = -26.0;
-      let rotB = -Math.PI / 2; // Facing South
+      let rotB = -Math.PI / 2;
       let rollB = 0;
 
       if (t < 2.8) {
         zB = -26.0 + (t * 9.5);
-        rollB = Math.sin(t * 4.0) * 0.03; // Subtle high-speed bike balance lean
+        rollB = Math.sin(t * 4.0) * 0.03;
       } else {
         const dt = t - 2.8;
         xB = 1.8 + Math.min(3.8, dt * 2.8);
         zB = 0.6 + Math.min(3.2, dt * 2.4);
         rotB = (-Math.PI / 2) + Math.min(0.7, dt * 0.55);
-        rollB = Math.min(Math.PI / 2.3, dt * 2.5); // Falls onto side (sliding)
-        yB = -Math.min(0.24, dt * 0.18); // Rests on asphalt
+        rollB = Math.min(Math.PI / 2.3, dt * 2.5);
+        yB = -Math.min(0.24, dt * 0.18);
       }
 
       if (vehicleBGroupRef.current) {
@@ -833,13 +999,11 @@ export default function ThreeForensicCanvas({
         vehicleBGroupRef.current.rotation.set(0, rotB, rollB);
       }
 
-      // Motorcycle slide friction mark on asphalt
       if (motoSlideMarkRef.current) {
         const mat = motoSlideMarkRef.current.material as THREE.MeshBasicMaterial;
         mat.opacity = t >= 2.8 ? Math.min(0.75, (t - 2.8) * 1.1) : 0;
       }
 
-      // Collision Impact Shockwave Ring
       if (impactRingRef.current) {
         const ringMat = impactRingRef.current.material as THREE.MeshBasicMaterial;
         impactRingRef.current.position.set(1.8, 0.08, 0.6);
@@ -871,7 +1035,7 @@ export default function ThreeForensicCanvas({
     }
   }, [scrubberTime, cameraMode, activeScenario]);
 
-  // Video Export Functionality (Generates WebM court evidence video directly from WebGL canvas)
+  // Video Export Functionality
   const handleExportVideo = () => {
     if (!canvasRef.current) return;
     setIsExporting(true);
@@ -929,7 +1093,7 @@ export default function ThreeForensicCanvas({
         onChange={handleLocalVideoUpload}
       />
 
-      {/* Main Forensic Player Viewport (100% Full-Width 3D Canvas, No Left Split Panel) */}
+      {/* Main Forensic Player Viewport (100% Full-Width 3D Canvas) */}
       <div 
         ref={containerRef}
         onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
@@ -956,9 +1120,17 @@ export default function ThreeForensicCanvas({
             </div>
             <div className="h-3.5 w-px bg-slate-700"></div>
             <div className="text-[11px] font-mono text-slate-300 flex items-center gap-2">
-              <span>VEHICLE A: <strong className="text-rose-400">{scrubberTime < 2.0 ? "48 km/h" : scrubberTime < 2.8 ? "18 km/h" : "0 km/h"}</strong></span>
+              <span>VEHICLE A: <strong className="text-rose-400">{scrubberTime < 2.0 ? "48 km/h" : scrubberTime < 2.7 ? "18 km/h" : "0 km/h"}</strong></span>
               <span className="text-slate-600">|</span>
-              <span>VEHICLE B: <strong className="text-blue-400">{scrubberTime < 2.8 ? "36 km/h" : "0 km/h"}</strong></span>
+              <span>
+                {activeScenario === "CAR_VS_LORRY" ? (
+                  <>VEHICLE B (Lorry): <strong className="text-amber-400">{scrubberTime < 2.7 ? "32 km/h" : "0 km/h"}</strong></>
+                ) : activeScenario === "CAR_VS_BIKE" ? (
+                  <>VEHICLE B (Bike): <strong className="text-blue-400">{scrubberTime < 2.8 ? "36 km/h" : "0 km/h"}</strong></>
+                ) : (
+                  <>VEHICLE B: <strong className="text-blue-400">{scrubberTime < 2.6 ? "35 km/h" : "0 km/h"}</strong></>
+                )}
+              </span>
             </div>
           </div>
 
@@ -975,6 +1147,7 @@ export default function ThreeForensicCanvas({
                 onChange={(e) => setActiveScenario(e.target.value as ScenarioType)}
                 className="bg-slate-800 text-white rounded px-2 py-0.5 text-xs font-semibold border border-slate-700 outline-none cursor-pointer hover:bg-slate-700 transition"
               >
+                <option value="CAR_VS_LORRY">🚛 Car vs Heavy Lorry / Truck Crash</option>
                 <option value="CAR_VS_BIKE">🏍️ Car vs Motorcycle Angle</option>
                 <option value="HIGHWAY_REAR_END">🛣️ Highway Rear-End Impact</option>
                 <option value="HEAD_ON">⚡ Head-On Collision</option>

@@ -46,22 +46,39 @@ class TrajectoryEngine:
                 brakingA = True
                 headingA = max(70.0, 90.0 - (dt * 15.0))
 
-            # Vehicle B: Starts at z = -25m, moving South at ~10 m/s (36 km/h)
-            if t < 2.8:
-                xB = 1.75
-                zB = -25.0 + (t * 9.1)
-                speedB = 36.0
-                brakingB = False
-                headingB = 180.0
-                bankB = 0.0
+            # Vehicle B: Lorry / Truck or Motorcycle or SUV
+            if vehicle_b_type == "LORRY":
+                if t < 2.7:
+                    xB = 1.6
+                    zB = -26.0 + (t * 8.9)
+                    speedB = 32.0
+                    brakingB = False
+                    headingB = 180.0
+                    bankB = 0.0
+                else:
+                    dt = t - 2.7
+                    xB = 1.6
+                    zB = -1.97 + min(3.8, dt * 2.4)
+                    speedB = max(0.0, 22.0 - (dt * 18.0))
+                    brakingB = True
+                    headingB = 180.0
+                    bankB = float(0.04 * np.sin(dt * 7.0) * np.exp(-dt * 2.5))
             else:
-                dt = t - 2.8
-                xB = 1.75 + (dt * 1.8)
-                zB = 0.5 + (dt * 2.1)
-                speedB = max(0.0, 30.0 - (dt * 22.0))
-                brakingB = True
-                headingB = max(140.0, 180.0 - (dt * 30.0))
-                bankB = min(1.3, dt * 1.3)
+                if t < 2.8:
+                    xB = 1.75
+                    zB = -25.0 + (t * 9.1)
+                    speedB = 36.0
+                    brakingB = False
+                    headingB = 180.0
+                    bankB = 0.0
+                else:
+                    dt = t - 2.8
+                    xB = 1.75 + (dt * 1.8)
+                    zB = 0.5 + (dt * 2.1)
+                    speedB = max(0.0, 30.0 - (dt * 22.0))
+                    brakingB = True
+                    headingB = max(140.0, 180.0 - (dt * 30.0))
+                    bankB = min(1.3, dt * 1.3)
 
             # Signal state
             if t < 1.4:

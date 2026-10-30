@@ -376,10 +376,14 @@ async def upload_case_video(case_id: str, file: UploadFile = File(...)):
             detected_classes.add(obj.get("label", "").lower())
 
     fn_lower = file.filename.lower()
-    has_motorcycle = "motorcycle" in detected_classes or "bike" in fn_lower or "moto" in fn_lower
+    has_truck = "truck" in detected_classes or any(k in fn_lower for k in ["lorry", "truck", "trailer", "semi", "hauler", "container", "heavy"])
+    has_motorcycle = "motorcycle" in detected_classes or any(k in fn_lower for k in ["bike", "motorcycle", "moto", "scooter"])
 
     # 4. Classify scenario and generate synchronized kinematic trajectory
-    if "rear" in fn_lower or "highway" in fn_lower:
+    if has_truck:
+        scenario = "CAR_VS_LORRY"
+        traj = trajectory_engine.generate_intersection_trajectory("LORRY")
+    elif "rear" in fn_lower or "highway" in fn_lower:
         scenario = "HIGHWAY_REAR_END"
         traj = trajectory_engine.generate_rear_end_trajectory()
     elif "head" in fn_lower or "oncoming" in fn_lower:
