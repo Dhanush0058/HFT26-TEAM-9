@@ -309,7 +309,7 @@ export function createNewCase(data: {
   address: string;
   accidentDate: string;
   description: string;
-  sources: Array<{ name: string; size: string; type: string }>;
+  sources: Array<{ name: string; size: string; type: string; fileUrl?: string }>;
 }): CaseDetail {
   const currentCases = getStoredCases();
   const nowStr = new Date().toLocaleString("en-US", { 
@@ -346,6 +346,7 @@ export function createNewCase(data: {
       uploadDate: nowStr,
       size: src.size || "1.8 MB",
       dataType: dataType,
+      fileUrl: src.fileUrl,
       accidentTime: data.accidentDate ? new Date(data.accidentDate).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) + " (Accident Window)" : "Incident Occurrence",
       is_data_extracted: 1, // Automatically extract metadata and contents upon intake
       status: "Extracted",
@@ -373,7 +374,18 @@ export function createNewCase(data: {
     }
   ];
 
-  const newCase: CaseDetail = {
+  const firstVideo = evidenceList.find(e => (e.dataType === "Video" || /\.(mp4|mov|avi|webm)$/i.test(e.name)) && e.fileUrl)?.fileUrl;
+  const combined = `${data.name} ${data.description} ${data.sources.map(s => s.name).join(" ")}`.toLowerCase();
+  let scenario = "CAR_VS_BIKE";
+  if (/rear|highway|interstate|trailing/i.test(combined)) {
+    scenario = "HIGHWAY_REAR_END";
+  } else if (/head|opposite|oncoming/i.test(combined)) {
+    scenario = "HEAD_ON";
+  } else if (/bike|motorcycle|moto|two-wheel/i.test(combined)) {
+    scenario = "CAR_VS_BIKE";
+  }
+
+  const newCase: CaseDetail & { videoUrl?: string; scenario?: string } = {
     id: data.caseNumber,
     name: data.name,
     caseNumber: data.caseNumber,
@@ -387,7 +399,9 @@ export function createNewCase(data: {
     status: "In Review",
     confidence: 86,
     evidenceList: evidenceList,
-    timeline: timeline
+    timeline: timeline,
+    videoUrl: firstVideo,
+    scenario: scenario
   };
 
   const updatedCases = [newCase, ...currentCases];

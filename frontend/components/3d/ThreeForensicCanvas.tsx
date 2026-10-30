@@ -13,8 +13,9 @@ import {
   Layers, 
   SplitSquareHorizontal, 
   Upload,
-  Eye,
-  CheckCircle2
+  Sparkles,
+  CheckCircle2,
+  FileVideo
 } from "lucide-react";
 
 export type ScenarioType = "CAR_VS_BIKE" | "HIGHWAY_REAR_END" | "HEAD_ON" | "INTERSECTION_TBONE";
@@ -51,9 +52,9 @@ export default function ThreeForensicCanvas({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Auto-detect scenario based on case title, description, and uploaded evidence files
-  const autoDetectScenario = (srcUrl?: string): ScenarioType => {
+  const autoDetectScenario = (srcUrlOrName?: string): ScenarioType => {
     if (defaultScenario) return defaultScenario;
-    const combined = `${caseTitle} ${caseDescription} ${srcUrl || ""} ${evidenceList.map(e => `${e.name} ${e.extractedData?.summary || ""}`).join(" ")}`.toLowerCase();
+    const combined = `${caseTitle} ${caseDescription} ${srcUrlOrName || ""} ${evidenceList.map(e => `${e.name} ${e.extractedData?.summary || ""}`).join(" ")}`.toLowerCase();
 
     if (/rear[\s_-]?end|highway|interstate|trailing|102/i.test(combined)) {
       return "HIGHWAY_REAR_END";
@@ -68,15 +69,16 @@ export default function ThreeForensicCanvas({
   };
 
   const [activeScenario, setActiveScenario] = useState<ScenarioType>(() => autoDetectScenario(evidenceVideoUrl));
+  const [currentVideoSrc, setCurrentVideoSrc] = useState<string | null>(evidenceVideoUrl || null);
   const [layoutMode, setLayoutMode] = useState<VisualLayoutMode>(evidenceVideoUrl ? "SPLIT_VIEW" : "3D_ONLY");
   const [cameraMode, setCameraMode] = useState<"ORBIT" | "POV" | "TOP">("ORBIT");
-  const [currentVideoSrc, setCurrentVideoSrc] = useState<string | null>(evidenceVideoUrl || null);
-  const [videoLoadedName, setVideoLoadedName] = useState<string | null>(evidenceVideoUrl ? "Evidence Video Source" : null);
+  const [videoLoadedName, setVideoLoadedName] = useState<string | null>(evidenceVideoUrl ? "Uploaded Dashcam Video" : null);
 
   const [isExporting, setIsExporting] = useState(false);
   const [exportNotice, setExportNotice] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
 
-  // Sync when props change
+  // Sync when prop updates
   useEffect(() => {
     if (evidenceVideoUrl && evidenceVideoUrl !== currentVideoSrc) {
       setCurrentVideoSrc(evidenceVideoUrl);
@@ -86,11 +88,8 @@ export default function ThreeForensicCanvas({
     }
   }, [evidenceVideoUrl]);
 
-  // Handle local video file upload directly on canvas
-  const handleLocalVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  // Handle local video file upload (via input or drag-and-drop)
+  const processUploadedVideo = (file: File) => {
     const blobUrl = URL.createObjectURL(file);
     setCurrentVideoSrc(blobUrl);
     setVideoLoadedName(file.name);
@@ -104,8 +103,22 @@ export default function ThreeForensicCanvas({
       onVideoUploaded(file);
     }
 
-    setExportNotice(`Loaded video: ${file.name}. Synchronizing 3D kinematics to video stream.`);
-    setTimeout(() => setExportNotice(null), 3500);
+    setExportNotice(`Loaded video: ${file.name}. Synchronizing 3D reconstruction to video stream.`);
+    setTimeout(() => setExportNotice(null), 4000);
+  };
+
+  const handleLocalVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) processUploadedVideo(file);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && (file.type.includes("video") || /\.(mp4|mov|avi|webm)$/i.test(file.name))) {
+      processUploadedVideo(file);
+    }
   };
 
   // Sync HTML5 Video playback with scrubberTime & isPlaying
@@ -124,7 +137,6 @@ export default function ThreeForensicCanvas({
     const video = videoRef.current;
     if (!video || !video.duration) return;
 
-    // Check drift between video currentTime and scrubberTime
     const diff = Math.abs(video.currentTime - scrubberTime);
     if (diff > 0.25) {
       video.currentTime = Math.min(video.duration, scrubberTime);
@@ -148,7 +160,6 @@ export default function ThreeForensicCanvas({
 
   const impactRingRef = useRef<THREE.Mesh | null>(null);
   const skidMarksARef = useRef<THREE.Mesh | null>(null);
-  const skidMarksBRef = useRef<THREE.Mesh | null>(null);
   const brakeLightsARef = useRef<THREE.Mesh[]>([]);
 
   // Initialize Three.js WebGL Scene
@@ -156,7 +167,7 @@ export default function ThreeForensicCanvas({
     if (!canvasRef.current || !containerRef.current) return;
 
     const width = canvasRef.current.parentElement?.clientWidth || 800;
-    const height = canvasRef.current.parentElement?.clientHeight || 470;
+    const height = canvasRef.current.parentElement?.clientHeight || 480;
 
     // 1. Scene & Atmospheric Fog
     const scene = new THREE.Scene();
@@ -569,7 +580,7 @@ export default function ThreeForensicCanvas({
     const handleResize = () => {
       if (!canvasRef.current || !renderer || !camera) return;
       const w = canvasRef.current.parentElement?.clientWidth || 800;
-      const h = canvasRef.current.parentElement?.clientHeight || 470;
+      const h = canvasRef.current.parentElement?.clientHeight || 480;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
@@ -846,18 +857,25 @@ export default function ThreeForensicCanvas({
       {/* Main Forensic Player Viewport */}
       <div 
         ref={containerRef}
-        className="relative w-full h-[510px] bg-slate-950 rounded-xl overflow-hidden border border-slate-800 shadow-2xl flex flex-col justify-between"
+        onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+        onDragLeave={() => setIsDragOver(false)}
+        onDrop={handleDrop}
+        className={`relative w-full h-[520px] bg-slate-950 rounded-xl overflow-hidden border shadow-2xl flex flex-col justify-between transition-colors ${
+          isDragOver ? "border-blue-500 bg-slate-900" : "border-slate-800"
+        }`}
       >
         {/* VIEWPORT BODY: Split Screen or 3D Only */}
         <div className="relative w-full h-full flex flex-1 overflow-hidden">
           
           {/* LEFT PANE: Actual Uploaded Video (Ground Truth with YOLO Bounding Boxes) */}
-          {(layoutMode === "SPLIT_VIEW" || layoutMode === "PIP_VIEW") && currentVideoSrc && (
+          {currentVideoSrc ? (
             <div 
               className={`relative bg-black border-r border-slate-800 transition-all flex flex-col justify-between ${
                 layoutMode === "SPLIT_VIEW" 
                   ? "w-1/2 h-full z-10" 
-                  : "absolute bottom-16 left-3 w-64 h-36 rounded-lg overflow-hidden border border-blue-500 shadow-2xl z-20"
+                  : layoutMode === "PIP_VIEW"
+                    ? "absolute bottom-16 left-3 w-64 h-36 rounded-lg overflow-hidden border border-blue-500 shadow-2xl z-20"
+                    : "hidden"
               }`}
             >
               {/* Actual Video Tag playing the User's Video */}
@@ -883,7 +901,7 @@ export default function ThreeForensicCanvas({
 
                 {/* Dynamic Bounding Box Overlay for Vehicles */}
                 <div className="relative w-full h-24 pointer-events-none">
-                  {/* Vehicle A (Car) Bounding Box */}
+                  {/* Vehicle A Bounding Box */}
                   <div 
                     className="absolute border-2 border-emerald-400 bg-emerald-500/10 rounded px-1 text-[9px] font-mono font-bold text-emerald-300 transition-all duration-100"
                     style={{
@@ -896,7 +914,7 @@ export default function ThreeForensicCanvas({
                     🚗 car: 98.4%
                   </div>
 
-                  {/* Vehicle B (Motorcycle / SUV) Bounding Box */}
+                  {/* Vehicle B Bounding Box */}
                   <div 
                     className="absolute border-2 border-blue-400 bg-blue-500/10 rounded px-1 text-[9px] font-mono font-bold text-blue-300 transition-all duration-100"
                     style={{
@@ -910,8 +928,30 @@ export default function ThreeForensicCanvas({
                   </div>
                 </div>
 
-                <div className="text-[10px] font-mono text-slate-400 bg-slate-950/80 px-2 py-1 rounded border border-slate-800 truncate">
-                  Source: {videoLoadedName || "User Uploaded Dashcam Stream"}
+                <div className="text-[10px] font-mono text-slate-300 bg-slate-950/85 px-2 py-1 rounded border border-slate-800 truncate flex items-center justify-between">
+                  <span className="truncate">Source: {videoLoadedName || "Uploaded Video Source"}</span>
+                  <span className="text-emerald-400 font-semibold shrink-0">Synced 1:1</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* EMPTY STATE OVERLAY: Prompts user to drop or select their video */
+            <div 
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute inset-0 bg-slate-950/60 backdrop-blur-[2px] flex flex-col items-center justify-center cursor-pointer hover:bg-slate-950/40 transition z-20 group"
+            >
+              <div className="p-6 rounded-2xl bg-slate-900/95 border border-slate-700 shadow-2xl flex flex-col items-center gap-3 text-center max-w-md group-hover:scale-105 transition transform">
+                <div className="w-14 h-14 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center border border-blue-500/40 shadow-inner">
+                  <FileVideo className="w-7 h-7 text-blue-400 animate-pulse" />
+                </div>
+                <h3 className="text-sm font-bold text-white">Click or Drop Video Here to Reconstruct in 3D</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Upload any accident video (Car, Motorcycle, Highway). YOLOv8 detects vehicles &amp; motion paths to generate the synchronized 3D digital twin.
+                </p>
+                <div className="flex items-center gap-2 pt-1">
+                  <span className="text-xs font-semibold px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow-md flex items-center gap-1.5">
+                    <Upload className="w-3.5 h-3.5" /> Select Video File (.mp4, .webm, .mov)
+                  </span>
                 </div>
               </div>
             </div>

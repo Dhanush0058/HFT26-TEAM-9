@@ -26,6 +26,7 @@ interface UploadedFilePreview {
   name: string;
   size: string;
   type: string;
+  fileUrl?: string;
 }
 
 export default function CreateNewCasePage() {
@@ -57,18 +58,28 @@ export default function CreateNewCasePage() {
     setAccidentDate(accidentTime.toISOString().slice(0, 16));
   }, []);
 
+  const [uploadedRealFiles, setUploadedRealFiles] = useState<File[]>([]);
+
   const handleFilesAdded = (files: FileList | null) => {
     if (!files) return;
     const newFiles: UploadedFilePreview[] = [];
+    const addedReal: File[] = [];
     for (let i = 0; i < files.length; i++) {
       const f = files[i];
       const sizeMb = (f.size / (1024 * 1024)).toFixed(1);
+      let blobUrl: string | undefined = undefined;
+      if (f.type.includes("video") || /\.(mp4|mov|avi|webm)$/i.test(f.name)) {
+        blobUrl = URL.createObjectURL(f);
+      }
       newFiles.push({
         name: f.name,
         size: `${sizeMb} MB`,
-        type: f.type || "application/octet-stream"
+        type: f.type || "application/octet-stream",
+        fileUrl: blobUrl
       });
+      addedReal.push(f);
     }
+    setUploadedRealFiles((prev) => [...prev, ...addedReal]);
     setSources((prev) => [...prev, ...newFiles]);
   };
 
@@ -96,7 +107,7 @@ export default function CreateNewCasePage() {
     setIsSubmitting(true);
 
     try {
-      createNewCase({
+      const created = createNewCase({
         name: caseName.trim(),
         caseNumber: caseNumber,
         filedBy: filedBy.trim(),
@@ -107,8 +118,19 @@ export default function CreateNewCasePage() {
         sources: sources
       });
 
-      // Redirect immediately to cases listing
-      router.push("/cases");
+      // Upload actual video file to backend YOLO service immediately
+      const vidFile = uploadedRealFiles.find(f => f.type.includes("video") || /\.(mp4|mov|avi|webm)$/i.test(f.name));
+      if (vidFile) {
+        const formData = new FormData();
+        formData.append("file", vidFile);
+        fetch(`http://localhost:8000/api/cases/${caseNumber}/upload-video`, {
+          method: "POST",
+          body: formData
+        }).catch(() => {});
+      }
+
+      // Redirect immediately to the newly created case details page
+      router.push(`/cases/${caseNumber}`);
     } catch (err) {
       console.error("Error creating case", err);
       setIsSubmitting(false);

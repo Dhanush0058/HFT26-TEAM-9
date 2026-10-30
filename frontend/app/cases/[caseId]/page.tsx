@@ -65,6 +65,8 @@ export default function CaseDetailsPage() {
       const found = getStoredCaseById(caseId);
       if (found) {
         setCaseData({ ...found });
+        const vid = (found as any).videoUrl || found.evidenceList?.find(e => (e.dataType === "Video" || /\.(mp4|mov|avi|webm)$/i.test(e.name)) && e.fileUrl)?.fileUrl;
+        if (vid) setUploadedVideoUrl(vid);
       }
     };
     reload();
@@ -746,10 +748,18 @@ export default function CaseDetailsPage() {
                   caseTitle={caseData.name}
                   caseDescription={caseData.description}
                   evidenceList={caseData.evidenceList}
-                  evidenceVideoUrl={uploadedVideoUrl || caseData.evidenceList.find(e => e.dataType === "Video" && e.fileUrl)?.fileUrl}
+                  evidenceVideoUrl={uploadedVideoUrl || (caseData as any).videoUrl || caseData.evidenceList.find(e => (e.dataType === "Video" || /\.(mp4|mov|avi|webm)$/i.test(e.name)) && e.fileUrl)?.fileUrl}
+                  defaultScenario={(caseData as any).scenario}
                   onVideoUploaded={(file) => {
                     const blobUrl = URL.createObjectURL(file);
                     setUploadedVideoUrl(blobUrl);
+                    // Add evidence to case
+                    addEvidenceToCase(caseData.id, {
+                      name: file.name,
+                      size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
+                      type: file.type || "video/mp4",
+                      fileUrl: blobUrl
+                    });
                     const formData = new FormData();
                     formData.append("file", file);
                     fetch(`http://localhost:8000/api/cases/${caseData.id}/upload-video`, {
