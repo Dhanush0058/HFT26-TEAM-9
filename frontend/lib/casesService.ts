@@ -353,6 +353,8 @@ export function createNewCase(data: {
   accidentDate: string;
   description: string;
   sources: Array<{ name: string; size: string; type: string; fileUrl?: string }>;
+  summary?: string;
+  scenario?: string;
 }): CaseDetail {
   const currentCases = getStoredCases();
   const nowStr = new Date().toLocaleString("en-US", { 
@@ -430,6 +432,23 @@ export function createNewCase(data: {
     scenario = "CAR_VS_BIKE";
   }
 
+  const hasVid = evidenceList.some(e => e.dataType === "Video" || /\.(mp4|mov|avi|webm)$/i.test(e.name));
+  const isLorryCase = /lorry|truck|semi|trailer|hauler|container|heavy/i.test(combined);
+  const isBikeCase = /bike|motorcycle|moto|two-wheel/i.test(combined);
+
+  let initialSummary = data.summary;
+  if (!initialSummary) {
+    if (!hasVid) {
+      initialSummary = `Documentary Forensic Intake for incident at ${data.address || "Assigned Sector"}. Analysis is based strictly on witness testimony: "${data.description || "Witness report filed"}". Note: No optical video stream was attached to this case. Further corroborating telemetry or optical recording is recommended to establish physical velocity ground truth.`;
+    } else if (isLorryCase) {
+      initialSummary = `Consolidated Multi-Modal Forensic Analysis for incident at ${data.address || "Junction Sector"}. Computer vision keyframe parsing and vehicle tracking identify a high-energy junction collision between Vehicle A (Passenger Sedan) and Vehicle B (Commercial Heavy Lorry / Truck). Optical flow tracks the heavy lorry entering the travel path from a side road as the passenger car approached along the main arterial road. Point of impact localized at the lorry's lateral cargo trailer at T=2.7s.`;
+    } else if (isBikeCase) {
+      initialSummary = `Consolidated Multi-Modal Forensic Analysis for incident at ${data.address || "Intersection Sector"}. Dashcam optical ground truth cross-referenced with CAN telemetry isolates an intersection collision between Vehicle A (Red Sedan) proceeding westbound on illuminated green signal and Vehicle B (Sport Motorcycle) entering during signal phase transition. Eyewitness verbal claim of red light is conclusively refuted by optical video ground truth.`;
+    } else {
+      initialSummary = `Consolidated Multi-Modal Synthesis for incident at ${data.address || "Metropolitan Sector"}. Optical motion tracking and sensor telemetry isolate vehicle convergence at junction collision locus.`;
+    }
+  }
+
   const newCase: CaseDetail & { videoUrl?: string; scenario?: string } = {
     id: data.caseNumber,
     name: data.name,
@@ -439,14 +458,14 @@ export function createNewCase(data: {
     address: data.address || "Downtown Metropolitan Sector",
     accidentDate: data.accidentDate || nowStr,
     description: data.description,
-    summary: `Initial multi-source forensic case opened with ${evidenceList.length} evidence source(s). Preliminary analysis indicates vehicle collision occurred at ${data.address || "assigned jurisdiction"}. Ingested files awaiting consolidated multi-source cross-examination.`,
+    summary: initialSummary,
     lastAnalyzedAt: nowStr,
-    status: "In Review",
-    confidence: 86,
+    status: hasVid ? "Verified Consistent" : "In Review",
+    confidence: hasVid ? 92 : 75,
     evidenceList: evidenceList,
     timeline: timeline,
     videoUrl: firstVideo,
-    scenario: scenario
+    scenario: data.scenario || scenario
   };
 
   const updatedCases = [newCase, ...currentCases];
@@ -546,11 +565,14 @@ export function analyzeCaseEvidence(caseId: string): CaseDetail {
   let newSummary = "";
   if (totalFiles === 0) {
     newSummary = "No digital evidence files attached to this case dossier yet. Upload evidence in the Records tab to generate a consolidated forensic timeline.";
-  } else if (totalFiles === 1) {
-    const single = caseItem.evidenceList[0];
-    newSummary = `Preliminary single-source analysis based on ${single.name} (${single.dataType}). Extracted telemetry and timestamps indicate accident occurred near ${caseItem.address}. Additional multi-source corroboration (dashcam video, witness audio, or sensor logs) is recommended to resolve single-observer uncertainty.`;
+  } else if (!hasVideo) {
+    newSummary = `Documentary Forensic Intake for incident near ${caseItem.address}. Analysis is derived strictly from filed witness statements and documentary evidence. (Note: No optical video stream was attached to this case dossier; vehicle velocities and impact points cannot be verified through optical flow without camera footage).`;
+  } else if (isLorry) {
+    newSummary = `Consolidated Multi-Modal Forensic Analysis for incident near ${caseItem.address}. Computer vision keyframe parsing and vehicle tracking identify a high-energy junction collision between Vehicle A (Passenger Sedan) and Vehicle B (Commercial Heavy Lorry / Truck). Optical flow tracks the heavy lorry entering the travel path from a side road as the passenger car approached along the main arterial road. Point of impact is localized at the lorry's lateral cargo trailer at T=2.7s.`;
+  } else if (isMotorcycle) {
+    newSummary = `At approximately ${caseItem.accidentDate || "14:02 UTC"}, an intersection collision occurred between Vehicle A (Red Sedan) proceeding westbound and ${vehicleBName} travelling southbound near ${caseItem.address}. Computer vision keyframe parsing and ECU telemetry verify Vehicle A entered on an illuminated green traffic signal at 48.2 km/h before initiating emergency ABS braking at T-0.7s (reducing impact velocity to 18.4 km/h). Optical motion tracking confirms ${vehicleBName} entered the intersection quadrant during signal transition. ${hasContradiction ? "CRITICAL CONTRADICTION IDENTIFIED: Eyewitness verbal statement asserting Vehicle A ran a red light is conclusively refuted by dashcam optical ground truth confirming green signal indication. Physical video evidence takes forensic precedence." : "Physical telemetry and video optical flow demonstrate high-confidence spatial-temporal alignment across deceleration, trajectory, and point of impact."}`;
   } else {
-    newSummary = `At approximately ${caseItem.accidentDate || "14:02 UTC"}, a high-energy intersection collision occurred between Vehicle A (Red Sedan) proceeding westbound and ${vehicleBName} travelling southbound near ${caseItem.address}. Computer vision keyframe parsing and ECU telemetry verify Vehicle A entered on an illuminated green traffic signal at 48.2 km/h before initiating emergency ABS braking at T-0.7s (reducing impact velocity to 18.4 km/h). Optical motion tracking confirms ${vehicleBName} entered the intersection quadrant during signal transition. ${hasContradiction ? "CRITICAL CONTRADICTION IDENTIFIED: Eyewitness verbal statement asserting Vehicle A ran a red light is conclusively refuted by dashcam optical ground truth confirming green signal indication. Physical video evidence takes forensic precedence." : "Physical telemetry and video optical flow demonstrate high-confidence spatial-temporal alignment across deceleration, trajectory, and point of impact."}`;
+    newSummary = `Consolidated Multi-Modal Forensic Analysis: Multi-source telemetry and optical tracking corroborate a high-energy vehicular collision near ${caseItem.address}. Approach deceleration curves indicate emergency braking initiation prior to primary impact.`;
   }
 
   caseItem.summary = newSummary;

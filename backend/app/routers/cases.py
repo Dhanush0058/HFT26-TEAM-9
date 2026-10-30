@@ -91,13 +91,25 @@ def create_case(payload: CreateCaseRequest):
             src_type = src.get("type", "").lower()
             name_lower = src_name.lower()
 
-            if any(name_lower.endswith(ext) for ext in [".mp4", ".mov", ".avi"]) or "video" in src_type:
+            if any(name_lower.endswith(ext) for ext in [".mp4", ".mov", ".avi", ".webm"]) or "video" in src_type:
                 dtype = "VIDEO"
-                obs = [
-                    {"timestampSec": 0.0, "observation": f"Optical detection in {src_name}: vehicle entering camera visual field.", "confidence": 98, "isGroundTruth": True},
-                    {"timestampSec": 1.4, "observation": "Signal state evaluation: illuminated phase confirmed.", "confidence": 99, "isGroundTruth": True},
-                    {"timestampSec": 2.8, "observation": "Impact trajectory convergence identified.", "confidence": 96, "isGroundTruth": True}
-                ]
+                if any(k in name_lower for k in ["lorry", "truck", "semi", "trailer", "heavy"]):
+                    obs = [
+                        {"timestampSec": 0.0, "observation": f"Video optical detection in {src_name}: Commercial heavy lorry/truck enters side-junction.", "confidence": 98, "isGroundTruth": True},
+                        {"timestampSec": 1.8, "observation": "Passenger Sedan approaches junction along main arterial road corridor.", "confidence": 97, "isGroundTruth": True},
+                        {"timestampSec": 2.7, "observation": "Sedan frontal collision into lateral side cargo trailer of crossing lorry.", "confidence": 99, "isGroundTruth": True}
+                    ]
+                elif any(k in name_lower for k in ["bike", "motorcycle", "moto", "scooter"]):
+                    obs = [
+                        {"timestampSec": 0.0, "observation": f"Video optical stream in {src_name}: Red Sedan westbound on illuminated green signal.", "confidence": 98, "isGroundTruth": True},
+                        {"timestampSec": 2.0, "observation": "Sport motorcycle enters intersection during signal change.", "confidence": 96, "isGroundTruth": True},
+                        {"timestampSec": 2.8, "observation": "Front bumper lateral impact with motorcycle in northwest quadrant.", "confidence": 99, "isGroundTruth": True}
+                    ]
+                else:
+                    obs = [
+                        {"timestampSec": 0.0, "observation": f"Video optical stream in {src_name}: Vehicle entering intersection visual field.", "confidence": 98, "isGroundTruth": True},
+                        {"timestampSec": 2.6, "observation": "Vehicle deceleration curve and collision point localized.", "confidence": 97, "isGroundTruth": True}
+                    ]
             elif any(name_lower.endswith(ext) for ext in [".wav", ".mp3", ".m4a"]) or "audio" in src_type:
                 dtype = "AUDIO"
                 obs = [

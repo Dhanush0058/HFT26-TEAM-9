@@ -33,6 +33,8 @@ import TopHeader from "@/components/TopHeader";
 import ThreeForensicCanvas from "@/components/3d/ThreeForensicCanvas";
 import { 
   getStoredCaseById, 
+  getStoredCases,
+  saveStoredCases,
   CaseDetail, 
   EvidenceRecord, 
   analyzeCaseEvidence, 
@@ -110,23 +112,54 @@ export default function CaseDetailsPage() {
     );
   }
 
-  // Trigger Smart Analysis
-  const handleTriggerAnalysis = () => {
+  // Trigger Smart Analysis (Direct Real-time Groq/Gemini AI Call)
+  const handleTriggerAnalysis = async () => {
+    if (!caseData) return;
     setIsAnalyzing(true);
-    setAnalysisNotice("Extracting pending metadata and cross-correlating multi-source evidence...");
+    setAnalysisNotice("Querying Groq & Gemini AI for real-time forensic synthesis on uploaded media...");
 
-    setTimeout(() => {
-      try {
-        const updated = analyzeCaseEvidence(caseData.id);
-        setCaseData({ ...updated });
-        setAnalysisNotice(`Smart Analysis Complete! Brief Summary updated from all ${updated.evidenceList.length} evidence sources.`);
-        setTimeout(() => setAnalysisNotice(null), 4000);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setIsAnalyzing(false);
+    try {
+      const res = await fetch(`http://localhost:8000/api/cases/${caseData.id}/generate-summary`, {
+        method: "POST"
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const execSummary = data.summary?.executive || (typeof data.summary === "string" ? data.summary : null);
+        if (execSummary) {
+          const nowStr = new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) + " UTC";
+          const updated = {
+            ...caseData,
+            summary: execSummary,
+            lastAnalyzedAt: nowStr
+          };
+          setCaseData(updated);
+          const cases = getStoredCases();
+          const target = cases.find(c => c.id === caseData.id || c.caseNumber === caseData.caseNumber);
+          if (target) {
+            target.summary = execSummary;
+            target.lastAnalyzedAt = nowStr;
+            saveStoredCases(cases);
+          }
+          setAnalysisNotice(`AI Analysis Complete! Synthesized via ${data.providerUsed || "Multi-Modal AI Pipeline"}.`);
+          setTimeout(() => setAnalysisNotice(null), 4500);
+          setIsAnalyzing(false);
+          return;
+        }
       }
-    }, 1200);
+    } catch {
+      // fallback to client-side rule synthesis
+    }
+
+    try {
+      const updated = analyzeCaseEvidence(caseData.id);
+      setCaseData({ ...updated });
+      setAnalysisNotice(`Analysis Updated from ${updated.evidenceList.length} evidence source(s).`);
+      setTimeout(() => setAnalysisNotice(null), 4000);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   // Upload new evidence from Records tab

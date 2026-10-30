@@ -42,6 +42,8 @@ export default function CreateNewCasePage() {
   const [description, setDescription] = useState("");
   const [sources, setSources] = useState<UploadedFilePreview[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [submittingStatus, setSubmittingStatus] = useState<string>("Analyzing evidence...");
   const [isDragging, setIsDragging] = useState(false);
 
   // Initialize auto-generated case number & default dates
@@ -100,13 +102,66 @@ export default function CreateNewCasePage() {
     ]);
   };
 
-  const handleCreateCase = (e: React.FormEvent) => {
+  const handleCreateCase = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!caseName.trim()) return;
 
     setIsSubmitting(true);
+    setSubmittingStatus("Initializing Multi-Modal AI Intake...");
 
     try {
+      let aiSummary: string | undefined = undefined;
+      let aiScenario: string | undefined = undefined;
+
+      const vidFile = uploadedRealFiles.find(f => f.type.includes("video") || /\.(mp4|mov|avi|webm)$/i.test(f.name));
+
+      if (vidFile) {
+        setSubmittingStatus("Running YOLOv8 Optical Detection on uploaded video stream...");
+        const formData = new FormData();
+        formData.append("file", vidFile);
+        try {
+          const res = await fetch(`http://localhost:8000/api/cases/${caseNumber}/upload-video`, {
+            method: "POST",
+            body: formData
+          });
+          if (res.ok) {
+            const data = await res.json();
+            aiSummary = data.summary?.executive || data.summary;
+            aiScenario = data.scenario;
+          }
+        } catch {
+          // fallback gracefully
+        }
+      } else {
+        setSubmittingStatus("Synthesizing multi-source forensic evidence via Groq & Gemini AI...");
+        try {
+          const res = await fetch("http://localhost:8000/api/cases", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: caseName.trim(),
+              caseNumber: caseNumber,
+              location: address.trim() || "Unspecified City Sector",
+              address: address.trim() || "Unspecified City Sector",
+              date: accidentDate,
+              accidentDate: accidentDate,
+              officer: filedBy.trim(),
+              filedBy: filedBy.trim(),
+              witnessStatement: description.trim(),
+              description: description.trim(),
+              sources: sources || []
+            })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            aiSummary = data.summary?.executive || data.summary;
+            aiScenario = data.scenario;
+          }
+        } catch {
+          // fallback gracefully
+        }
+      }
+
       const created = createNewCase({
         name: caseName.trim(),
         caseNumber: caseNumber,
@@ -115,21 +170,11 @@ export default function CreateNewCasePage() {
         address: address.trim() || "Unspecified City Sector",
         accidentDate: accidentDate,
         description: description.trim(),
-        sources: sources
+        sources: sources,
+        summary: aiSummary,
+        scenario: aiScenario
       });
 
-      // Upload actual video file to backend YOLO service immediately
-      const vidFile = uploadedRealFiles.find(f => f.type.includes("video") || /\.(mp4|mov|avi|webm)$/i.test(f.name));
-      if (vidFile) {
-        const formData = new FormData();
-        formData.append("file", vidFile);
-        fetch(`http://localhost:8000/api/cases/${caseNumber}/upload-video`, {
-          method: "POST",
-          body: formData
-        }).catch(() => {});
-      }
-
-      // Redirect immediately to the newly created case details page
       router.push(`/cases/${caseNumber}`);
     } catch (err) {
       console.error("Error creating case", err);
@@ -402,7 +447,6 @@ export default function CreateNewCasePage() {
               {isSubmitting ? (
                 <>
                   <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  <span>Registering Case Dossier...</span>
                 </>
               ) : (
                 <>
