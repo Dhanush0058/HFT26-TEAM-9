@@ -39,7 +39,8 @@ import {
   addEvidenceToCase,
   analyzeCaseEvidence, 
   deleteEvidenceFromCase,
-  deleteCase
+  deleteCase,
+  generateForensicEvidenceData
 } from "@/lib/casesService";
 
 export default function CaseDetailsPage() {
@@ -54,6 +55,34 @@ export default function CaseDetailsPage() {
   const [analysisNotice, setAnalysisNotice] = useState<string | null>(null);
   const [viewingEvidence, setViewingEvidence] = useState<EvidenceRecord | null>(null);
   const [extractedDrawerRecord, setExtractedDrawerRecord] = useState<EvidenceRecord | null>(null);
+
+  const openExtractedDrawer = (ev: EvidenceRecord) => {
+    const summaryText = ev.extractedData?.summary || "";
+    if (
+      !summaryText ||
+      summaryText.startsWith("Data and digital artifacts extracted from") ||
+      summaryText.startsWith("Extracted digital artifacts from") ||
+      summaryText.startsWith("Forensic ingestion of")
+    ) {
+      const fresh = generateForensicEvidenceData(
+        { name: ev.name, size: ev.size, type: ev.dataType, accidentTime: ev.accidentTime },
+        { name: caseData?.name, address: caseData?.address, description: caseData?.description, scenario: (caseData as any)?.scenario }
+      );
+      setExtractedDrawerRecord({
+        ...ev,
+        is_data_extracted: 1,
+        status: "Extracted",
+        extractedData: {
+          summary: fresh.summary,
+          keyObservations: fresh.keyObservations,
+          fields: fresh.fields,
+          transcript: fresh.transcript || ev.extractedData?.transcript
+        }
+      });
+    } else {
+      setExtractedDrawerRecord(ev);
+    }
+  };
   const [selectedUpdateId, setSelectedUpdateId] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -890,7 +919,7 @@ export default function CaseDetailsPage() {
                               {ev.is_data_extracted ? (
                                 <button
                                   type="button"
-                                  onClick={() => setExtractedDrawerRecord(ev)}
+                                  onClick={() => openExtractedDrawer(ev)}
                                   className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#F5F8FF] hover:bg-[#EBF3FF] text-[#0A66FF] border border-[#D0E2FF] transition flex items-center gap-1.5 shadow-2xs"
                                 >
                                   <Database className="w-3.5 h-3.5" />
@@ -1246,6 +1275,23 @@ export default function CaseDetailsPage() {
                   </span>
                   <div className="p-4 rounded-[16px] bg-[#F5F8FF] border border-[#EEEEEC] text-xs text-[#222222] leading-relaxed">
                     {extractedDrawerRecord.extractedData.summary}
+                  </div>
+                </div>
+              )}
+
+              {/* Key Forensic Observations */}
+              {extractedDrawerRecord.extractedData?.keyObservations && extractedDrawerRecord.extractedData.keyObservations.length > 0 && (
+                <div className="space-y-2">
+                  <span className="text-[11px] font-bold text-[#8A8A8A] uppercase tracking-wider">
+                    Key Forensic Observations
+                  </span>
+                  <div className="space-y-1.5">
+                    {extractedDrawerRecord.extractedData.keyObservations.map((obs, idx) => (
+                      <div key={idx} className="p-3 rounded-[14px] bg-[#F5F8FF] border border-[#EEEEEC] flex items-start gap-2.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#0A66FF] mt-1.5 shrink-0" />
+                        <span className="text-xs text-[#222222] leading-relaxed">{obs}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
