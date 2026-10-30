@@ -49,9 +49,6 @@ export default function CaseDetailsPage() {
   const [selectedUpdateId, setSelectedUpdateId] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  // Visuals tab scrubber state
-  const [scrubberTime, setScrubberTime] = useState(2.8);
-  const [isPlaying, setIsPlaying] = useState(false);
 
   // Load case data and auto-refresh when AI completes in background
   useEffect(() => {
@@ -71,19 +68,6 @@ export default function CaseDetailsPage() {
     return () => window.removeEventListener("caseUpdated", reload);
   }, [caseId]);
 
-  // Scrubber animation loop for Visuals tab
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
-    if (isPlaying) {
-      interval = setInterval(() => {
-        setScrubberTime((prev) => {
-          if (prev >= 6.0) return 0.0;
-          return Number((prev + 0.1).toFixed(1));
-        });
-      }, 100);
-    }
-    return () => clearInterval(interval);
-  }, [isPlaying]);
 
   useEffect(() => {
     if (caseData?.updates && caseData.updates.length > 0) {

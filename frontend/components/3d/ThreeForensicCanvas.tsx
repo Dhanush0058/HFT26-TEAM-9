@@ -551,7 +551,7 @@ export default function ThreeForensicCanvas({
           <div className="bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-800 pointer-events-auto flex items-center gap-3 text-xs font-mono">
             <span className="flex items-center gap-1.5 text-blue-400 font-bold">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              REKISHI 3D FORENSIC STUDIO
+              REKISHI 3D FORENSIC STUDIO <span className="text-slate-400">| {caseTitle}</span>
             </span>
             <span className="text-slate-500">|</span>
             <span className="text-slate-300">
