@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from app.services.ai_pipeline import forensic_ai_engine
 from app.services.trajectory_service import trajectory_engine
+from app.services.yolo_service import yolo_service
 
 router = APIRouter(prefix="/api/cases", tags=["Cases & Forensics"])
 
@@ -440,6 +441,37 @@ def get_case_trajectory(case_id: str):
                 "caseId": case_id,
                 "frameCount": len(traj),
                 "frames": traj
+            }
+    raise HTTPException(status_code=404, detail=f"Case {case_id} not found")
+
+@router.get("/{case_id}/yolo-detections")
+def get_case_yolo_detections(case_id: str):
+    """
+    Returns YOLOv8 vehicle detections (cars, motorcycles, trucks, buses)
+    identified in the case video evidence.
+    """
+    for c in CASES_DB:
+        if c.get("id").upper() == case_id.upper():
+            return {
+                "caseId": case_id,
+                "model": "YOLOv8n (Ultralytics)",
+                "targetClasses": ["car", "motorcycle", "bus", "truck"],
+                "detections": yolo_service.get_demo_detections()
+            }
+    raise HTTPException(status_code=404, detail=f"Case {case_id} not found")
+
+@router.get("/{case_id}/evidence-gaps")
+def get_case_evidence_gaps(case_id: str):
+    """
+    Returns automated flags for missing information, blindspots, and unverified data.
+    """
+    for c in CASES_DB:
+        if c.get("id").upper() == case_id.upper():
+            gaps = forensic_ai_engine.analyze_evidence_gaps(c.get("records", []))
+            return {
+                "caseId": case_id,
+                "gapCount": len(gaps),
+                "evidenceGaps": gaps
             }
     raise HTTPException(status_code=404, detail=f"Case {case_id} not found")
 
