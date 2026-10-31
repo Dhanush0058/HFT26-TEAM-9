@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import TopHeader from "@/components/TopHeader";
 import ThreeForensicCanvas, { ScenarioType } from "@/components/3d/ThreeForensicCanvas";
+import DetailedCaseReport from "@/components/DetailedCaseReport";
 import { 
   getStoredCaseById, 
   CaseDetail, 
@@ -61,7 +62,7 @@ export default function CaseDetailsPage() {
     ) {
       const fresh = generateForensicEvidenceData(
         { name: ev.name, size: ev.size, type: ev.dataType, accidentTime: ev.accidentTime },
-        { name: caseData?.name, address: caseData?.address, description: caseData?.description, scenario: (caseData as any)?.scenario }
+        { name: caseData?.name, address: caseData?.address, description: caseData?.description, scenario: caseData?.scenario }
       );
       setExtractedDrawerRecord({
         ...ev,
@@ -788,7 +789,10 @@ export default function CaseDetailsPage() {
                   </div>
                 </div>
 
-                {/* Block 4: Case Removal / Danger Zone */}
+                {/* Block 4: Comprehensive Detailed Forensic Investigation Report */}
+                <DetailedCaseReport caseData={caseData} />
+
+                {/* Block 5: Case Removal / Danger Zone */}
                 <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-soft border border-[#F0F0F0] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <span className="text-[13px] font-medium text-[#8A8A8A]">

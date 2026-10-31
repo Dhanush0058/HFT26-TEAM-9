@@ -41,7 +41,6 @@ export default function CreateNewCasePage() {
   const [sources, setSources] = useState<UploadedFilePreview[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [submittingStatus, setSubmittingStatus] = useState<string>("Analyzing evidence...");
   const [isDragging, setIsDragging] = useState(false);
   const [showCoordinatePicker, setShowCoordinatePicker] = useState(false);
   const [geoLocating, setGeoLocating] = useState(false);
@@ -111,13 +110,11 @@ export default function CreateNewCasePage() {
     if (!caseName.trim()) return;
 
     setIsSubmitting(true);
-    setSubmittingStatus("Initializing Multi-Modal AI Intake & Supabase Vault...");
     try {
       let aiSummary: string | undefined = undefined;
       let aiScenario: string | undefined = undefined;
 
       // 1. Register base case in backend
-      setSubmittingStatus("Registering incident dossier in forensic database...");
       try {
         const res = await fetch("http://localhost:8000/api/cases", {
           method: "POST",
@@ -148,7 +145,6 @@ export default function CreateNewCasePage() {
       // 2. Upload video stream if provided (runs YOLOv8 detection and stores to Supabase)
       const vidFile = uploadedRealFiles.find(f => f.type.includes("video") || /\.(mp4|mov|avi|webm)$/i.test(f.name));
       if (vidFile) {
-        setSubmittingStatus("Uploading video to Supabase Storage & executing YOLOv8 detection...");
         const formData = new FormData();
         formData.append("file", vidFile);
         try {
@@ -169,7 +165,6 @@ export default function CreateNewCasePage() {
       // 3. Upload non-video evidence files (images, documents, text notes, audio, csv) to Supabase Storage
       const otherFiles = uploadedRealFiles.filter(f => !f.type.includes("video") && !/\.(mp4|mov|avi|webm)$/i.test(f.name));
       if (otherFiles.length > 0) {
-        setSubmittingStatus(`Ingesting ${otherFiles.length} file(s) (Images, Documents, Text) into Supabase Cloud Storage...`);
         for (const f of otherFiles) {
           try {
             const formData = new FormData();
@@ -191,7 +186,6 @@ export default function CreateNewCasePage() {
       }
 
       // 4. Save and index dossier
-      setSubmittingStatus("Finalizing synchronized timeline and physical reconstruction...");
       createNewCase({
         name: caseName.trim(),
         caseNumber: caseNumber,
@@ -497,7 +491,7 @@ export default function CreateNewCasePage() {
               {isSubmitting ? (
                 <div className="flex items-center gap-2">
                   <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  <span>{submittingStatus}</span>
+                  <span>Creating...</span>
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
