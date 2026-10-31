@@ -506,23 +506,21 @@ export function downloadPdfReport(caseData: CaseDetail): void {
   y += liabilityLines.length * 4.5 + 8;
 
   // Signoff Box
-  checkPageBreak(30);
+  checkPageBreak(25);
   doc.setFillColor(248, 250, 252);
   doc.setDrawColor(203, 213, 225);
-  doc.roundedRect(margin, y, contentWidth, 24, 2, 2, "FD");
+  doc.roundedRect(margin, y, contentWidth, 18, 2, 2, "FD");
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8.5);
   doc.setTextColor(30, 41, 59);
   doc.text("Certified Forensic Investigator:", margin + 4, y + 6);
   doc.text("Verification Date:", margin + 4, y + 12);
-  doc.text("Digital Dossier Authority:", margin + 4, y + 18);
 
   doc.setFont("helvetica", "normal");
   doc.setTextColor(71, 85, 105);
   doc.text(`${report.findingsAndLiability.investigatorSignoff.officer} (${report.findingsAndLiability.investigatorSignoff.credentials})`, margin + 54, y + 6);
   doc.text(report.findingsAndLiability.investigatorSignoff.date, margin + 54, y + 12);
-  doc.text("REKISHI Multi-Modal Forensic Engine v2.4 - Sealed Record", margin + 54, y + 18);
 
   // Add Footers to all pages
   const totalPages = doc.internal.pages.length - 1;
