@@ -16,6 +16,15 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "REKISHI | Forensic Intelligence System",
   description: "Multi-Source Forensic Reconstruction and Case Dossier Management",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icon.png", type: "image/png", sizes: "192x192" },
+    ],
+    apple: [
+      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({
