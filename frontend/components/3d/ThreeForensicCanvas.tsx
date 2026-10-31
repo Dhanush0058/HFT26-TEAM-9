@@ -8,12 +8,9 @@ import {
   Pause, 
   RotateCcw, 
   Video, 
-  Compass, 
   Camera, 
   Layers, 
-  Eye,
-  Sliders,
-  Sparkles
+  Sliders
 } from "lucide-react";
 
 export type ScenarioType = "CAR_VS_LORRY" | "CAR_VS_BIKE" | "HIGHWAY_REAR_END" | "HEAD_ON" | "INTERSECTION_TBONE";
@@ -28,7 +25,7 @@ interface ThreeForensicCanvasProps {
   caseTitle?: string;
   caseDescription?: string;
   evidenceVideoUrl?: string;
-  evidenceList?: Array<{ name: string; dataType?: string; extractedData?: any }>;
+  evidenceList?: Array<{ name: string; dataType?: string; extractedData?: { summary?: string; [key: string]: unknown } }>;
   defaultScenario?: ScenarioType;
   onVideoUploaded?: (file: File) => void;
 }
@@ -213,7 +210,6 @@ export default function ThreeForensicCanvas({
     const roadMat = new THREE.MeshStandardMaterial({ color: 0x141a27, roughness: 0.72 });
     const curbMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.65 });
     const lineMat = new THREE.MeshBasicMaterial({ color: 0xf8fafc });
-    const zebraMat = new THREE.MeshBasicMaterial({ color: 0xe2e8f0 });
     const lampPostMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.8, roughness: 0.3 });
 
     // Helper for Streetlamps (placed safely outside camera lines)
@@ -782,7 +778,7 @@ export default function ThreeForensicCanvas({
       }
 
       // Lorry emerging from side-junction: Southbound along Avenue
-      let xB = 1.6;
+      const xB = 1.6;
       let zB = -26.0;
       let rollLorry = 0;
 
@@ -813,17 +809,14 @@ export default function ThreeForensicCanvas({
 
     } else if (activeScenario === "HIGHWAY_REAR_END") {
       let xB = 2.0;
-      let isBrakingB = false;
       if (t < 1.0) {
         xB = 2.0 + (t * 8.0);
       } else if (t < 2.6) {
         const dt = t - 1.0;
         xB = 10.0 + (dt * 3.5);
-        isBrakingB = true;
       } else {
         const dt = t - 2.6;
         xB = 15.6 + (dt * 4.5);
-        isBrakingB = true;
       }
 
       let xA = -22.0;

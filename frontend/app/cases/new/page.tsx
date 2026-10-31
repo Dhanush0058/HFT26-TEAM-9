@@ -192,7 +192,7 @@ export default function CreateNewCasePage() {
 
       // 4. Save and index dossier
       setSubmittingStatus("Finalizing synchronized timeline and physical reconstruction...");
-      const created = createNewCase({
+      createNewCase({
         name: caseName.trim(),
         caseNumber: caseNumber,
         filedBy: filedBy.trim() || "Investigator",
@@ -497,7 +497,7 @@ export default function CreateNewCasePage() {
               {isSubmitting ? (
                 <div className="flex items-center gap-2">
                   <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  <span>Saving & Ingesting to Supabase...</span>
+                  <span>{submittingStatus}</span>
                 </div>
               ) : (
                 <div className="flex items-center gap-2">

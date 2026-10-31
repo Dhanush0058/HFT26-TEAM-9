@@ -1,19 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import TopHeader from "@/components/TopHeader";
 import { 
   CheckCircle2, 
   Save, 
-  MoreHorizontal, 
-  Database, 
-  HardDrive, 
-  Terminal, 
-  Cpu, 
-  Check, 
-  Lock, 
-  Activity 
+  MoreHorizontal
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -21,26 +14,6 @@ export default function SettingsPage() {
   const [timeFormat, setTimeFormat] = useState("dual");
   const [auditLogging, setAuditLogging] = useState(true);
   const [isSaved, setIsSaved] = useState(false);
-  const [copiedSql, setCopiedSql] = useState(false);
-  const [supabaseStatus, setSupabaseStatus] = useState<{
-    configured: boolean;
-    connected: boolean;
-    bucket: string;
-    supabaseUrl: string | null;
-    status: string;
-  } | null>(null);
-
-  useEffect(() => {
-    fetch("http://localhost:8000/api/supabase/status")
-      .then((r) => r.json())
-      .then((data) => setSupabaseStatus(data))
-      .catch(() => {});
-  }, []);
-
-  const handleCopySqlNotice = () => {
-    setCopiedSql(true);
-    setTimeout(() => setCopiedSql(false), 2000);
-  };
 
   const handleSave = () => {
     setIsSaved(true);
@@ -63,137 +36,7 @@ export default function SettingsPage() {
       >
         <div className="max-w-5xl space-y-6">
 
-          {/* Block 1: Supabase Cloud Database & Storage */}
-          <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-soft border border-[#F0F0F0] space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#F0F0F0] pb-4">
-              <div>
-                <span className="text-[13px] font-medium text-[#8A8A8A]">
-                  Cloud Infrastructure
-                </span>
-                <h2 className="text-xl font-extrabold text-[#111111] mt-0.5 flex items-center gap-2">
-                  <Database className="w-5 h-5 text-emerald-600" /> Supabase Database & Storage Vault
-                </h2>
-                <p className="text-xs text-[#8A8A8A] mt-0.5">
-                  PostgreSQL relational tables and Object Storage bucket for digital evidence assets.
-                </p>
-              </div>
-              {supabaseStatus?.connected ? (
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 self-start sm:self-auto">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  Connected
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 self-start sm:self-auto">
-                  <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                  Awaiting Credentials
-                </span>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-              <div className="p-4 rounded-[18px] bg-[#F5F8FF] border border-[#EEEEEC]">
-                <div className="text-[11px] font-semibold text-[#8A8A8A] uppercase tracking-wider">Database Status</div>
-                <div className="text-xs font-bold text-[#111111] mt-1 flex items-center gap-1.5">
-                  <Database className="w-3.5 h-3.5 text-emerald-600" />
-                  {supabaseStatus?.connected ? "PostgreSQL Connected" : "Local In-Memory Cache (Active)"}
-                </div>
-                <div className="text-[10px] text-[#8A8A8A] mt-0.5 truncate">
-                  {supabaseStatus?.supabaseUrl || "Tables: cases, evidence_records, timeline"}
-                </div>
-              </div>
-
-              <div className="p-4 rounded-[18px] bg-[#F5F8FF] border border-[#EEEEEC]">
-                <div className="text-[11px] font-semibold text-[#8A8A8A] uppercase tracking-wider">Storage Bucket</div>
-                <div className="text-xs font-bold text-[#111111] mt-1 flex items-center gap-1.5">
-                  <HardDrive className="w-3.5 h-3.5 text-blue-600" />
-                  {supabaseStatus?.bucket || "evidence-media"}
-                </div>
-                <div className="text-[10px] text-[#8A8A8A] mt-0.5">Videos, Images, Documents, Sensors</div>
-              </div>
-
-              <div className="p-4 rounded-[18px] bg-[#F5F8FF] border border-[#EEEEEC]">
-                <div className="text-[11px] font-semibold text-[#8A8A8A] uppercase tracking-wider">SQL Migration</div>
-                <div className="text-xs font-bold text-[#111111] mt-1 flex items-center gap-1.5">
-                  <Terminal className="w-3.5 h-3.5 text-indigo-600" />
-                  supabase_schema.sql
-                </div>
-                <div className="text-[10px] text-[#8A8A8A] mt-0.5">Ready for Supabase SQL Editor</div>
-              </div>
-            </div>
-
-            <div className="bg-slate-900 text-slate-200 p-4 rounded-[18px] font-mono text-xs space-y-2">
-              <div className="flex items-center justify-between text-slate-400 text-[11px] border-b border-slate-800 pb-2">
-                <span>Setup Guide: Execute SQL Schema in Supabase Dashboard</span>
-                <span className="text-emerald-400 text-[10px]">supabase_schema.sql</span>
-              </div>
-              <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
-                1. Open your Supabase Dashboard &rarr; <strong>SQL Editor</strong> &rarr; <strong>New query</strong>.<br />
-                2. Copy & paste the contents of <code className="bg-slate-800 px-1 py-0.5 rounded text-amber-300">supabase_schema.sql</code> and click <strong>Run</strong>.<br />
-                3. Paste your project URL & Anon Key into <code className="bg-slate-800 px-1 py-0.5 rounded text-amber-300">backend/.env</code>.
-              </p>
-            </div>
-          </div>
-
-          {/* Block 2: Forensic Intelligence Engine */}
-          <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-soft border border-[#F0F0F0] space-y-5">
-            <div className="flex items-center justify-between border-b border-[#F0F0F0] pb-4">
-              <div>
-                <span className="text-[13px] font-medium text-[#8A8A8A]">Neural Pipelines</span>
-                <h2 className="text-xl font-extrabold text-[#111111] mt-0.5 flex items-center gap-2">
-                  <Cpu className="w-5 h-5 text-blue-600" /> Forensic Intelligence Engine
-                </h2>
-                <p className="text-xs text-[#8A8A8A] mt-0.5">
-                  Multi-modal neural pipeline status and internal backend connectivity.
-                </p>
-              </div>
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                Operational
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
-              <div className="p-4 rounded-[18px] bg-[#F5F8FF] border border-[#EEEEEC]">
-                <div className="text-[11px] font-semibold text-[#8A8A8A] uppercase tracking-wider">Vision Pipeline</div>
-                <div className="text-xs font-bold text-[#111111] mt-1 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" /> Featherless VLM
-                </div>
-                <div className="text-[10px] text-[#8A8A8A] mt-0.5 flex items-center gap-1">
-                  <Lock className="w-2.5 h-2.5 text-slate-400" /> Internal Config
-                </div>
-              </div>
-
-              <div className="p-4 rounded-[18px] bg-[#F5F8FF] border border-[#EEEEEC]">
-                <div className="text-[11px] font-semibold text-[#8A8A8A] uppercase tracking-wider">Audio STT</div>
-                <div className="text-xs font-bold text-[#111111] mt-1 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-sky-600" /> Groq Whisper-v3
-                </div>
-                <div className="text-[10px] text-[#8A8A8A] mt-0.5 flex items-center gap-1">
-                  <Lock className="w-2.5 h-2.5 text-slate-400" /> Internal Config
-                </div>
-              </div>
-
-              <div className="p-4 rounded-[18px] bg-[#F5F8FF] border border-[#EEEEEC]">
-                <div className="text-[11px] font-semibold text-[#8A8A8A] uppercase tracking-wider">Reasoner Core</div>
-                <div className="text-xs font-bold text-[#111111] mt-1 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" /> Llama 3.3 70B
-                </div>
-                <div className="text-[10px] text-[#8A8A8A] mt-0.5 flex items-center gap-1">
-                  <Lock className="w-2.5 h-2.5 text-slate-400" /> Internal Config
-                </div>
-              </div>
-
-              <div className="p-4 rounded-[18px] bg-[#F5F8FF] border border-[#EEEEEC]">
-                <div className="text-[11px] font-semibold text-[#8A8A8A] uppercase tracking-wider">3D Physics</div>
-                <div className="text-xs font-bold text-[#111111] mt-1 flex items-center gap-1.5">
-                  <Activity className="w-3.5 h-3.5 text-emerald-600" /> SciPy Spline Engine
-                </div>
-                <div className="text-[10px] text-[#8A8A8A] mt-0.5">Active & Local</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Block 3: Preferences Card */}
+          {/* Preferences Card */}
           <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-soft border border-[#F0F0F0] space-y-6">
             <div className="flex items-center justify-between">
               <div>
