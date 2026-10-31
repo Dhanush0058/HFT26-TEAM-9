@@ -90,6 +90,10 @@ export default function ThreeForensicCanvas({
   const [activeScenario, setActiveScenario] = useState<ScenarioType>(initialDetection.scenario);
   const [activeJunction, setActiveJunction] = useState<JunctionType>(initialDetection.junction);
   const [cameraPerspective, setCameraPerspective] = useState<CameraPerspective>("ORBIT");
+  const [mapLayerMode, setMapLayerMode] = useState<"ARCHITECTURAL" | "SATELLITE">("ARCHITECTURAL");
+  const groundMeshRef = useRef<THREE.Mesh | null>(null);
+  const groundMatRef = useRef<THREE.MeshStandardMaterial | null>(null);
+  const satelliteMatRef = useRef<THREE.MeshStandardMaterial | null>(null);
   const perspectiveRef = useRef<CameraPerspective>("ORBIT");
   useEffect(() => {
     perspectiveRef.current = cameraPerspective;
@@ -97,6 +101,17 @@ export default function ThreeForensicCanvas({
       controlsRef.current.enabled = true;
     }
   }, [cameraPerspective]);
+
+  // Real-time Basemap Layer Switcher (3D Architectural Blueprint vs ESRI Aerial Satellite Orthophoto)
+  useEffect(() => {
+    if (groundMeshRef.current) {
+      if (mapLayerMode === "SATELLITE" && satelliteMatRef.current) {
+        groundMeshRef.current.material = satelliteMatRef.current;
+      } else if (groundMatRef.current) {
+        groundMeshRef.current.material = groundMatRef.current;
+      }
+    }
+  }, [mapLayerMode]);
   const [isExporting, setIsExporting] = useState(false);
   const [exportNotice, setExportNotice] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -316,10 +331,24 @@ export default function ThreeForensicCanvas({
       roughness: 0.92,
       metalness: 0.03
     });
+    groundMatRef.current = groundMat;
+
+    // High-resolution real satellite orthophoto basemap for Gachibowli ORR
+    const textureLoader = new THREE.TextureLoader();
+    const satelliteTexture = textureLoader.load("/satellite_gachibowli.jpg");
+    satelliteTexture.colorSpace = THREE.SRGBColorSpace;
+    const satelliteMat = new THREE.MeshStandardMaterial({
+      map: satelliteTexture,
+      roughness: 0.88,
+      metalness: 0.04
+    });
+    satelliteMatRef.current = satelliteMat;
+
     const ground = new THREE.Mesh(new THREE.PlaneGeometry(160, 160), groundMat);
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     scene.add(ground);
+    groundMeshRef.current = ground;
 
     // Subtle grid on sidewalks without cutting through the asphalt road
     const curbMat = new THREE.MeshStandardMaterial({ 
@@ -327,9 +356,151 @@ export default function ThreeForensicCanvas({
       roughness: 0.85, 
       metalness: 0.04 
     });
-    const roadMat = new THREE.MeshStandardMaterial({ color: 0x5a6778, roughness: 0.85 });
+    const roadMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.88 });
     const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff }); // continuous crisp white lane lines
     const lampPostMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.8, roughness: 0.3 });
+
+    // Helper for Pedestrian Zebra Crossings (All 4 Intersection Approaches)
+    const addZebraCrossings = (targetGroup: THREE.Group) => {
+      // East Crosswalk
+      for (let z = -5.0; z <= 5.0; z += 1.25) {
+        const stripe = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 2.8), lineMat);
+        stripe.rotation.x = -Math.PI / 2;
+        stripe.position.set(7.5, 0.048, z);
+        targetGroup.add(stripe);
+      }
+      // West Crosswalk
+      for (let z = -5.0; z <= 5.0; z += 1.25) {
+        const stripe = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 2.8), lineMat);
+        stripe.rotation.x = -Math.PI / 2;
+        stripe.position.set(-7.5, 0.048, z);
+        targetGroup.add(stripe);
+      }
+      // North Crosswalk
+      for (let x = -5.0; x <= 5.0; x += 1.25) {
+        const stripe = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 0.7), lineMat);
+        stripe.rotation.x = -Math.PI / 2;
+        stripe.position.set(x, 0.048, -7.5);
+        targetGroup.add(stripe);
+      }
+      // South Crosswalk
+      for (let x = -5.0; x <= 5.0; x += 1.25) {
+        const stripe = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 0.7), lineMat);
+        stripe.rotation.x = -Math.PI / 2;
+        stripe.position.set(x, 0.048, 7.5);
+        targetGroup.add(stripe);
+      }
+    };
+
+    // Helper for White Directional Arrows on Pavement
+    const addDirectionalArrow = (targetGroup: THREE.Group, x: number, z: number, rotY: number) => {
+      const g = new THREE.Group();
+      g.position.set(x, 0.046, z);
+      g.rotation.y = rotY;
+
+      const stem = new THREE.Mesh(new THREE.PlaneGeometry(0.32, 2.2), lineMat);
+      stem.rotation.x = -Math.PI / 2;
+      g.add(stem);
+
+      const head = new THREE.Mesh(new THREE.ConeGeometry(0.55, 1.1, 3), lineMat);
+      head.rotation.x = -Math.PI / 2;
+      head.position.set(0, 0, -1.35);
+      g.add(head);
+
+      targetGroup.add(g);
+    };
+
+    // Helper for Traffic Signal Gantries with Forensically Verified Light States
+    const signalMastMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.85, roughness: 0.3 });
+    const greenLightMat = new THREE.MeshStandardMaterial({ color: 0x22c55e, emissive: 0x16a34a, emissiveIntensity: 1.2 });
+    const redLightMat = new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0xdc2626, emissiveIntensity: 1.2 });
+    const offLightMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.9 });
+
+    const addTrafficSignalGantry = (targetGroup: THREE.Group, x: number, z: number, rotY: number, showGreenArterial: boolean) => {
+      const g = new THREE.Group();
+      g.position.set(x, 0, z);
+      g.rotation.y = rotY;
+
+      // Vertical structural steel pole
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.18, 6.4, 12), signalMastMat);
+      pole.position.y = 3.2;
+      g.add(pole);
+
+      // Overhead cantilever truss
+      const truss = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.18, 0.18), signalMastMat);
+      truss.position.set(2.1, 6.1, 0);
+      g.add(truss);
+
+      // Signal housing
+      const housing = new THREE.Mesh(new THREE.BoxGeometry(0.45, 1.2, 0.32), signalMastMat);
+      housing.position.set(3.4, 5.4, 0);
+      g.add(housing);
+
+      // Top Red light
+      const red = new THREE.Mesh(new THREE.CircleGeometry(0.12, 16), showGreenArterial ? offLightMat : redLightMat);
+      red.position.set(3.4, 5.75, 0.17);
+      g.add(red);
+
+      // Middle Amber light
+      const amber = new THREE.Mesh(new THREE.CircleGeometry(0.12, 16), offLightMat);
+      amber.position.set(3.4, 5.4, 0.17);
+      g.add(amber);
+
+      // Bottom Green light (Corroborating optical ground truth of primary vehicle)
+      const green = new THREE.Mesh(new THREE.CircleGeometry(0.12, 16), showGreenArterial ? greenLightMat : offLightMat);
+      green.position.set(3.4, 5.05, 0.17);
+      g.add(green);
+
+      targetGroup.add(g);
+    };
+
+    // Gachibowli Elevated Flyover Structure Spanning Overhead
+    const flyoverGroup = new THREE.Group();
+    const concreteMat = new THREE.MeshStandardMaterial({ color: 0xd6dbe4, roughness: 0.68, metalness: 0.08 });
+    const flyoverRoadMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.85 });
+    const pierMat = new THREE.MeshStandardMaterial({ color: 0xc4cbd5, roughness: 0.7 });
+
+    // Elevated Bridge Deck
+    const deck = new THREE.Mesh(new THREE.BoxGeometry(140, 0.65, 8.8), concreteMat);
+    deck.position.set(0, 5.65, -14.2);
+    deck.castShadow = true;
+    deck.receiveShadow = true;
+    flyoverGroup.add(deck);
+
+    // Deck Pavement
+    const deckSurface = new THREE.Mesh(new THREE.PlaneGeometry(140, 8.0), flyoverRoadMat);
+    deckSurface.rotation.x = -Math.PI / 2;
+    deckSurface.position.set(0, 6.0, -14.2);
+    flyoverGroup.add(deckSurface);
+
+    // Deck Center Dashed Lines
+    for (let x = -40; x <= 40; x += 4.5) {
+      const d = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 0.2), lineMat);
+      d.rotation.x = -Math.PI / 2;
+      d.position.set(x, 6.02, -14.2);
+      flyoverGroup.add(d);
+    }
+
+    // Safety Concrete Parapets
+    const northParapet = new THREE.Mesh(new THREE.BoxGeometry(140, 0.85, 0.3), concreteMat);
+    northParapet.position.set(0, 6.4, -18.45);
+    northParapet.castShadow = true;
+    flyoverGroup.add(northParapet);
+
+    const southParapet = northParapet.clone();
+    southParapet.position.z = -9.95;
+    flyoverGroup.add(southParapet);
+
+    // Cylindrical Concrete Bridge Piers
+    [-52, -32, -12, 12, 32, 52].forEach((px) => {
+      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.95, 5.3, 16), pierMat);
+      p.position.set(px, 2.65, -14.2);
+      p.castShadow = true;
+      p.receiveShadow = true;
+      flyoverGroup.add(p);
+    });
+
+    scene.add(flyoverGroup);
 
     // Helper for Streetlamps (placed safely outside camera lines)
     const addStreetLamp = (targetGroup: THREE.Group, x: number, z: number, rotY: number) => {
@@ -442,6 +613,9 @@ export default function ThreeForensicCanvas({
     addTJBorderNS(-5.8, -44, -6.3);
     addTJBorderNS(5.8, -44, -6.3);
 
+    addZebraCrossings(tJunctionGroup);
+    addTrafficSignalGantry(tJunctionGroup, -8.0, 7.5, 0, true);   // Arterial Green light
+    addTrafficSignalGantry(tJunctionGroup, 8.0, -7.5, Math.PI, false); // Lateral Red light
     addStreetLamp(tJunctionGroup, -16.0, -16.0, Math.PI / 4);
     addStreetLamp(tJunctionGroup, 16.0, -16.0, -Math.PI / 4);
     addStreetLamp(tJunctionGroup, 0.0, 16.0, Math.PI);
@@ -455,28 +629,56 @@ export default function ThreeForensicCanvas({
     const intersectionGroup = new THREE.Group();
     intersectionRoadGroupRef.current = intersectionGroup;
 
-    const ewRoad = new THREE.Mesh(new THREE.PlaneGeometry(90, 12), roadMat);
+    const ewRoad = new THREE.Mesh(new THREE.PlaneGeometry(140, 12), roadMat);
     ewRoad.rotation.x = -Math.PI / 2;
     ewRoad.position.y = 0.02;
     ewRoad.receiveShadow = true;
     intersectionGroup.add(ewRoad);
 
-    const nsRoad = new THREE.Mesh(new THREE.PlaneGeometry(12, 90), roadMat);
+    const nsRoad = new THREE.Mesh(new THREE.PlaneGeometry(12, 140), roadMat);
     nsRoad.rotation.x = -Math.PI / 2;
     nsRoad.position.y = 0.03;
     nsRoad.receiveShadow = true;
     intersectionGroup.add(nsRoad);
 
+    // Continuous architectural curbs framing sidewalks seamlessly
     const add4WayCurb = (x: number, z: number) => {
-      const c = new THREE.Mesh(new THREE.BoxGeometry(32, 0.28, 32), curbMat);
+      const c = new THREE.Mesh(new THREE.BoxGeometry(60, 0.28, 60), curbMat);
       c.position.set(x, 0.14, z);
       c.receiveShadow = true;
       intersectionGroup.add(c);
     };
-    add4WayCurb(-22, -22);
-    add4WayCurb(22, -22);
-    add4WayCurb(-22, 22);
-    add4WayCurb(22, 22);
+    add4WayCurb(-36, -36);
+    add4WayCurb(36, -36);
+    add4WayCurb(-36, 36);
+    add4WayCurb(36, 36);
+
+    // Solid stop bars before crosswalks
+    const stopLineEast = new THREE.Mesh(new THREE.PlaneGeometry(0.55, 5.8), lineMat);
+    stopLineEast.rotation.x = -Math.PI / 2;
+    stopLineEast.position.set(-6.1, 0.046, 3.0);
+    intersectionGroup.add(stopLineEast);
+
+    const stopLineWest = new THREE.Mesh(new THREE.PlaneGeometry(0.55, 5.8), lineMat);
+    stopLineWest.rotation.x = -Math.PI / 2;
+    stopLineWest.position.set(6.1, 0.046, -3.0);
+    intersectionGroup.add(stopLineWest);
+
+    const stopLineNorth = new THREE.Mesh(new THREE.PlaneGeometry(5.8, 0.55), lineMat);
+    stopLineNorth.rotation.x = -Math.PI / 2;
+    stopLineNorth.position.set(3.0, 0.046, -6.1);
+    intersectionGroup.add(stopLineNorth);
+
+    const stopLineSouth = new THREE.Mesh(new THREE.PlaneGeometry(5.8, 0.55), lineMat);
+    stopLineSouth.rotation.x = -Math.PI / 2;
+    stopLineSouth.position.set(-3.0, 0.046, 6.1);
+    intersectionGroup.add(stopLineSouth);
+
+    // Forensic directional arrows on approach lanes
+    addDirectionalArrow(intersectionGroup, -16.0, 3.0, Math.PI / 2); // V1 Eastbound Approach
+    addDirectionalArrow(intersectionGroup, 16.0, -3.0, -Math.PI / 2); // Westbound Approach
+    addDirectionalArrow(intersectionGroup, 3.0, 16.0, 0); // V2 Northbound Approach
+    addDirectionalArrow(intersectionGroup, -3.0, -16.0, Math.PI); // Southbound Approach
 
     for (let x = -40; x <= 40; x += 4.5) {
       if (Math.abs(x) < 7) continue;
@@ -509,16 +711,19 @@ export default function ThreeForensicCanvas({
       intersectionGroup.add(l);
     };
 
-    addBorderLineEW(-44, -6.1, -5.8);
-    addBorderLineEW(6.1, 44, -5.8);
-    addBorderLineEW(-44, -6.1, 5.8);
-    addBorderLineEW(6.1, 44, 5.8);
+    addBorderLineEW(-66, -6.1, -5.8);
+    addBorderLineEW(6.1, 66, -5.8);
+    addBorderLineEW(-66, -6.1, 5.8);
+    addBorderLineEW(6.1, 66, 5.8);
 
-    addBorderLineNS(-5.8, -44, -6.1);
-    addBorderLineNS(-5.8, 6.1, 44);
-    addBorderLineNS(5.8, -44, -6.1);
-    addBorderLineNS(5.8, 6.1, 44);
+    addBorderLineNS(-5.8, -66, -6.1);
+    addBorderLineNS(-5.8, 6.1, 66);
+    addBorderLineNS(5.8, -66, -6.1);
+    addBorderLineNS(5.8, 6.1, 66);
 
+    addZebraCrossings(intersectionGroup);
+    addTrafficSignalGantry(intersectionGroup, -7.5, 7.5, 0, true);
+    addTrafficSignalGantry(intersectionGroup, 7.5, -7.5, Math.PI, false);
     addStreetLamp(intersectionGroup, -14.0, -14.0, Math.PI / 4);
     addStreetLamp(intersectionGroup, 14.0, -14.0, -Math.PI / 4);
     addStreetLamp(intersectionGroup, -14.0, 14.0, (3 * Math.PI) / 4);
@@ -1352,6 +1557,37 @@ export default function ThreeForensicCanvas({
               <span>
                 {activeScenario === "CAR_VS_LORRY" ? "POV Vehicle 2 (Truck)" : activeScenario === "CAR_VS_BIKE" ? "POV Vehicle 2 (Bike)" : "POV Vehicle 2"}
               </span>
+            </button>
+          </div>
+
+          {/* Map Layer Mode Switcher (3D Schematic vs Real Aerial Satellite) */}
+          <div className="pointer-events-auto bg-white/95 backdrop-blur-md p-1 rounded-full border border-slate-200/90 shadow-sm flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              onClick={() => setMapLayerMode("ARCHITECTURAL")}
+              className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1 cursor-pointer whitespace-nowrap ${
+                mapLayerMode === "ARCHITECTURAL"
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+              }`}
+              title="Clean Architectural 3D Schematic"
+            >
+              <span>🏛️</span>
+              <span className="hidden sm:inline">Schematic</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setMapLayerMode("SATELLITE")}
+              className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1 cursor-pointer whitespace-nowrap ${
+                mapLayerMode === "SATELLITE"
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+              }`}
+              title="High-Resolution Real Aerial Satellite Orthophoto"
+            >
+              <span>🛰️</span>
+              <span className="hidden sm:inline">Satellite</span>
             </button>
           </div>
 

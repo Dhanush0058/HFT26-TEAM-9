@@ -252,7 +252,7 @@ export function createProceduralEnvironmentGroup(data: OsmEnvironmentData): THRE
   const group = new THREE.Group();
   group.name = "OSM_ENVIRONMENT_GROUP";
 
-  // Warm architectural limestone / beige palette matching reference schematic
+  // Sleek architectural materials
   const defaultBldMat = new THREE.MeshStandardMaterial({
     color: 0xdcd6cb,
     roughness: 0.85,
@@ -265,23 +265,44 @@ export function createProceduralEnvironmentGroup(data: OsmEnvironmentData): THRE
     metalness: 0.02
   });
 
+  const hvacMat = new THREE.MeshStandardMaterial({
+    color: 0x94a3b8,
+    roughness: 0.6,
+    metalness: 0.25
+  });
+
+  const glassBandMat = new THREE.MeshStandardMaterial({
+    color: 0x0f172a,
+    roughness: 0.15,
+    metalness: 0.85
+  });
+
+  const antennaMat = new THREE.MeshStandardMaterial({
+    color: 0x64748b,
+    metalness: 0.9,
+    roughness: 0.2
+  });
+
   const doorMat = new THREE.MeshStandardMaterial({
-    color: 0x374151,
+    color: 0x334155,
     roughness: 0.7
   });
 
-  // Pure rectangular architectural trees (tall box canopy + box trunk)
+  // Architectural Trees: Dual-tiered tapered box canopies
   const trunkMat = new THREE.MeshStandardMaterial({
     color: 0x5c3c26,
     roughness: 0.92
   });
-
-  const foliageMat = new THREE.MeshStandardMaterial({
+  const foliageLowerMat = new THREE.MeshStandardMaterial({
+    color: 0x16a34a,
+    roughness: 0.65
+  });
+  const foliageUpperMat = new THREE.MeshStandardMaterial({
     color: 0x22c55e,
     roughness: 0.55
   });
 
-  // 1. Extrude Buildings with architectural roof parapet caps and door cutouts
+  // 1. Extrude Buildings with architectural roof caps, window ribbon bands, and rooftop structures
   data.buildings.forEach((bld) => {
     if (bld.points.length < 3) return;
 
@@ -326,28 +347,70 @@ export function createProceduralEnvironmentGroup(data: OsmEnvironmentData): THRE
       roofMesh.receiveShadow = true;
       group.add(roofMesh);
 
-      // Recessed doorway accent for procedural buildings facing the road
-      if (bld.points.length >= 2) {
-        const p1 = bld.points[0];
-        const p2 = bld.points[1];
-        const midX = (p1.x + p2.x) / 2;
-        const midZ = (p1.z + p2.z) / 2;
-        const door = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2.2, 0.2), doorMat);
-        door.position.set(midX, 1.1, midZ);
-        door.castShadow = true;
-        group.add(door);
+      // Compute bounding box for architectural facade ribbons & rooftop equipment
+      let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+      bld.points.forEach((p) => {
+        if (p.x < minX) minX = p.x;
+        if (p.x > maxX) maxX = p.x;
+        if (p.z < minZ) minZ = p.z;
+        if (p.z > maxZ) maxZ = p.z;
+      });
+
+      const centerX = (minX + maxX) / 2;
+      const centerZ = (minZ + maxZ) / 2;
+      const widthX = Math.abs(maxX - minX);
+      const depthZ = Math.abs(maxZ - minZ);
+
+      // Rooftop HVAC mechanical penthouse
+      if (widthX > 8 && depthZ > 8 && bld.height > 8) {
+        const hvacW = Math.min(10, widthX * 0.4);
+        const hvacD = Math.min(10, depthZ * 0.4);
+        const hvacMesh = new THREE.Mesh(new THREE.BoxGeometry(hvacW, 1.8, hvacD), hvacMat);
+        hvacMesh.position.set(centerX, bld.height + 0.9, centerZ);
+        hvacMesh.castShadow = true;
+        group.add(hvacMesh);
+
+        // Communications antenna mast
+        const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.09, 4.0, 8), antennaMat);
+        mast.position.set(centerX, bld.height + 3.8, centerZ);
+        group.add(mast);
       }
+
+      // Horizontal glass ribbon window bands on prominent facades
+      if (bld.height >= 8 && widthX >= 6) {
+        for (let y = 3.6; y < bld.height - 1.5; y += 3.2) {
+          // North/South glass ribbons
+          const glassBandN = new THREE.Mesh(new THREE.BoxGeometry(widthX * 0.85, 0.9, 0.15), glassBandMat);
+          glassBandN.position.set(centerX, y, minZ - 0.05);
+          group.add(glassBandN);
+
+          const glassBandS = new THREE.Mesh(new THREE.BoxGeometry(widthX * 0.85, 0.9, 0.15), glassBandMat);
+          glassBandS.position.set(centerX, y, maxZ + 0.05);
+          group.add(glassBandS);
+        }
+      }
+
+      // Ground floor entrance canopy facing road
+      const entranceZ = centerZ > 0 ? minZ : maxZ;
+      const canopy = new THREE.Mesh(new THREE.BoxGeometry(Math.min(7, widthX * 0.5), 0.25, 2.2), doorMat);
+      canopy.position.set(centerX, 2.8, entranceZ + (centerZ > 0 ? -1.0 : 1.0));
+      canopy.castShadow = true;
+      group.add(canopy);
+
     } catch {
-      // Skip degenerate polygon gracefully
+      // Gracefully handle any degenerate polygon
     }
   });
 
-  // 2. Spawn 100% Pure Rectangular Architectural Trees (Box Trunk + Box Canopy)
-  const trunkGeom = new THREE.BoxGeometry(0.32, 1.4, 0.32);
+  // 2. Spawn Modern Architectural Tapered Trees (Trunk + Lower Box + Upper Tapered Box)
+  const trunkGeom = new THREE.BoxGeometry(0.34, 1.4, 0.34);
   trunkGeom.translate(0, 0.7, 0);
 
-  const foliageGeom = new THREE.BoxGeometry(1.15, 2.6, 1.15);
-  foliageGeom.translate(0, 2.7, 0);
+  const foliageLowerGeom = new THREE.BoxGeometry(1.65, 1.5, 1.65);
+  foliageLowerGeom.translate(0, 2.0, 0);
+
+  const foliageUpperGeom = new THREE.BoxGeometry(1.15, 1.8, 1.15);
+  foliageUpperGeom.translate(0, 3.4, 0);
 
   data.trees.forEach((t) => {
     const treeGroup = new THREE.Group();
@@ -359,10 +422,15 @@ export function createProceduralEnvironmentGroup(data: OsmEnvironmentData): THRE
     trunk.receiveShadow = true;
     treeGroup.add(trunk);
 
-    const foliage = new THREE.Mesh(foliageGeom, foliageMat);
-    foliage.castShadow = true;
-    foliage.receiveShadow = true;
-    treeGroup.add(foliage);
+    const lowerFoliage = new THREE.Mesh(foliageLowerGeom, foliageLowerMat);
+    lowerFoliage.castShadow = true;
+    lowerFoliage.receiveShadow = true;
+    treeGroup.add(lowerFoliage);
+
+    const upperFoliage = new THREE.Mesh(foliageUpperGeom, foliageUpperMat);
+    upperFoliage.castShadow = true;
+    upperFoliage.receiveShadow = true;
+    treeGroup.add(upperFoliage);
 
     group.add(treeGroup);
   });
@@ -370,9 +438,6 @@ export function createProceduralEnvironmentGroup(data: OsmEnvironmentData): THRE
   return group;
 }
 
-/**
- * CatmullRomCurve3 Spline Trajectory Tracks for Vehicles
- */
 export interface VehicleSplineTracks {
   splineA: THREE.CatmullRomCurve3;
   splineB: THREE.CatmullRomCurve3;
