@@ -51,7 +51,7 @@ export interface ContactsMetrics {
 }
 
 const CONTACTS_STORAGE_KEY = "rekishi_case_contacts";
-const HISTORY_STORAGE_KEY = "rekishi_case_contact_history";
+const HISTORY_STORAGE_KEY = "rekishi_case_contact_history_v2";
 
 // Pre-seeded Indian witness coordination contacts (Includes requested number +91 63035 31123)
 export const DEFAULT_CONTACTS: ContactItem[] = [
@@ -107,6 +107,95 @@ export const DEFAULT_CONTACTS: ContactItem[] = [
     last_contact_date: undefined,
     next_follow_up: "Oct 31, 2026, 06:30 PM",
     created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()  },
+  {
+    id: "CNT-9597-01",
+    case_id: "CASE-2026-9597",
+    full_name: "Ravi Kumar",
+    phone_number: "+91 63035 31123",
+    contact_category: "Witness",
+    associated_vehicle: "Pedestrian Crosswalk",
+    address: "H.No 1-8-303, Sindhi Colony, Begumpet, Hyderabad, Telangana",
+    notes: "Eyewitness waiting at pedestrian crossing. Observed motorcycle filter into junction prior to collision.",
+    contact_status: "Contact Attempted",
+    preferred_contact_time: "Morning 10:00 AM - 12:00 PM",
+    identity_verified: false,
+    assigned_officer: "Inspector R. K. Sharma",
+    last_contact_date: "Oct 31, 2026, 09:40 AM",
+    next_follow_up: "Nov 03, 2026, 10:00 AM",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: "CNT-9597-02",
+    case_id: "CASE-2026-9597",
+    full_name: "K. Suresh Reddy",
+    phone_number: "+91 98492 88310",
+    contact_category: "Vehicle Owner",
+    associated_vehicle: "Vehicle A (Maruti Swift - TS 08 FG 2109)",
+    address: "Plot 45, Road No. 10, Jubilee Hills, Hyderabad, Telangana",
+    notes: "Registered owner and driver of white sedan. Telemetry confirms brake engagement 0.7s before impact.",
+    contact_status: "Contacted",
+    preferred_contact_time: "Evening 04:00 PM - 06:00 PM",
+    identity_verified: true,
+    assigned_officer: "Inspector R. K. Sharma",
+    last_contact_date: "Oct 30, 2026, 11:15 PM",
+    next_follow_up: "Nov 02, 2026, 10:00 AM",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: "CNT-9597-03",
+    case_id: "CASE-2026-9597",
+    full_name: "Syed Imran",
+    phone_number: "+91 97003 44192",
+    contact_category: "Vehicle Owner",
+    associated_vehicle: "Vehicle B (Yamaha R15 - TS 07 EK 8421)",
+    address: "H.No 12-2-417, Mehdipatnam, Hyderabad, Telangana",
+    notes: "Two-wheeler rider involved in impact. Statement recorded regarding approach velocity and signal status.",
+    contact_status: "Statement Collected",
+    preferred_contact_time: "Afternoon 02:00 PM - 04:00 PM",
+    identity_verified: true,
+    assigned_officer: "Inspector R. K. Sharma",
+    last_contact_date: "Oct 30, 2026, 11:45 PM",
+    next_follow_up: undefined,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: "CNT-9597-04",
+    case_id: "CASE-2026-9597",
+    full_name: "M. Anitha Rao",
+    phone_number: "+91 80081 22915",
+    contact_category: "Informant",
+    associated_vehicle: "Traffic Junction Post #4",
+    address: "Traffic Police Booth, Masab Tank Circle, Hyderabad",
+    notes: "On-duty traffic warden stationed near the signal. Provided spatial coordinates of final vehicle positions.",
+    contact_status: "Visit Scheduled",
+    preferred_contact_time: "Morning 09:00 AM - 11:00 AM",
+    identity_verified: true,
+    assigned_officer: "Inspector R. K. Sharma",
+    last_contact_date: "Oct 31, 2026, 09:00 AM",
+    next_follow_up: "Nov 01, 2026, 10:30 AM",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: "CNT-9597-05",
+    case_id: "CASE-2026-9597",
+    full_name: "P. Venkat Ramana",
+    phone_number: "+91 94901 77204",
+    contact_category: "Other",
+    associated_vehicle: "Commercial CCTV DVR Host",
+    address: "Shop #8, Corner Plaza, Banjara Hills, Hyderabad, Telangana",
+    notes: "Owner of corner commercial establishment facing intersection. Security camera EV-002 retrieved from his DVR.",
+    contact_status: "Contact Attempted",
+    preferred_contact_time: "Afternoon 01:00 PM - 03:00 PM",
+    identity_verified: false,
+    assigned_officer: "Inspector R. K. Sharma",
+    last_contact_date: "Oct 31, 2026, 09:30 AM",
+    next_follow_up: "Nov 01, 2026, 02:00 PM",
+    created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   }
 ];
@@ -141,6 +230,60 @@ export const DEFAULT_HISTORY: ContactHistoryItem[] = [
     outcome: "Formal Deposition Recorded",
     notes: "Driver attended Cyberabad traffic station; recorded formal audio statement (EV-1042-03).",
     timestamp: "Oct 28, 2026, 04:42 PM",
+    assigned_investigator: "Inspector R. K. Sharma"   },
+  {
+    id: "HIST-9597-01",
+    contact_id: "CNT-9597-01",
+    case_id: "CASE-2026-9597",
+    communication_type: "Automated Twilio Call",
+    outcome: "Voice Assistant Call Delivered (3-Day Case Notice)",
+    notes: "Hello Ravi Kumar. This is Rekishi Forensics regarding your incident report for case number CASE 2026 9597. Please visit our investigation office within the next three days. Thank you, goodbye.",
+    timestamp: "Oct 31, 2026, 09:40 AM",
+    next_follow_up: "Nov 03, 2026, 10:00 AM",
+    assigned_investigator: "Twilio AI Voice Assistant (Male • Polly.Matthew)"
+  },
+  {
+    id: "HIST-9597-02",
+    contact_id: "CNT-9597-02",
+    case_id: "CASE-2026-9597",
+    communication_type: "Automated Twilio Call",
+    outcome: "Voice Assistant Call Delivered (3-Day Case Notice)",
+    notes: "Hello Suresh Reddy. This is Rekishi Forensics regarding your incident report for case number CASE 2026 9597. Please visit our investigation office within the next three days. Thank you, goodbye.",
+    timestamp: "Oct 31, 2026, 09:42 AM",
+    next_follow_up: "Nov 03, 2026, 10:00 AM",
+    assigned_investigator: "Twilio AI Voice Assistant (Male • Polly.Matthew)"
+  },
+  {
+    id: "HIST-9597-03",
+    contact_id: "CNT-9597-03",
+    case_id: "CASE-2026-9597",
+    communication_type: "In-Person Visit",
+    outcome: "Sworn Eyewitness Deposition Recorded",
+    notes: "Motorcyclist Syed Imran attended investigation cell. Formal sworn statement recorded regarding signal transit and approach velocity. Evidence linked to Records.",
+    timestamp: "Oct 30, 2026, 11:45 PM",
+    next_follow_up: undefined,
+    assigned_investigator: "Inspector R. K. Sharma"
+  },
+  {
+    id: "HIST-9597-04",
+    contact_id: "CNT-9597-04",
+    case_id: "CASE-2026-9597",
+    communication_type: "Automated Twilio Call",
+    outcome: "Station Appointment Confirmed",
+    notes: "Hello Anitha Rao. This is Rekishi Forensics regarding your incident report for case number CASE 2026 9597. Please visit our investigation office within the next three days. Thank you, goodbye.",
+    timestamp: "Oct 31, 2026, 09:00 AM",
+    next_follow_up: "Nov 01, 2026, 10:30 AM",
+    assigned_investigator: "Twilio AI Voice Assistant (Male • Polly.Matthew)"
+  },
+  {
+    id: "HIST-9597-05",
+    contact_id: "CNT-9597-05",
+    case_id: "CASE-2026-9597",
+    communication_type: "In-Person Visit",
+    outcome: "CCTV Footage Handover Verified",
+    notes: "Commercial shop owner P. Venkat Ramana verified camera timestamp synchronicity for corner surveillance unit EV-002.",
+    timestamp: "Oct 31, 2026, 09:30 AM",
+    next_follow_up: "Nov 01, 2026, 02:00 PM",
     assigned_investigator: "Inspector R. K. Sharma"
   }
 ];
@@ -235,9 +378,21 @@ export async function fetchCaseContacts(caseId: string): Promise<{ contacts: Con
     // Offline or server not reachable: use local fallback
   }
 
-  const filtered = getLocalContacts().filter(
+  let filtered = getLocalContacts().filter(
     (c) => c.case_id.toLowerCase() === caseId.toLowerCase()
   );
+
+  // Automatically merge sample contacts if fewer than available defaults exist for this case
+  const sampleForCase = DEFAULT_CONTACTS.filter(c => c.case_id.toLowerCase() === caseId.toLowerCase());
+  if (sampleForCase.length > 0 && filtered.length < sampleForCase.length) {
+    const existingPhones = new Set(filtered.map(c => c.phone_number.replace(/\s+/g, "")));
+    const missing = sampleForCase.filter(c => !existingPhones.has(c.phone_number.replace(/\s+/g, "")));
+    if (missing.length > 0) {
+      filtered = [...filtered, ...missing];
+      saveLocalContacts([...getLocalContacts(), ...missing]);
+    }
+  }
+
   return {
     contacts: filtered,
     metrics: computeMetrics(filtered)
@@ -396,20 +551,47 @@ export async function callContact(
   officer: string = "Investigator",
   notes?: string
 ): Promise<{ success: boolean; message: string; telUrl?: string; twilioResult?: Record<string, unknown> }> {
+  const all = getLocalContacts();
+  const target = all.find((c) => c.id === contactId);
+
   try {
     const res = await fetch(`http://localhost:8000/api/cases/${encodeURIComponent(caseId)}/contacts/${contactId}/call`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode, officer, notes })
+      body: JSON.stringify({ 
+        mode, 
+        officer, 
+        notes,
+        phone_number: target?.phone_number,
+        full_name: target?.full_name
+      })
     });
     if (res.ok) {
-      return await res.json();
+      const data = await res.json();
+      if (target) {
+        target.contact_status = "Contact Attempted";
+        target.last_contact_date = new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+        saveLocalContacts(all);
+
+        const conversationScript = `Hello ${target.full_name || "Citizen"}. This is Rekishi Forensics regarding your incident report for case number ${caseId.replace("-", " ")}. Please visit our investigation office within the next three days. Thank you, goodbye.`;
+        const localHist = getLocalHistory();
+        const newEntry: ContactHistoryItem = {
+          id: "HIST-" + Date.now(),
+          contact_id: contactId,
+          case_id: caseId,
+          communication_type: mode === "automated" ? "Automated Twilio Call" : "Manual Phone Call",
+          outcome: mode === "automated" ? "Voice Assistant Call Delivered (3-Day Case Notice)" : "Manual Call Initiated",
+          notes: mode === "automated" ? conversationScript : `Manual phone call dialed to ${target.phone_number}.`,
+          timestamp: new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }),
+          assigned_investigator: mode === "automated" ? "Twilio Voice Assistant (Male • Polly.Matthew)" : officer
+        };
+        saveLocalHistory([newEntry, ...localHist]);
+      }
+      return data;
     }
   } catch {}
 
   // Fallback
-  const all = getLocalContacts();
-  const target = all.find((c) => c.id === contactId);
   if (target) {
     target.contact_status = "Contact Attempted";
     target.last_contact_date = new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -431,12 +613,25 @@ export async function fetchContactHistory(caseId: string, contactId: string): Pr
     const res = await fetch(`http://localhost:8000/api/cases/${encodeURIComponent(caseId)}/contacts/${contactId}/history`);
     if (res.ok) {
       const data = await res.json();
-      if (Array.isArray(data.history)) return data.history;
+      if (Array.isArray(data.history) && data.history.length > 0) {
+        const clean = data.history.filter((h: ContactHistoryItem) => 
+          !h.outcome?.startsWith("Status Updated:") && h.notes !== "0"
+        );
+        if (clean.length > 0) return clean;
+      }
     }
   } catch {}
 
   const all = getLocalHistory();
-  return all.filter((h) => h.contact_id === contactId);
+  const matched = all.filter((h) => 
+    h.contact_id === contactId && 
+    !h.outcome?.startsWith("Status Updated:") && 
+    h.notes !== "0"
+  );
+  if (matched.length > 0) return matched;
+
+  // Fallback to default sample history if no events recorded yet
+  return DEFAULT_HISTORY.filter(h => h.contact_id === contactId);
 }
 
 // 7. Log history

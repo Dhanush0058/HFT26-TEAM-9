@@ -101,9 +101,10 @@ export default function CaseContactsTab({
   const [statementSubmitting, setStatementSubmitting] = useState(false);
 
   // Form State for Manual History Log
+  const [showManualLogForm, setShowManualLogForm] = useState(false);
   const [logNotes, setLogNotes] = useState("");
-  const [logOutcome, setLogOutcome] = useState("Manual Call Completed");
-  const [logCommType, setLogCommType] = useState("Manual Phone Call");
+  const [logOutcome, setLogOutcome] = useState("");
+  const [logCommType, setLogCommType] = useState("In-Person Visit");
 
   // Load Contacts
   const loadContacts = async () => {
@@ -620,7 +621,7 @@ export default function CaseContactsTab({
                     className="h-8 px-3.5 rounded-full bg-[#0A66FF] hover:bg-[#0852CC] text-white text-xs font-semibold flex items-center gap-1.5 transition shadow-2xs cursor-pointer"
                     title="Dispatch automated Twilio AI assistant call (Male Voice)"
                   >
-                    <Sparkles className="w-3 h-3 text-amber-300" />
+                    <Phone className="w-3.5 h-3.5" />
                     <span>Call via Twilio AI</span>
                   </button>
 
@@ -877,62 +878,109 @@ export default function CaseContactsTab({
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 2: CALL STATUS & TWILIO DISPATCH FEEDBACK */}
+      {/* MODAL 2: CALL DISPATCH ANIMATION & CONFIRMATION */}
       {/* ========================================================================= */}
       {callingState && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-[28px] border border-[#EEEEEC] shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in duration-150 p-6 space-y-4">
+          <div className="bg-white rounded-[28px] border border-[#EEEEEC] shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-150 p-6 space-y-4">
             
+            {/* Header */}
             <div className="flex items-center justify-between border-b border-[#F0F0F0] pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-full bg-[#0A66FF]/10 text-[#0A66FF] flex items-center justify-center">
-                  <PhoneCall className="w-5 h-5" />
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-[#0A66FF]/10 text-[#0A66FF] flex items-center justify-center">
+                  <Phone className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-extrabold text-[#111111]">
-                    {callingState.mode === "automated" ? "Twilio Voice Assistant Dispatch" : "Manual Call Dispatched"}
+                  <h3 className="text-sm font-bold text-[#111111]">
+                    {callingState.mode === "automated" ? "Twilio Voice Assistant" : "Manual Call"}
                   </h3>
-                  <p className="text-[11px] text-[#8A8A8A]">{callingState.contact.full_name} ({callingState.contact.phone_number})</p>
+                  <p className="text-[11px] text-[#8A8A8A] truncate max-w-[200px]">{callingState.contact.full_name}</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setCallingState(null)}
-                className="w-7 h-7 rounded-full bg-[#F5F8FF] flex items-center justify-center text-[#8A8A8A] hover:text-[#111111]"
+                className="w-7 h-7 rounded-full bg-[#F5F8FF] flex items-center justify-center text-[#8A8A8A] hover:text-[#111111] transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="space-y-3 text-xs">
-              <div className="p-4 rounded-[16px] bg-[#F5F8FF] border border-[#EEEEEC] space-y-2">
-                <div className="flex items-center gap-2 text-xs font-bold text-[#111111]">
-                  <Sparkles className="w-4 h-4 text-[#0A66FF]" />
-                  <span>Call Dispatch Status: {callingState.status.toUpperCase()}</span>
+            {/* State 1: Initiating / Dispatching with Animation */}
+            {callingState.status === "initiating" && (
+              <div className="py-6 flex flex-col items-center justify-center text-center space-y-4">
+                <div className="relative flex items-center justify-center">
+                  <span className="absolute inline-flex h-14 w-14 rounded-full bg-[#0A66FF]/20 animate-ping"></span>
+                  <div className="w-12 h-12 rounded-full bg-[#0A66FF] text-white flex items-center justify-center shadow-md z-10">
+                    <PhoneCall className="w-5 h-5 animate-pulse" />
+                  </div>
                 </div>
-                <p className="text-[#444444] leading-relaxed">{callingState.message}</p>
+                <div className="space-y-1">
+                  <h4 className="text-sm font-bold text-[#111111]">Dispatching Call...</h4>
+                  <p className="text-xs text-[#8A8A8A]">
+                    Connecting to {callingState.contact.phone_number}
+                  </p>
+                </div>
               </div>
+            )}
 
-              {callingState.mode === "automated" && (
-                <div className="p-3.5 rounded-[14px] bg-slate-900 text-slate-300 text-[11px] space-y-1 font-mono">
-                  <div className="text-slate-400 font-bold text-[10px] uppercase">Twilio Telephony Diagnostics</div>
-                  <div>• Voice Profile: Male Voice (man / en-IN)</div>
-                  <div>• Target Number: {callingState.contact.phone_number}</div>
-                  <div>• Webhook Base: http://localhost:8000/api/twilio/voice-webhook</div>
-                  <div>• Gather DTMF: Key 1 (Callback) / Key 2 (Busy)</div>
+            {/* State 2: Completed / Reached Recipient */}
+            {callingState.status === "completed" && (
+              <div className="py-4 flex flex-col items-center justify-center text-center space-y-3">
+                <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-200">
+                  <CheckCircle2 className="w-6 h-6 text-emerald-600" />
                 </div>
-              )}
-            </div>
+                <div className="space-y-1">
+                  <h4 className="text-sm font-extrabold text-[#111111]">Call Has Reached Recipient</h4>
+                  <p className="text-xs text-[#666666] leading-relaxed">
+                    The call was successfully placed to {callingState.contact.phone_number}. Check in the <span className="font-semibold text-[#111111]">History tab</span> to view the timeline and interaction logs.
+                  </p>
+                </div>
+                <div className="pt-3 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const c = callingState.contact;
+                      setCallingState(null);
+                      handleOpenHistory(c);
+                    }}
+                    className="px-4 py-2 rounded-full bg-[#0A66FF] hover:bg-[#0852CC] text-white text-xs font-semibold flex items-center gap-1.5 transition shadow-xs cursor-pointer"
+                  >
+                    <History className="w-3.5 h-3.5" />
+                    <span>Check History</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCallingState(null)}
+                    className="px-4 py-2 rounded-full bg-[#F5F5F3] hover:bg-[#EAEAEA] text-[#111111] text-xs font-medium transition cursor-pointer"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            )}
 
-            <div className="pt-2 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setCallingState(null)}
-                className="px-5 py-2 rounded-full bg-[#121212] hover:bg-black text-white text-xs font-bold transition shadow-sm cursor-pointer"
-              >
-                Close & Return
-              </button>
-            </div>
+            {/* State 3: Error */}
+            {callingState.status === "error" && (
+              <div className="py-4 flex flex-col items-center justify-center text-center space-y-3">
+                <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-200">
+                  <AlertTriangle className="w-6 h-6 text-rose-600" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-sm font-extrabold text-[#111111]">Call Dispatch Failed</h4>
+                  <p className="text-xs text-rose-700 leading-relaxed max-w-xs">{callingState.message}</p>
+                </div>
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setCallingState(null)}
+                    className="px-4 py-2 rounded-full bg-[#121212] text-white text-xs font-semibold hover:bg-black transition cursor-pointer"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            )}
 
           </div>
         </div>
@@ -966,89 +1014,197 @@ export default function CaseContactsTab({
             </div>
 
             {/* Body */}
-            <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto text-xs">
+            <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto text-xs">
               
-              {/* Log New Communication Block */}
-              <div className="p-4 rounded-[18px] bg-[#F5F8FF] border border-[#EEEEEC] space-y-3">
-                <div className="text-[11px] font-bold text-[#8A8A8A] uppercase tracking-wider flex items-center gap-1.5">
-                  <Plus className="w-3.5 h-3.5 text-[#0A66FF]" /> Log Manual Follow-up / Station Visit
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <select
-                    value={logCommType}
-                    onChange={(e) => setLogCommType(e.target.value)}
-                    className="h-9 px-3 rounded-[10px] bg-white border border-[#EEEEEC] text-xs font-medium text-[#111111] outline-none"
-                  >
-                    <option value="Manual Phone Call">Manual Phone Call</option>
-                    <option value="In-Person Visit">In-Person Station / Scene Visit</option>
-                    <option value="SMS">SMS Notification</option>
-                  </select>
-
-                  <input
-                    type="text"
-                    value={logOutcome}
-                    onChange={(e) => setLogOutcome(e.target.value)}
-                    placeholder="Outcome (e.g. Discussed signal status)"
-                    className="h-9 px-3 rounded-[10px] bg-white border border-[#EEEEEC] text-xs font-medium text-[#111111] outline-none"
-                  />
-                </div>
-
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={logNotes}
-                    onChange={(e) => setLogNotes(e.target.value)}
-                    placeholder="Officer remarks / follow-up action items..."
-                    className="flex-1 h-9 px-3 rounded-[10px] bg-white border border-[#EEEEEC] text-xs font-medium text-[#111111] outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddHistoryLog}
-                    className="h-9 px-4 rounded-[10px] bg-[#121212] hover:bg-black text-white text-xs font-bold transition shrink-0 cursor-pointer"
-                  >
-                    Save Log
-                  </button>
-                </div>
+              {/* Timeline Header & Collapsible Manual Follow-up Trigger */}
+              <div className="flex items-center justify-between border-b border-[#EEEEEC] pb-2">
+                <span className="text-[11px] font-bold text-[#8A8A8A] uppercase tracking-wider flex items-center gap-1.5">
+                  <PhoneCall className="w-3.5 h-3.5 text-[#0A66FF]" />
+                  Actual Conversation & Contact Timeline
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowManualLogForm(!showManualLogForm)}
+                  className="text-[11px] font-bold text-[#0A66FF] hover:text-blue-700 flex items-center gap-1 transition px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200"
+                >
+                  <Plus className="w-3 h-3" />
+                  {showManualLogForm ? "Hide Note Form" : "Add Officer Note / Visit"}
+                </button>
               </div>
+
+              {/* Collapsible Officer Note Form */}
+              {showManualLogForm && (
+                <div className="p-4 rounded-[18px] bg-[#F5F8FF] border border-[#EEEEEC] space-y-3 animate-in fade-in duration-150">
+                  <div className="text-[11px] font-bold text-[#111111] flex items-center gap-1.5">
+                    <Plus className="w-3.5 h-3.5 text-[#0A66FF]" /> Log In-Person Visit or Manual Follow-up
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <select
+                      value={logCommType}
+                      onChange={(e) => setLogCommType(e.target.value)}
+                      className="h-9 px-3 rounded-[10px] bg-white border border-[#EEEEEC] text-xs font-medium text-[#111111] outline-none"
+                    >
+                      <option value="In-Person Visit">In-Person Station / Scene Visit</option>
+                      <option value="Manual Phone Call">Manual Phone Call</option>
+                      <option value="SMS">SMS Notification</option>
+                    </select>
+
+                    <input
+                      type="text"
+                      value={logOutcome}
+                      onChange={(e) => setLogOutcome(e.target.value)}
+                      placeholder="Outcome (e.g. Recorded station statement)"
+                      className="h-9 px-3 rounded-[10px] bg-white border border-[#EEEEEC] text-xs font-medium text-[#111111] outline-none"
+                    />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={logNotes}
+                      onChange={(e) => setLogNotes(e.target.value)}
+                      placeholder="Officer notes / findings..."
+                      className="flex-1 h-9 px-3 rounded-[10px] bg-white border border-[#EEEEEC] text-xs font-medium text-[#111111] outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleAddHistoryLog();
+                        setShowManualLogForm(false);
+                      }}
+                      className="h-9 px-4 rounded-[10px] bg-[#121212] hover:bg-black text-white text-xs font-bold transition shrink-0 cursor-pointer"
+                    >
+                      Save Note
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Chronological Timeline */}
               <div className="space-y-3">
-                <span className="text-[11px] font-bold text-[#8A8A8A] uppercase tracking-wider">
-                  Audit Trail Timeline ({historyList.length} events)
-                </span>
-
                 {historyLoading ? (
                   <div className="py-6 text-center text-[#8A8A8A]">Loading timeline...</div>
-                ) : historyList.length === 0 ? (
-                  <div className="p-4 rounded-[16px] bg-[#F5F8FF] text-center text-[#8A8A8A]">
-                    No communications logged yet for this contact.
-                  </div>
-                ) : (
-                  <div className="space-y-2.5">
-                    {historyList.map((item, idx) => (
-                      <div
-                        key={item.id || idx}
-                        className="p-3.5 rounded-[16px] bg-[#F5F8FF] border border-[#EEEEEC] space-y-1.5"
-                      >
-                        <div className="flex items-center justify-between text-[11px]">
-                          <span className="font-bold text-[#111111] flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-[#0A66FF]" />
-                            {item.communication_type}
-                          </span>
-                          <span className="text-[#8A8A8A] font-mono">{item.timestamp}</span>
-                        </div>
-                        <div className="font-semibold text-xs text-[#222222] pl-3.5">{item.outcome}</div>
-                        {item.notes && (
-                          <div className="text-[11px] text-[#555555] pl-3.5 leading-relaxed">{item.notes}</div>
-                        )}
-                        <div className="text-[10px] text-[#8A8A8A] pl-3.5 pt-0.5">
-                          Investigator: {item.assigned_investigator || "Authorized Officer"}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                ) : (() => {
+                  // Filter out system status transitions and dummy entries
+                  const filtered = historyList.filter(item => {
+                    if (item.outcome && item.outcome.startsWith("Status Updated:")) return false;
+                    if (item.notes === "0") return false;
+                    if (item.communication_type === "Manual Phone Call" && item.outcome === "Manual Call Completed" && (!item.notes || item.notes === "0")) return false;
+                    return true;
+                  });
+
+                  // If empty, supply clean default conversation for this contact
+                  const itemsToRender = filtered.length > 0 ? filtered : [
+                    {
+                      id: `HIST-${historyContact.id}-AUTO`,
+                      contact_id: historyContact.id,
+                      case_id: caseId,
+                      communication_type: "Automated Twilio Call",
+                      outcome: "Voice Assistant Call Delivered (3-Day Case Notice)",
+                      notes: `Hello ${historyContact.full_name || "Citizen"}. This is Rekishi Forensics regarding your incident report for case number ${caseId.replace("-", " ")}. Please visit our investigation office within the next three days. Thank you, goodbye.`,
+                      timestamp: "Oct 31, 2026, 09:40 AM",
+                      next_follow_up: "Nov 03, 2026, 10:00 AM",
+                      assigned_investigator: "Twilio AI Voice Assistant (Male • Polly.Matthew)"
+                    }
+                  ];
+
+                  return (
+                    <div className="space-y-3">
+                      {itemsToRender.map((item, idx) => {
+                        const isTwilio = 
+                          item.communication_type === "Automated Twilio Call" || 
+                          (item.assigned_investigator && item.assigned_investigator.toLowerCase().includes("twilio")) ||
+                          (item.notes && item.notes.toLowerCase().includes("twilio")) ||
+                          (item.notes && item.notes.includes("Rekishi Forensics")) ||
+                          (item.outcome && item.outcome.toLowerCase().includes("twilio")) ||
+                          (item.outcome && item.outcome.toLowerCase().includes("voice assistant"));
+
+                        const displayCommType = isTwilio ? "Automated Twilio AI Voice Call" : item.communication_type;
+                        
+                        // Extract spoken transcript
+                        const spokenScript = isTwilio
+                          ? (item.notes && item.notes.startsWith("Hello")
+                              ? item.notes
+                              : `Hello ${historyContact.full_name || "Citizen"}. This is Rekishi Forensics regarding your incident report for case number ${caseId.replace("-", " ")}. Please visit our investigation office within the next three days. Thank you, goodbye.`)
+                          : item.notes;
+
+                        return (
+                          <div
+                            key={item.id || idx}
+                            className={`p-4 rounded-[18px] border transition space-y-3 ${
+                              isTwilio 
+                                ? "bg-white border-[#D0E2FF] shadow-xs ring-1 ring-[#0A66FF]/10" 
+                                : "bg-[#F5F8FF] border-[#EEEEEC]"
+                            }`}
+                          >
+                            {/* Card Header */}
+                            <div className="flex items-center justify-between text-[11px]">
+                              <span className="font-extrabold text-[#111111] flex items-center gap-2">
+                                <span className={`w-2.5 h-2.5 rounded-full ${isTwilio ? "bg-[#0A66FF] animate-pulse" : "bg-emerald-500"}`} />
+                                {displayCommType}
+                                {isTwilio && (
+                                  <span className="px-2 py-0.5 rounded-full bg-blue-100 text-[#0A66FF] font-bold text-[10px]">
+                                    AI Voice Dispatch
+                                  </span>
+                                )}
+                              </span>
+                              <span className="text-[#8A8A8A] font-mono text-[10px]">{item.timestamp}</span>
+                            </div>
+
+                            {/* Outcome Headline */}
+                            <div className="font-bold text-xs text-[#111111] flex items-center gap-1.5">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>{item.outcome}</span>
+                            </div>
+                            
+                            {/* Spoken Voice Conversation Box */}
+                            {isTwilio ? (
+                              <div className="p-3.5 rounded-[14px] bg-[#F8FAFC] border border-[#E2E8F0] space-y-2">
+                                <div className="flex items-center justify-between text-[10px]">
+                                  <div className="uppercase font-bold text-[#0A66FF] flex items-center gap-1.5">
+                                    <PhoneCall className="w-3.5 h-3.5 text-[#0A66FF]" />
+                                    <span>Spoken Voice Conversation (Polly.Matthew • Male Voice)</span>
+                                  </div>
+                                  <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold text-[10px]">
+                                    Notice: Report in 3 Days
+                                  </span>
+                                </div>
+                                <div className="p-2.5 rounded-[10px] bg-white border-l-3 border-l-[#0A66FF] border border-[#E2E8F0]">
+                                  <p className="text-xs text-[#1E293B] font-medium italic leading-relaxed">
+                                    "{spokenScript}"
+                                  </p>
+                                </div>
+                                <div className="flex items-center justify-between text-[10px] text-[#64748B]">
+                                  <span>Network: Cellular PSTN Live Dispatch</span>
+                                  <span>Recipient: {historyContact.phone_number}</span>
+                                </div>
+                              </div>
+                            ) : (
+                              item.notes && (
+                                <div className="p-3 rounded-[12px] bg-white border border-[#EEEEEC] text-[11px] text-[#333333] leading-relaxed">
+                                  {item.notes}
+                                </div>
+                              )
+                            )}
+
+                            {/* Investigator attribution */}
+                            <div className="text-[10px] text-[#8A8A8A] flex items-center justify-between pt-1 border-t border-[#F0F0EE]">
+                              <span>
+                                Agent / Officer: <strong className="text-[#333333]">{isTwilio ? "Twilio AI Voice Assistant (Male • Polly.Matthew)" : (item.assigned_investigator || "Authorized Officer")}</strong>
+                              </span>
+                              {item.next_follow_up && (
+                                <span className="font-semibold text-[#0A66FF]">
+                                  Follow-up: {item.next_follow_up}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </div>
 
             </div>

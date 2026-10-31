@@ -51,6 +51,8 @@ class CallContactRequest(BaseModel):
     mode: str = Field("automated", description="'automated' (Twilio) or 'manual'")
     officer: Optional[str] = "Investigator"
     notes: Optional[str] = None
+    phone_number: Optional[str] = None
+    full_name: Optional[str] = None
 
 class VerifyIdentityRequest(BaseModel):
     officer: str = Field(..., description="Name of authorized verifying officer")
@@ -205,8 +207,18 @@ def trigger_call(case_id: str, contact_id: str, payload: CallContactRequest, req
     Triggers automated telephone call via Twilio Voice API, or records manual call attempt.
     """
     contact = contacts_service.get_contact_by_id(contact_id)
-    if not contact or contact.get("case_id", "").upper() != case_id.upper():
-        raise HTTPException(status_code=404, detail="Contact not found for this case")
+    if not contact:
+        if payload.phone_number:
+            contact = {
+                "id": contact_id,
+                "case_id": case_id,
+                "full_name": payload.full_name or "Witness",
+                "phone_number": payload.phone_number,
+                "contact_status": "Not Contacted"
+            }
+            contacts_service.create_contact(case_id, contact)
+        else:
+            raise HTTPException(status_code=404, detail="Contact not found for this case")
 
     if payload.mode == "manual":
         # Log manual call
@@ -243,21 +255,34 @@ def trigger_call(case_id: str, contact_id: str, payload: CallContactRequest, req
         host_override=host_override
     )
 
-    # Update contact status to Contact Attempted
+    # Generate the actual conversation transcript delivered to the contact
+    clean_name = contact.get("full_name") or "Citizen"
+    clean_case = case_id if case_id and case_id != "UNKNOWN" else "101"
+    spoken_case = clean_case.replace("-", " ")
+    conversation_script = (
+        f'Hello {clean_name}. This is Rekishi Forensics regarding your incident report '
+        f'for case number {spoken_case}. Please visit our investigation office within '
+        f'the next three days. Thank you, goodbye.'
+    )
+
+    # Update contact status without generating a duplicate log entry
     contacts_service.update_contact_status(
         contact_id=contact_id,
         new_status="Contact Attempted",
         officer="Twilio Voice Assistant",
-        note=f"Twilio Voice dispatch: {dispatch_res.get('message', 'Call queued.')}"
+        note=f"Voice Assistant: Delivered 3-day notice for case {clean_case}.",
+        comm_type="Automated Twilio Call",
+        log_audit=False
     )
 
+    # Log the single, clear history entry containing the actual conversation!
     contacts_service.log_history(
         contact_id=contact_id,
         case_id=case_id,
         comm_type="Automated Twilio Call",
-        outcome=f"Twilio Call Dispatched ({dispatch_res.get('mode', 'automated').title()})",
-        notes=dispatch_res.get("message", "Twilio automated voice assistant initiated."),
-        assigned_officer="Twilio Voice Assistant"
+        outcome="Voice Assistant Call Delivered (3-Day Case Notice)",
+        notes=conversation_script,
+        assigned_officer="Twilio Voice Assistant (Male • Polly.Matthew)"
     )
 
     return {

@@ -40,29 +40,29 @@ class TwilioService:
         """
         Generates court-compliant TwiML greeting using Polly.Matthew male voice:
         1. Identifies as Rekishi Forensics automated case coordination assistant
-        2. Inquires availability of contact without disclosing sensitive details
-        3. Prompts user for callback or appointment slot via DTMF keypad
+        2. Announces specific case number
+        3. Requests attendance within three days
         """
         clean_name = contact_name or "Citizen"
-        clean_case = case_id if case_id and case_id != "UNKNOWN" else "101"
-        spoken_case = clean_case.replace("-", " ")
-        callback_url = f"{self.base_url}/api/twilio/gather-callback?contact_id={urllib.parse.quote(contact_id)}&case_id={urllib.parse.quote(case_id)}"
-        
-        twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-    <Say voice="Polly.Matthew">
-        Hello {clean_name}. This is Rekishi Forensics regarding your incident report for case number {spoken_case}. Please visit our investigation office within the next three days.
-    </Say>
-    <Pause length="1"/>
-    <Gather numDigits="1" action="{callback_url}" method="POST" timeout="8">
-        <Say voice="Polly.Matthew">
-            Press 1 to confirm your appointment, or press 2 if unavailable.
-        </Say>
-    </Gather>
-    <Say voice="Polly.Matthew">
-        Thank you, goodbye.
-    </Say>
-</Response>"""
+        if case_id and case_id != "UNKNOWN":
+            spoken_case = case_id.replace("-", " ")
+            case_phrase = f"for case number {spoken_case}"
+        else:
+            case_phrase = "for your official incident dossier"
+
+        twiml = (
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            '<Response>'
+            '<Pause length="1"/>'
+            '<Say voice="Polly.Matthew">'
+            f'Hello {clean_name}. This is Rekishi Forensics regarding your incident report {case_phrase}. '
+            'Please visit our investigation office within the next three days. '
+            'Thank you, goodbye.'
+            '</Say>'
+            '<Pause length="1"/>'
+            '<Hangup/>'
+            '</Response>'
+        )
         return twiml
 
     def generate_gather_twiml(self, digit: str) -> str:

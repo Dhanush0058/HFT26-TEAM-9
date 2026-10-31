@@ -78,6 +78,96 @@ INITIAL_SAMPLE_CONTACTS: List[Dict[str, Any]] = [
         "next_follow_up": "2026-10-31T10:00:00Z",
         "created_at": "2026-10-29T09:30:00Z",
         "updated_at": "2026-10-29T10:15:00Z"
+    },
+    {
+        "id": "CNT-9597-01",
+        "case_id": "CASE-2026-9597",
+        "full_name": "Ravi Kumar",
+        "phone_number": "+91 63035 31123",
+        "contact_category": "Witness",
+        "associated_vehicle": "Pedestrian Crosswalk",
+        "address": "H.No 1-8-303, Sindhi Colony, Begumpet, Hyderabad, Telangana",
+        "notes": "Eyewitness waiting at pedestrian crossing. Observed motorcycle filter into junction prior to collision.",
+        "contact_status": "Not Contacted",
+        "preferred_contact_time": "Morning 10:00 AM - 12:00 PM",
+        "identity_verified": False,
+        "assigned_officer": "Inspector R. K. Sharma",
+        "last_contact_date": None,
+        "next_follow_up": "2026-11-01T10:00:00Z",
+        "created_at": "2026-10-30T22:35:00Z",
+        "updated_at": "2026-10-30T22:35:00Z"
+    },
+    {
+        "id": "CNT-9597-02",
+        "case_id": "CASE-2026-9597",
+        "full_name": "K. Suresh Reddy",
+        "phone_number": "+91 98492 88310",
+        "contact_category": "Vehicle Owner",
+        "associated_vehicle": "Vehicle A (Maruti Swift - TS 08 FG 2109)",
+        "address": "Plot 45, Road No. 10, Jubilee Hills, Hyderabad, Telangana",
+        "notes": "Registered owner and driver of white sedan. Telemetry confirms brake engagement 0.7s before impact.",
+        "contact_status": "Contacted",
+        "preferred_contact_time": "Evening 04:00 PM - 06:00 PM",
+        "identity_verified": True,
+        "assigned_officer": "Inspector R. K. Sharma",
+        "last_contact_date": "2026-10-30T23:15:00Z",
+        "next_follow_up": "2026-11-02T10:00:00Z",
+        "created_at": "2026-10-30T22:40:00Z",
+        "updated_at": "2026-10-30T23:15:00Z"
+    },
+    {
+        "id": "CNT-9597-03",
+        "case_id": "CASE-2026-9597",
+        "full_name": "Syed Imran",
+        "phone_number": "+91 97003 44192",
+        "contact_category": "Vehicle Owner",
+        "associated_vehicle": "Vehicle B (Yamaha R15 - TS 07 EK 8421)",
+        "address": "H.No 12-2-417, Mehdipatnam, Hyderabad, Telangana",
+        "notes": "Two-wheeler rider involved in impact. Statement recorded regarding approach velocity and signal status.",
+        "contact_status": "Statement Collected",
+        "preferred_contact_time": "Afternoon 02:00 PM - 04:00 PM",
+        "identity_verified": True,
+        "assigned_officer": "Inspector R. K. Sharma",
+        "last_contact_date": "2026-10-30T23:45:00Z",
+        "next_follow_up": None,
+        "created_at": "2026-10-30T22:45:00Z",
+        "updated_at": "2026-10-30T23:45:00Z"
+    },
+    {
+        "id": "CNT-9597-04",
+        "case_id": "CASE-2026-9597",
+        "full_name": "M. Anitha Rao",
+        "phone_number": "+91 80081 22915",
+        "contact_category": "Informant",
+        "associated_vehicle": "Traffic Junction Post #4",
+        "address": "Traffic Police Booth, Masab Tank Circle, Hyderabad",
+        "notes": "On-duty traffic warden stationed near the signal. Provided spatial coordinates of final vehicle positions.",
+        "contact_status": "Visit Scheduled",
+        "preferred_contact_time": "Morning 09:00 AM - 11:00 AM",
+        "identity_verified": True,
+        "assigned_officer": "Inspector R. K. Sharma",
+        "last_contact_date": "2026-10-31T09:00:00Z",
+        "next_follow_up": "2026-11-01T10:30:00Z",
+        "created_at": "2026-10-30T22:50:00Z",
+        "updated_at": "2026-10-31T09:00:00Z"
+    },
+    {
+        "id": "CNT-9597-05",
+        "case_id": "CASE-2026-9597",
+        "full_name": "P. Venkat Ramana",
+        "phone_number": "+91 94901 77204",
+        "contact_category": "Other",
+        "associated_vehicle": "Commercial CCTV DVR Host",
+        "address": "Shop #8, Corner Plaza, Banjara Hills, Hyderabad, Telangana",
+        "notes": "Owner of corner commercial establishment facing intersection. Security camera EV-002 retrieved from his DVR.",
+        "contact_status": "Contact Attempted",
+        "preferred_contact_time": "Afternoon 01:00 PM - 03:00 PM",
+        "identity_verified": False,
+        "assigned_officer": "Inspector R. K. Sharma",
+        "last_contact_date": "2026-10-31T09:30:00Z",
+        "next_follow_up": "2026-11-01T14:00:00Z",
+        "created_at": "2026-10-30T23:00:00Z",
+        "updated_at": "2026-10-31T09:30:00Z"
     }
 ]
 
@@ -113,6 +203,61 @@ INITIAL_SAMPLE_HISTORY: List[Dict[str, Any]] = [
         "notes": "Driver attended cyber station; recorded formal audio deposition filed in case evidence (EV-1042-03).",
         "timestamp": "2026-10-28T16:42:00Z",
         "next_follow_up": None,
+        "assigned_investigator": "Inspector R. K. Sharma"
+    },
+    {
+        "id": "HIST-9597-01",
+        "contact_id": "CNT-9597-01",
+        "case_id": "CASE-2026-9597",
+        "communication_type": "Automated Twilio Call",
+        "outcome": "Voice Assistant Call Delivered (3-Day Case Notice)",
+        "notes": "Hello Ravi Kumar. This is Rekishi Forensics regarding your incident report for case number CASE 2026 9597. Please visit our investigation office within the next three days. Thank you, goodbye.",
+        "timestamp": "2026-10-31T09:40:00Z",
+        "next_follow_up": "2026-11-03T10:00:00Z",
+        "assigned_investigator": "Twilio AI Voice Assistant (Male • Polly.Matthew)"
+    },
+    {
+        "id": "HIST-9597-02",
+        "contact_id": "CNT-9597-02",
+        "case_id": "CASE-2026-9597",
+        "communication_type": "Automated Twilio Call",
+        "outcome": "Voice Assistant Call Delivered (3-Day Case Notice)",
+        "notes": "Hello Suresh Reddy. This is Rekishi Forensics regarding your incident report for case number CASE 2026 9597. Please visit our investigation office within the next three days. Thank you, goodbye.",
+        "timestamp": "2026-10-31T09:42:00Z",
+        "next_follow_up": "2026-11-03T10:00:00Z",
+        "assigned_investigator": "Twilio AI Voice Assistant (Male • Polly.Matthew)"
+    },
+    {
+        "id": "HIST-9597-03",
+        "contact_id": "CNT-9597-03",
+        "case_id": "CASE-2026-9597",
+        "communication_type": "In-Person Visit",
+        "outcome": "Sworn Eyewitness Deposition Recorded",
+        "notes": "Motorcyclist Syed Imran attended investigation cell. Formal sworn statement recorded regarding signal transit and approach velocity. Evidence linked to Records.",
+        "timestamp": "2026-10-30T23:45:00Z",
+        "next_follow_up": None,
+        "assigned_investigator": "Inspector R. K. Sharma"
+    },
+    {
+        "id": "HIST-9597-04",
+        "contact_id": "CNT-9597-04",
+        "case_id": "CASE-2026-9597",
+        "communication_type": "Automated Twilio Call",
+        "outcome": "Station Appointment Confirmed",
+        "notes": "Hello Anitha Rao. This is Rekishi Forensics regarding your incident report for case number CASE 2026 9597. Please visit our investigation office within the next three days. Thank you, goodbye.",
+        "timestamp": "2026-10-31T09:00:00Z",
+        "next_follow_up": "2026-11-01T10:30:00Z",
+        "assigned_investigator": "Twilio AI Voice Assistant (Male • Polly.Matthew)"
+    },
+    {
+        "id": "HIST-9597-05",
+        "contact_id": "CNT-9597-05",
+        "case_id": "CASE-2026-9597",
+        "communication_type": "In-Person Visit",
+        "outcome": "CCTV Footage Handover Verified",
+        "notes": "Commercial shop owner P. Venkat Ramana verified camera timestamp synchronicity for corner surveillance unit EV-002.",
+        "timestamp": "2026-10-31T09:30:00Z",
+        "next_follow_up": "2026-11-01T14:00:00Z",
         "assigned_investigator": "Inspector R. K. Sharma"
     }
 ]
@@ -259,7 +404,9 @@ class ContactsService:
         contact_id: str,
         new_status: str,
         officer: str = "Investigator",
-        note: Optional[str] = None
+        note: Optional[str] = None,
+        comm_type: Optional[str] = None,
+        log_audit: bool = True
     ) -> Optional[Dict[str, Any]]:
         target = self.get_contact_by_id(contact_id)
         if not target:
@@ -275,15 +422,17 @@ class ContactsService:
             existing_notes = target.get("notes") or ""
             target["notes"] = f"{existing_notes}\n[{datetime.now().strftime('%b %d, %H:%M')}] {note}".strip()
 
-        # Audit log status shift
-        self.log_history(
-            contact_id=contact_id,
-            case_id=target.get("case_id", ""),
-            comm_type="Manual Phone Call",
-            outcome=f"Status Updated: {old_status} -> {new_status}",
-            notes=note or f"Status transitioned to {new_status} by {officer}.",
-            assigned_officer=officer
-        )
+        # Audit log status shift (if requested)
+        if log_audit:
+            actual_comm = comm_type or ("Automated Twilio Call" if "Twilio" in officer else "Manual Phone Call")
+            self.log_history(
+                contact_id=contact_id,
+                case_id=target.get("case_id", ""),
+                comm_type=actual_comm,
+                outcome=f"Status Updated: {old_status} -> {new_status}",
+                notes=note or f"Status transitioned to {new_status} by {officer}.",
+                assigned_officer=officer
+            )
 
         # Sync to Supabase
         sb = supabase_service.get_client()
@@ -362,11 +511,26 @@ class ContactsService:
             try:
                 res = sb.table("contact_history").select("*").eq("contact_id", c_id).order("timestamp", desc=True).execute()
                 if res and res.data:
-                    return res.data
+                    cleaned = [
+                        h for h in res.data 
+                        if not (h.get("outcome", "").startswith("Status Updated:")) and h.get("notes") != "0"
+                    ]
+                    if cleaned:
+                        return cleaned
             except Exception as e:
                 logger.debug(f"[Supabase History] Query note: {e}")
 
-        matched = [h for h in self._history_db if h.get("contact_id") == c_id]
+        matched = [
+            h for h in self._history_db 
+            if h.get("contact_id") == c_id 
+            and not (h.get("outcome", "").startswith("Status Updated:"))
+            and h.get("notes") != "0"
+        ]
+        if not matched:
+            matched = [
+                h for h in INITIAL_SAMPLE_HISTORY 
+                if h.get("contact_id") == c_id
+            ]
         return sorted(matched, key=lambda x: x.get("timestamp", ""), reverse=True)
 
     def log_history(

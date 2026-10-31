@@ -29,9 +29,15 @@ import {
   HelpCircle,
   Info
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import TopHeader from "@/components/TopHeader";
-import ThreeForensicCanvas, { ScenarioType } from "@/components/3d/ThreeForensicCanvas";
+import type { ScenarioType } from "@/components/3d/ThreeForensicCanvas";
 import CaseContactsTab from "@/components/cases/CaseContactsTab";
+
+const ThreeForensicCanvas = dynamic(
+  () => import("@/components/3d/ThreeForensicCanvas"),
+  { ssr: false }
+);
 import { 
   getStoredCaseById, 
   CaseDetail, 
@@ -1200,7 +1206,7 @@ export default function CaseDetailsPage() {
             {/* Contacts Tab */}
             {activeTab === "contacts" && (
               <CaseContactsTab
-                caseId={caseData.id}
+                caseId={caseData.caseNumber || caseData.id}
                 caseTitle={caseData.name}
                 assignedOfficer={caseData.filedBy}
                 onStatementLinked={() => {
