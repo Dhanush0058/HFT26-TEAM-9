@@ -302,3 +302,4 @@ def link_statement(case_id: str, contact_id: str, payload: LinkStatementRequest)
         officer=payload.officer or "Investigator"
     )
     return res
+

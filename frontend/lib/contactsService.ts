@@ -395,7 +395,7 @@ export async function callContact(
   mode: "automated" | "manual" = "automated",
   officer: string = "Investigator",
   notes?: string
-): Promise<{ success: boolean; message: string; telUrl?: string; twilioResult?: any }> {
+): Promise<{ success: boolean; message: string; telUrl?: string; twilioResult?: Record<string, unknown> }> {
   try {
     const res = await fetch(`http://localhost:8000/api/cases/${encodeURIComponent(caseId)}/contacts/${contactId}/call`, {
       method: "POST",
@@ -490,7 +490,7 @@ export async function linkStatementToRecords(
   contactId: string,
   statementText: string,
   officer: string = "Investigator"
-): Promise<{ success: boolean; message: string; evidenceRecord?: any }> {
+): Promise<{ success: boolean; message: string; evidenceRecord?: Record<string, unknown> }> {
   try {
     const res = await fetch(`http://localhost:8000/api/cases/${encodeURIComponent(caseId)}/contacts/${contactId}/link-statement`, {
       method: "POST",
@@ -520,3 +520,4 @@ export async function deleteContact(caseId: string, contactId: string): Promise<
   saveLocalContacts(all);
   return true;
 }
+

@@ -495,3 +495,4 @@ class ContactsService:
         }
 
 contacts_service = ContactsService()
+

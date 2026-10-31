@@ -612,13 +612,6 @@ export function generateForensicEvidenceData(
   const nameLower = file.name.toLowerCase();
   const contextLower = `${caseContext?.name || ""} ${caseContext?.description || ""} ${caseContext?.scenario || ""} ${file.name}`.toLowerCase();
   const address = caseContext?.address || "Signalized Intersection Sector";
-  const nowStr = new Date().toLocaleString("en-US", { 
-    month: "short", 
-    day: "numeric", 
-    year: "numeric", 
-    hour: "2-digit", 
-    minute: "2-digit" 
-  });
 
   const isLorry = /lorry|truck|semi|trailer|hauler|container|heavy|commercial|tanker/i.test(contextLower);
   const isBike = /bike|motorcycle|moto|scooter|two-wheel|rider/i.test(contextLower);
@@ -829,7 +822,6 @@ export function autoGenerateSummary(caseItem: CaseDetail): string {
     return `Forensic case opened for ${caseItem.name} at ${caseItem.address}. No digital evidence records attached yet. Ingest video, audio, sensor, or document evidence to generate automated physical reconstruction.`;
   }
 
-  const names = caseItem.evidenceList.map((e) => e.name).join(", ");
   const types = Array.from(new Set(caseItem.evidenceList.map((e) => e.dataType))).join(", ");
 
   const hasAudio = caseItem.evidenceList.some((e) => e.dataType === "Audio");
@@ -882,6 +874,21 @@ export function autoGenerateSummary(caseItem: CaseDetail): string {
   }
 }
 
+export function isPlaceholderForensicSummary(summaryText?: string): boolean {
+  if (!summaryText || typeof summaryText !== "string") return true;
+  const s = summaryText.trim().toLowerCase();
+  return (
+    s.includes("data and digital artifacts") ||
+    s.includes("extracted digital artifacts") ||
+    s.includes("forensic ingestion of") ||
+    s.includes("uploaded and parsed") ||
+    s.includes("ready for consolidated multi-source") ||
+    s.startsWith("extracted from") ||
+    s.length < 50 ||
+    (!s.includes("collision") && !s.includes("impact") && !s.includes("vehicle") && !s.includes("trajectory") && !s.includes("brake") && !s.includes("signal") && !s.includes("velocity"))
+  );
+}
+
 // Helper to ensure every case has valid updates and extracted fields
 function ensureCaseUpdatesAndFields(cases: CaseDetail[]): CaseDetail[] {
   return cases.map((c) => {
@@ -892,10 +899,7 @@ function ensureCaseUpdatesAndFields(cases: CaseDetail[]): CaseDetail[] {
     const evidenceList = c.evidenceList.map((ev) => {
       const matchEv = defaultMatch?.evidenceList.find((de) => de.name === ev.name || de.id === ev.id);
       const summaryText = ev.extractedData?.summary || "";
-      const isPlaceholderSummary = !summaryText ||
-        summaryText.startsWith("Data and digital artifacts extracted from") ||
-        summaryText.startsWith("Extracted digital artifacts from") ||
-        summaryText.startsWith("Forensic ingestion of");
+      const isPlaceholderSummary = isPlaceholderForensicSummary(summaryText);
 
       if (isPlaceholderSummary) {
         const forensicData = generateForensicEvidenceData(

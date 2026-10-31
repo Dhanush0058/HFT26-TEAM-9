@@ -9,7 +9,6 @@ import {
   Database, 
   Eye, 
   Users, 
-  Phone, 
   Calendar, 
   MapPin, 
   User, 
@@ -40,7 +39,10 @@ import {
   addEvidenceToCase, 
   deleteEvidenceFromCase,
   deleteCase,
-  generateForensicEvidenceData
+  generateForensicEvidenceData,
+  isPlaceholderForensicSummary,
+  getStoredCases,
+  saveStoredCases
 } from "@/lib/casesService";
 
 export default function CaseDetailsPage() {
@@ -56,20 +58,50 @@ export default function CaseDetailsPage() {
 
   const openExtractedDrawer = (ev: EvidenceRecord) => {
     const summaryText = ev.extractedData?.summary || "";
-    if (
-      !summaryText ||
-      summaryText.startsWith("Data and digital artifacts extracted from") ||
-      summaryText.startsWith("Extracted digital artifacts from") ||
-      summaryText.startsWith("Forensic ingestion of")
-    ) {
+    if (isPlaceholderForensicSummary(summaryText)) {
       const fresh = generateForensicEvidenceData(
         { name: ev.name, size: ev.size, type: ev.dataType, accidentTime: ev.accidentTime },
-        { name: caseData?.name, address: caseData?.address, description: caseData?.description, scenario: (caseData as any)?.scenario }
+        { name: caseData?.name, address: caseData?.address, description: caseData?.description, scenario: caseData?.scenario }
       );
-      setExtractedDrawerRecord({
+      const upgradedEv = {
         ...ev,
         is_data_extracted: 1,
-        status: "Extracted",
+        status: "Extracted" as const,
+        extractedData: {
+          summary: fresh.summary,
+          keyObservations: fresh.keyObservations,
+          fields: fresh.fields,
+          transcript: fresh.transcript || ev.extractedData?.transcript
+        }
+      };
+      setExtractedDrawerRecord(upgradedEv);
+
+      // Persist permanently into current case state and localStorage
+      if (caseData) {
+        const nextEvidenceList = caseData.evidenceList.map(e => e.id === ev.id ? upgradedEv : e);
+        const nextCase = { ...caseData, evidenceList: nextEvidenceList };
+        setCaseData(nextCase);
+        const stored = getStoredCases();
+        const cIdx = stored.findIndex(c => c.id === caseData.id || c.caseNumber === caseData.caseNumber);
+        if (cIdx !== -1) {
+          stored[cIdx] = nextCase;
+          saveStoredCases(stored);
+        }
+      }
+    } else {
+      setExtractedDrawerRecord(ev);
+    }
+  };
+
+  const handleViewEvidence = (ev: EvidenceRecord) => {
+    const summaryText = ev.extractedData?.summary || "";
+    if (isPlaceholderForensicSummary(summaryText)) {
+      const fresh = generateForensicEvidenceData(
+        { name: ev.name, size: ev.size, type: ev.dataType, accidentTime: ev.accidentTime },
+        { name: caseData?.name, address: caseData?.address, description: caseData?.description, scenario: caseData?.scenario }
+      );
+      setViewingEvidence({
+        ...ev,
         extractedData: {
           summary: fresh.summary,
           keyObservations: fresh.keyObservations,
@@ -78,7 +110,7 @@ export default function CaseDetailsPage() {
         }
       });
     } else {
-      setExtractedDrawerRecord(ev);
+      setViewingEvidence(ev);
     }
   };
   const [selectedUpdateId, setSelectedUpdateId] = useState<string | null>(null);
@@ -912,7 +944,7 @@ export default function CaseDetailsPage() {
                                 <button
                                   type="button"
                                   title="View Record Details"
-                                  onClick={() => setViewingEvidence(ev)}
+                                  onClick={() => handleViewEvidence(ev)}
                                   className="w-8 h-8 rounded-full bg-[#F5F5F3] hover:bg-[#EAEAEA] flex items-center justify-center text-[#111111] transition"
                                 >
                                   <Eye className="w-3.5 h-3.5" />

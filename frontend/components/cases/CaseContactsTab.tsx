@@ -18,9 +18,6 @@ import {
   X,
   History,
   ShieldCheck,
-  Send,
-  ExternalLink,
-  ChevronDown,
   Sparkles,
   Info,
   Trash2
@@ -80,7 +77,7 @@ export default function CaseContactsTab({
     mode: "automated" | "manual";
     status: "initiating" | "in_progress" | "completed" | "error";
     message: string;
-    details?: any;
+    details?: Record<string, unknown>;
   } | null>(null);
 
   // Notice banner
@@ -124,6 +121,7 @@ export default function CaseContactsTab({
 
   useEffect(() => {
     loadContacts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseId]);
 
   // Open Communication History Modal
@@ -193,12 +191,13 @@ export default function CaseContactsTab({
           message: res.message || "Failed to dispatch call."
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : "Telephony dispatch error.";
       setCallingState({
         contact,
         mode,
         status: "error",
-        message: err.message || "Telephony dispatch error."
+        message: errMsg
       });
     }
   };
@@ -372,7 +371,7 @@ export default function CaseContactsTab({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#F0F0F0] pb-5">
           <div>
             <span className="text-[13px] font-medium text-[#8A8A8A]">
-              Case Coordination • {caseId}
+              Case Coordination • {caseId}{caseTitle ? ` • ${caseTitle}` : ""}
             </span>
             <h2 className="text-xl sm:text-2xl font-extrabold text-[#111111] mt-0.5 flex items-center gap-2.5">
               <Users className="w-6 h-6 text-[#0A66FF]" /> Case Contacts & Witness Coordination
@@ -1148,3 +1147,4 @@ export default function CaseContactsTab({
     </div>
   );
 }
+

@@ -38,29 +38,29 @@ class TwilioService:
 
     def generate_initial_twiml(self, contact_name: str, contact_id: str, case_id: str) -> str:
         """
-        Generates court-compliant TwiML greeting using male voice:
+        Generates court-compliant TwiML greeting using Polly.Matthew male voice:
         1. Identifies as Rekishi Forensics automated case coordination assistant
         2. Inquires availability of contact without disclosing sensitive details
         3. Prompts user for callback or appointment slot via DTMF keypad
         """
         clean_name = contact_name or "Citizen"
+        clean_case = case_id if case_id and case_id != "UNKNOWN" else "101"
+        spoken_case = clean_case.replace("-", " ")
         callback_url = f"{self.base_url}/api/twilio/gather-callback?contact_id={urllib.parse.quote(contact_id)}&case_id={urllib.parse.quote(case_id)}"
         
         twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Say voice="man" language="en-IN">
-        Hello. This is the automated investigation coordination assistant from Rekishi Forensics. Am I speaking with {clean_name}?
+    <Say voice="Polly.Matthew">
+        Hello {clean_name}. This is Rekishi Forensics regarding your incident report for case number {spoken_case}. Please visit our investigation office within the next three days.
     </Say>
     <Pause length="1"/>
-    <Gather numDigits="1" action="{callback_url}" method="POST" timeout="10">
-        <Say voice="man" language="en-IN">
-            An official traffic accident investigator wishes to schedule a brief follow-up regarding an incident coordination report.
-            To request an investigator callback or schedule an appointment slot, press 1.
-            If you are currently busy or unavailable, press 2.
+    <Gather numDigits="1" action="{callback_url}" method="POST" timeout="8">
+        <Say voice="Polly.Matthew">
+            Press 1 to confirm your appointment, or press 2 if unavailable.
         </Say>
     </Gather>
-    <Say voice="man" language="en-IN">
-        We did not receive your input. An investigator will follow up with you at a later time. Thank you, goodbye.
+    <Say voice="Polly.Matthew">
+        Thank you, goodbye.
     </Say>
 </Response>"""
         return twiml
@@ -72,7 +72,7 @@ class TwilioService:
         if digit == "1":
             twiml = """<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Say voice="man" language="en-IN">
+    <Say voice="Polly.Matthew">
         Thank you. Your request for an investigator callback has been logged in the official case dossier. An authorized officer will contact you during preferred hours. Goodbye.
     </Say>
     <Hangup/>
@@ -80,7 +80,7 @@ class TwilioService:
         elif digit == "2":
             twiml = """<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Say voice="man" language="en-IN">
+    <Say voice="Polly.Matthew">
         Thank you for letting us know. We have noted that you are currently unavailable and will attempt contact at another time. Goodbye.
     </Say>
     <Hangup/>
@@ -88,7 +88,7 @@ class TwilioService:
         else:
             twiml = """<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Say voice="man" language="en-IN">
+    <Say voice="Polly.Matthew">
         Invalid selection received. An investigator will follow up with you directly. Thank you, goodbye.
     </Say>
     <Hangup/>
@@ -123,7 +123,7 @@ class TwilioService:
                 "contactName": contact_name,
                 "callSid": f"SIM_CA{contact_id[-6:]}_{case_id[-4:]}",
                 "status": "queued",
-                "voice": "man (en-IN)",
+                "voice": "Polly.Matthew (Male)",
                 "webhookUrl": voice_url,
                 "message": (
                     f"Automated voice call simulated for {contact_name} ({to_number}). "
@@ -138,14 +138,25 @@ class TwilioService:
             if not clean_to.startswith("+"):
                 clean_to = f"+91{clean_to}" if len(clean_to) == 10 else f"+{clean_to}"
 
-            call = client.calls.create(
-                to=clean_to,
-                from_=self.from_number,
-                url=voice_url,
-                status_callback=status_url,
-                status_callback_event=["initiated", "ringing", "answered", "completed"],
-                status_callback_method="POST"
-            )
+            is_localhost = "localhost" in base_url or "127.0.0.1" in base_url
+            twiml_content = self.generate_initial_twiml(contact_name, contact_id, case_id)
+
+            call_kwargs = {
+                "to": clean_to,
+                "from_": self.from_number
+            }
+            if is_localhost:
+                # Use echo webhook for local development to ensure compatibility with Twilio Trial accounts
+                # (Trial accounts disallow direct inline 'twiml' parameter)
+                echo_url = "https://twimlets.com/echo?Twiml=" + urllib.parse.quote(twiml_content)
+                call_kwargs["url"] = echo_url
+            else:
+                call_kwargs["url"] = voice_url
+                call_kwargs["status_callback"] = status_url
+                call_kwargs["status_callback_event"] = ["initiated", "ringing", "answered", "completed"]
+                call_kwargs["status_callback_method"] = "POST"
+
+            call = client.calls.create(**call_kwargs)
 
             logger.info(f"[Twilio] Live call dispatched successfully! Call SID: {call.sid}")
             return {
@@ -157,7 +168,7 @@ class TwilioService:
                 "fromNumber": self.from_number,
                 "callSid": call.sid,
                 "status": call.status,
-                "voice": "man (en-IN)",
+                "voice": "Polly.Matthew (Male)",
                 "webhookUrl": voice_url,
                 "message": f"Twilio voice call dispatched to {clean_to}. Call SID: {call.sid}."
             }
@@ -171,3 +182,4 @@ class TwilioService:
             }
 
 twilio_service = TwilioService()
+

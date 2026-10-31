@@ -18,7 +18,7 @@ def get_twilio_info(request: Request):
         "configured": twilio_service.is_configured(),
         "fromNumber": settings.TWILIO_PHONE_NUMBER or "Pending Configuration",
         "accountSidSet": bool(settings.TWILIO_ACCOUNT_SID),
-        "voiceType": "Male (man / en-IN)",
+        "voiceType": "Male (Polly.Matthew)",
         "webhooks": {
             "voiceWebhook": f"{host}/api/twilio/voice-webhook",
             "gatherCallback": f"{host}/api/twilio/gather-callback",
@@ -144,3 +144,4 @@ async def status_callback(
         )
 
     return {"received": True, "callStatus": call_status}
+
