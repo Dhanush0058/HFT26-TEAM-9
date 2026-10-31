@@ -194,15 +194,15 @@ export default function ThreeForensicCanvas({
     const width = containerRef.current.clientWidth || 800;
     const height = containerRef.current.clientHeight || 520;
 
-    // 1. Scene & Atmospheric Fog
+    // 1. Scene & Atmospheric Fog (Crisp Daylight Isometric Blueprint Aesthetic)
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xd6e8fa);
-    scene.fog = new THREE.FogExp2(0xd6e8fa, 0.0045);
+    scene.background = new THREE.Color(0xdce7f3);
+    scene.fog = new THREE.FogExp2(0xdce7f3, 0.0035);
     sceneRef.current = scene;
 
-    // 2. Camera: Cinematic unobstructed isometric perspective
-    const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 1000);
-    camera.position.set(16, 14, 20);
+    // 2. Camera: True 45-degree Isometric High-Angle Perspective
+    const camera = new THREE.PerspectiveCamera(36, width / height, 0.1, 1000);
+    camera.position.set(24, 22, 24);
     camera.lookAt(0, 0.5, 0);
     cameraRef.current = camera;
 
@@ -219,7 +219,7 @@ export default function ThreeForensicCanvas({
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
+    renderer.toneMappingExposure = 1.15;
     rendererRef.current = renderer;
 
     // 4. Free 3D OrbitControls (Mouse drag to orbit 360°)
@@ -232,35 +232,60 @@ export default function ThreeForensicCanvas({
     controls.target.set(0, 0.5, 0);
     controlsRef.current = controls;
 
-    // 5. Lighting
-    const hemiLight = new THREE.HemisphereLight(0xedf6ff, 0xccd8c2, 1.15);
+    // 5. Lighting: Crisp 45-degree directional sunlight casting sharp clean shadows
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0xc7d6e5, 1.25);
     scene.add(hemiLight);
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
     scene.add(ambientLight);
 
-    const mainSun = new THREE.DirectionalLight(0xfffaea, 2.0);
-    mainSun.position.set(22, 36, 16);
+    const mainSun = new THREE.DirectionalLight(0xfffaea, 1.9);
+    mainSun.position.set(28, 45, -18);
     mainSun.castShadow = true;
     mainSun.shadow.mapSize.width = 2048;
     mainSun.shadow.mapSize.height = 2048;
     mainSun.shadow.bias = -0.0001;
     scene.add(mainSun);
 
-    const rimLight = new THREE.DirectionalLight(0xbfdbfe, 0.65);
+    const rimLight = new THREE.DirectionalLight(0xbfdbfe, 0.5);
     rimLight.position.set(-20, 18, -18);
     scene.add(rimLight);
 
-    // 6. Base Ground Plane
-    const asphaltMat = new THREE.MeshStandardMaterial({ color: 0x8eb27b, roughness: 0.95 });
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(130, 130), asphaltMat);
+    // 6. Base Ground Plane with Architectural Square Grid Texture (Exact match to reference)
+    const createArchitecturalGridTexture = () => {
+      const size = 128;
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.fillStyle = "#edf2f7"; // soft crisp light grayish-blue ground
+        ctx.fillRect(0, 0, size, size);
+        ctx.strokeStyle = "#d4dee9"; // subtle architectural grid line
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(0, 0, size, size);
+      }
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(40, 40);
+      return tex;
+    };
+
+    const gridTexture = createArchitecturalGridTexture();
+    const groundMat = new THREE.MeshStandardMaterial({ 
+      map: gridTexture, 
+      roughness: 0.92,
+      metalness: 0.03
+    });
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(140, 140), groundMat);
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     scene.add(ground);
 
-    const roadMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8 });
-    const curbMat = new THREE.MeshStandardMaterial({ color: 0xcfd7e3, roughness: 0.6 });
-    const lineMat = new THREE.MeshBasicMaterial({ color: 0xf8fafc });
+    const roadMat = new THREE.MeshStandardMaterial({ color: 0x5a6778, roughness: 0.85 }); // matte slate road from reference
+    const curbMat = new THREE.MeshStandardMaterial({ color: 0xd9e0ea, roughness: 0.5 }); // clean light architectural sidewalk
+    const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff }); // continuous crisp white lane lines
     const lampPostMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.8, roughness: 0.3 });
 
     // Helper for Streetlamps (placed safely outside camera lines)
@@ -352,6 +377,28 @@ export default function ThreeForensicCanvas({
       tJunctionGroup.add(d);
     }
 
+    // Outer solid white road border lines for T-Junction
+    const addTJBorderEW = (xStart: number, xEnd: number, z: number) => {
+      const len = Math.abs(xEnd - xStart);
+      const l = new THREE.Mesh(new THREE.PlaneGeometry(len, 0.22), lineMat);
+      l.rotation.x = -Math.PI / 2;
+      l.position.set((xStart + xEnd) / 2, 0.045, z);
+      tJunctionGroup.add(l);
+    };
+    addTJBorderEW(-44, -6.1, -6.3);
+    addTJBorderEW(6.1, 44, -6.3);
+    addTJBorderEW(-44, 44, 6.3); // Continuous unbroken south outer border
+
+    const addTJBorderNS = (x: number, zStart: number, zEnd: number) => {
+      const len = Math.abs(zEnd - zStart);
+      const l = new THREE.Mesh(new THREE.PlaneGeometry(0.22, len), lineMat);
+      l.rotation.x = -Math.PI / 2;
+      l.position.set(x, 0.045, (zStart + zEnd) / 2);
+      tJunctionGroup.add(l);
+    };
+    addTJBorderNS(-5.8, -44, -6.3);
+    addTJBorderNS(5.8, -44, -6.3);
+
     addStreetLamp(tJunctionGroup, -16.0, -16.0, Math.PI / 4);
     addStreetLamp(tJunctionGroup, 16.0, -16.0, -Math.PI / 4);
     addStreetLamp(tJunctionGroup, 0.0, 16.0, Math.PI);
@@ -402,6 +449,32 @@ export default function ThreeForensicCanvas({
       d.position.set(0, 0.04, z);
       intersectionGroup.add(d);
     }
+
+    // Continuous Crisp White Outer Road Border Lines (Framing Sidewalks like reference)
+    const addBorderLineEW = (xStart: number, xEnd: number, z: number) => {
+      const len = Math.abs(xEnd - xStart);
+      const l = new THREE.Mesh(new THREE.PlaneGeometry(len, 0.22), lineMat);
+      l.rotation.x = -Math.PI / 2;
+      l.position.set((xStart + xEnd) / 2, 0.045, z);
+      intersectionGroup.add(l);
+    };
+    const addBorderLineNS = (x: number, zStart: number, zEnd: number) => {
+      const len = Math.abs(zEnd - zStart);
+      const l = new THREE.Mesh(new THREE.PlaneGeometry(0.22, len), lineMat);
+      l.rotation.x = -Math.PI / 2;
+      l.position.set(x, 0.045, (zStart + zEnd) / 2);
+      intersectionGroup.add(l);
+    };
+
+    addBorderLineEW(-44, -6.1, -5.8);
+    addBorderLineEW(6.1, 44, -5.8);
+    addBorderLineEW(-44, -6.1, 5.8);
+    addBorderLineEW(6.1, 44, 5.8);
+
+    addBorderLineNS(-5.8, -44, -6.1);
+    addBorderLineNS(-5.8, 6.1, 44);
+    addBorderLineNS(5.8, -44, -6.1);
+    addBorderLineNS(5.8, 6.1, 44);
 
     addStreetLamp(intersectionGroup, -14.0, -14.0, Math.PI / 4);
     addStreetLamp(intersectionGroup, 14.0, -14.0, -Math.PI / 4);
@@ -1205,93 +1278,94 @@ export default function ThreeForensicCanvas({
         />
 
 
-        {/* Top-Left: Location & Coordinates (Clean Rekishi Design Language) */}
-        <div className="absolute top-3.5 left-3.5 bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-[16px] border border-[#F0F0F0] shadow-soft z-20 pointer-events-none max-w-xs sm:max-w-sm">
-          <div className="text-xs font-bold text-[#111111] leading-snug">
-            {address}
-          </div>
-          <div className="flex items-center gap-1.5 text-[11px] font-mono text-[#8A8A8A] mt-0.5">
-            <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-            <span>{latitude.toFixed(6)}° N, {longitude.toFixed(6)}° E</span>
-          </div>
-        </div>
-
-        {/* Top-Center: Camera Perspective Controls (Free Roam, POV Vehicle 1, POV Vehicle 2) */}
-        <div className="absolute top-3.5 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md p-1.5 rounded-full border border-[#F0F0F0] shadow-soft z-30 flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setCameraPerspective("ORBIT")}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer ${
-              cameraPerspective === "ORBIT"
-                ? "bg-[#121212] text-white shadow-sm"
-                : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F5F8FF]"
-            }`}
-          >
-            <Compass className="w-3.5 h-3.5" />
-            <span>Free Roam</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setCameraPerspective("CAR_POV")}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer ${
-              cameraPerspective === "CAR_POV"
-                ? "bg-[#121212] text-white shadow-sm"
-                : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F5F8FF]"
-            }`}
-          >
-            <Eye className="w-3.5 h-3.5 text-rose-500" />
-            <span>POV Vehicle 1</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setCameraPerspective("LORRY_POV")}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer ${
-              cameraPerspective === "LORRY_POV"
-                ? "bg-[#121212] text-white shadow-sm"
-                : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F5F8FF]"
-            }`}
-          >
-            <Eye className="w-3.5 h-3.5 text-blue-500" />
-            <span>
-              {activeScenario === "CAR_VS_LORRY" ? "POV Vehicle 2 (Truck)" : activeScenario === "CAR_VS_BIKE" ? "POV Vehicle 2 (Bike)" : "POV Vehicle 2"}
-            </span>
-          </button>
-        </div>
-
-        {/* Top-Right: Telemetry Speedometer (Clean Rekishi Design Language) */}
-        <div className="absolute top-3.5 right-3.5 bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-[16px] border border-[#F0F0F0] shadow-soft z-20 pointer-events-none flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0"></span>
-            <div>
-              <div className="text-[10px] font-semibold text-[#8A8A8A] uppercase tracking-wider leading-none">Vehicle 1</div>
-              <div className="text-xs font-bold text-[#111111] font-mono leading-tight mt-0.5">
-                {telemetryState.speedA} <span className="text-[10px] text-[#8A8A8A] font-sans font-normal">km/h</span>
-              </div>
+        {/* TOP HUD BAR: Unified single-row container with guaranteed zero overlap */}
+        <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 z-30 pointer-events-none">
+          {/* 1. Location & GPS Coordinates (Compact, Truncated, Clean Rekishi Style) */}
+          <div className="pointer-events-auto bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-slate-200/90 shadow-sm max-w-[210px] sm:max-w-[280px] shrink-0">
+            <div className="text-xs font-bold text-slate-900 leading-tight truncate" title={address}>
+              {address}
+            </div>
+            <div className="flex items-center gap-1.5 text-[11px] font-mono text-slate-500 mt-0.5 truncate">
+              <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+              <span>{latitude.toFixed(6)}° N, {longitude.toFixed(6)}° E</span>
             </div>
           </div>
 
-          <div className="w-[1px] h-6 bg-[#F0F0F0]"></div>
+          {/* 2. Camera Perspective Controls (Pill switcher) */}
+          <div className="pointer-events-auto bg-white/95 backdrop-blur-md p-1 rounded-full border border-slate-200/90 shadow-sm flex items-center gap-1 shrink">
+            <button
+              type="button"
+              onClick={() => setCameraPerspective("ORBIT")}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                cameraPerspective === "ORBIT"
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+              }`}
+            >
+              <Compass className="w-3.5 h-3.5" />
+              <span>Free Roam</span>
+            </button>
 
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0"></span>
-            <div>
-              <div className="text-[10px] font-semibold text-[#8A8A8A] uppercase tracking-wider leading-none">Vehicle 2</div>
-              <div className="text-xs font-bold text-[#111111] font-mono leading-tight mt-0.5">
-                {telemetryState.speedB} <span className="text-[10px] text-[#8A8A8A] font-sans font-normal">km/h</span>
-              </div>
-            </div>
+            <button
+              type="button"
+              onClick={() => setCameraPerspective("CAR_POV")}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                cameraPerspective === "CAR_POV"
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+              }`}
+            >
+              <Eye className="w-3.5 h-3.5 text-rose-500" />
+              <span>POV Vehicle 1</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCameraPerspective("LORRY_POV")}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                cameraPerspective === "LORRY_POV"
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+              }`}
+            >
+              <Eye className="w-3.5 h-3.5 text-blue-500" />
+              <span>
+                {activeScenario === "CAR_VS_LORRY" ? "POV Vehicle 2 (Truck)" : activeScenario === "CAR_VS_BIKE" ? "POV Vehicle 2 (Bike)" : "POV Vehicle 2"}
+              </span>
+            </button>
           </div>
 
-          {telemetryState.isBrakingA && (
-            <span className="px-2 py-0.5 rounded-full bg-rose-50 border border-rose-200 text-rose-600 font-bold text-[9px] animate-pulse">
-              ABS
-            </span>
-          )}
-        </div>
+          {/* 3. Telemetry Speedometer & ABS Status */}
+          <div className="pointer-events-auto bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-slate-200/90 shadow-sm shrink-0 flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0"></span>
+              <div>
+                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider leading-none">Vehicle 1</div>
+                <div className="text-xs font-bold text-slate-900 font-mono leading-tight mt-0.5">
+                  {telemetryState.speedA} <span className="text-[10px] text-slate-400 font-sans font-normal">km/h</span>
+                </div>
+              </div>
+            </div>
 
-        {/* BOTTOM CONTROLS: Clean Timeline Scrubber, Playback, and High-Resolution Video Export */}
+            <div className="w-[1px] h-6 bg-slate-200"></div>
+
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0"></span>
+              <div>
+                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider leading-none">Vehicle 2</div>
+                <div className="text-xs font-bold text-slate-900 font-mono leading-tight mt-0.5">
+                  {telemetryState.speedB} <span className="text-[10px] text-slate-400 font-sans font-normal">km/h</span>
+                </div>
+              </div>
+            </div>
+
+            {telemetryState.isBrakingA && (
+              <span className="px-2 py-0.5 rounded-full bg-rose-50 border border-rose-200 text-rose-600 font-bold text-[9px] animate-pulse">
+                ABS
+              </span>
+            )}
+          </div>
+        </div>{/* BOTTOM CONTROLS: Clean Timeline Scrubber, Playback, and High-Resolution Video Export */}
         <div className="absolute bottom-3 left-3 right-3 bg-slate-950/90 backdrop-blur-md p-3 rounded-lg border border-slate-800 flex items-center gap-4 shadow-xl z-30">
           <button
             onClick={onTogglePlay}

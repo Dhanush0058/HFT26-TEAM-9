@@ -56,7 +56,7 @@ export function generateProceduralOsmData(centerLat: number, centerLon: number):
     { xMin: 14, xMax: 45, zMin: 14, zMax: 50 },   // SE
   ];
 
-  const colors = [0xffffff, 0xf8fafc, 0xf1f5f9, 0xe2e8f0, 0xfef3c7, 0xe0e7ff];
+  const colors = [0xdcd6cb, 0xd5cfc3, 0xded9cd, 0xdfdacf];
 
   blocks.forEach((block, bIdx) => {
     // 2-3 buildings per quadrant block
@@ -234,28 +234,36 @@ export function createProceduralEnvironmentGroup(data: OsmEnvironmentData): THRE
   const group = new THREE.Group();
   group.name = "OSM_ENVIRONMENT_GROUP";
 
+  // Warm architectural limestone / beige palette matching reference schematic
   const defaultBldMat = new THREE.MeshStandardMaterial({
-    color: 0xf8fafc,
-    roughness: 0.7,
-    metalness: 0.1
+    color: 0xdcd6cb,
+    roughness: 0.85,
+    metalness: 0.04
   });
 
-  const roofMat = new THREE.MeshStandardMaterial({
-    color: 0x94a3b8,
-    roughness: 0.8
+  const roofCapMat = new THREE.MeshStandardMaterial({
+    color: 0xede8df,
+    roughness: 0.9,
+    metalness: 0.02
   });
 
+  const doorMat = new THREE.MeshStandardMaterial({
+    color: 0x374151,
+    roughness: 0.7
+  });
+
+  // Pure rectangular architectural trees (tall box canopy + box trunk)
   const trunkMat = new THREE.MeshStandardMaterial({
-    color: 0x78350f,
-    roughness: 0.9
+    color: 0x5c3c26,
+    roughness: 0.92
   });
 
   const foliageMat = new THREE.MeshStandardMaterial({
-    color: 0x16a34a,
-    roughness: 0.65
+    color: 0x22c55e,
+    roughness: 0.55
   });
 
-  // 1. Extrude Buildings from vector polygon footprints
+  // 1. Extrude Buildings with architectural roof parapet caps and door cutouts
   data.buildings.forEach((bld) => {
     if (bld.points.length < 3) return;
 
@@ -270,8 +278,8 @@ export function createProceduralEnvironmentGroup(data: OsmEnvironmentData): THRE
       const extrudeSettings: THREE.ExtrudeGeometryOptions = {
         depth: bld.height,
         bevelEnabled: true,
-        bevelThickness: 0.2,
-        bevelSize: 0.2,
+        bevelThickness: 0.15,
+        bevelSize: 0.15,
         bevelSegments: 1
       };
 
@@ -279,25 +287,49 @@ export function createProceduralEnvironmentGroup(data: OsmEnvironmentData): THRE
       geom.rotateX(-Math.PI / 2);
 
       const mat = bld.color
-        ? new THREE.MeshStandardMaterial({ color: bld.color, roughness: 0.72 })
+        ? new THREE.MeshStandardMaterial({ color: bld.color, roughness: 0.85, metalness: 0.04 })
         : defaultBldMat;
 
       const mesh = new THREE.Mesh(geom, mat);
       mesh.castShadow = true;
       mesh.receiveShadow = true;
-
       group.add(mesh);
+
+      // Inset roof top cap
+      const roofSettings: THREE.ExtrudeGeometryOptions = {
+        depth: 0.25,
+        bevelEnabled: false
+      };
+      const roofGeom = new THREE.ExtrudeGeometry(shape, roofSettings);
+      roofGeom.rotateX(-Math.PI / 2);
+      roofGeom.translate(0, bld.height, 0);
+      const roofMesh = new THREE.Mesh(roofGeom, roofCapMat);
+      roofMesh.castShadow = true;
+      roofMesh.receiveShadow = true;
+      group.add(roofMesh);
+
+      // Recessed doorway accent for procedural buildings facing the road
+      if (bld.points.length >= 2) {
+        const p1 = bld.points[0];
+        const p2 = bld.points[1];
+        const midX = (p1.x + p2.x) / 2;
+        const midZ = (p1.z + p2.z) / 2;
+        const door = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2.2, 0.2), doorMat);
+        door.position.set(midX, 1.1, midZ);
+        door.castShadow = true;
+        group.add(door);
+      }
     } catch {
       // Skip degenerate polygon gracefully
     }
   });
 
-  // 2. Spawn Trees (Cylinder Trunk + Low-Poly Foliage)
-  const trunkGeom = new THREE.CylinderGeometry(0.18, 0.24, 2.4, 6);
-  trunkGeom.translate(0, 1.2, 0);
+  // 2. Spawn 100% Pure Rectangular Architectural Trees (Box Trunk + Box Canopy)
+  const trunkGeom = new THREE.BoxGeometry(0.32, 1.4, 0.32);
+  trunkGeom.translate(0, 0.7, 0);
 
-  const foliageGeom = new THREE.IcosahedronGeometry(1.2, 1);
-  foliageGeom.translate(0, 2.8, 0);
+  const foliageGeom = new THREE.BoxGeometry(1.15, 2.6, 1.15);
+  foliageGeom.translate(0, 2.7, 0);
 
   data.trees.forEach((t) => {
     const treeGroup = new THREE.Group();
@@ -306,10 +338,12 @@ export function createProceduralEnvironmentGroup(data: OsmEnvironmentData): THRE
 
     const trunk = new THREE.Mesh(trunkGeom, trunkMat);
     trunk.castShadow = true;
+    trunk.receiveShadow = true;
     treeGroup.add(trunk);
 
     const foliage = new THREE.Mesh(foliageGeom, foliageMat);
     foliage.castShadow = true;
+    foliage.receiveShadow = true;
     treeGroup.add(foliage);
 
     group.add(treeGroup);
