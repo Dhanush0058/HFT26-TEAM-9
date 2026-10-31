@@ -112,7 +112,9 @@ export default function ThreeForensicCanvas({
   const [, setOsmLoading] = useState(false);
   const [telemetryState, setTelemetryState] = useState({ speedA: 48, speedB: 36, isBrakingA: false });
   const [showCctvFeed, setShowCctvFeed] = useState(true);
+  const [showBuildings, setShowBuildings] = useState(false);
   const cctvVideoRef = useRef<HTMLVideoElement | null>(null);
+  const flyoverGroupRef = useRef<THREE.Group | null>(null);
   const osmGroupRef = useRef<THREE.Group | null>(null);
   const splineTracksRef = useRef(buildScenarioSplineTracks(activeScenario));
 
@@ -168,6 +170,13 @@ export default function ThreeForensicCanvas({
       vid.pause();
     }
   }, [isPlaying]);
+
+  // Toggle procedural buildings visibility
+  useEffect(() => {
+    if (osmGroupRef.current) {
+      osmGroupRef.current.visible = showBuildings;
+    }
+  }, [showBuildings]);
 
 
   // Handle video file upload for automatic scenario detection
@@ -266,10 +275,16 @@ export default function ThreeForensicCanvas({
     scene.fog = new THREE.FogExp2(0xdce7f3, 0.0025);
     sceneRef.current = scene;
 
-    // 2. Camera: True 45-degree Isometric High-Angle Perspective
+    // 2. Camera: True 45-degree Isometric High-Angle Perspective (Clear of all obstacles)
     const camera = new THREE.PerspectiveCamera(36, width / height, 0.1, 1000);
-    camera.position.set(24, 22, 24);
-    camera.lookAt(0, 0.5, 0);
+    const isRoundaboutScenario = activeScenario === "ROUNDABOUT_ENCLOACHMENT" || activeJunction === "ROUNDABOUT";
+    if (isRoundaboutScenario) {
+      camera.position.set(-14, 18, 26);
+      camera.lookAt(-4.0, 0.5, 3.5);
+    } else {
+      camera.position.set(20, 20, 20);
+      camera.lookAt(0, 0.5, 0);
+    }
     cameraRef.current = camera;
 
     // 3. Renderer with soft shadow maps and ACES Filmic tone mapping
@@ -504,6 +519,9 @@ export default function ThreeForensicCanvas({
       flyoverGroup.add(p);
     });
 
+    flyoverGroupRef.current = flyoverGroup;
+    const isGachibowli = caseTitle.toLowerCase().includes("gachibowli") || caseTitle.includes("1042");
+    flyoverGroup.visible = isGachibowli;
     scene.add(flyoverGroup);
 
     // Helper for Streetlamps (placed safely outside camera lines)
@@ -1213,6 +1231,7 @@ export default function ThreeForensicCanvas({
       osmGroupRef.current = null;
     }
     const group = createProceduralEnvironmentGroup(osmData);
+    group.visible = showBuildings;
     osmGroupRef.current = group;
     sceneRef.current.add(group);
 
@@ -1874,6 +1893,46 @@ export default function ThreeForensicCanvas({
               <span>
                 {activeScenario === "CAR_VS_LORRY" ? "POV Vehicle 2 (Truck)" : activeScenario === "ROUNDABOUT_ENCLOACHMENT" ? "POV Bike (Victim)" : activeScenario === "CAR_VS_BIKE" ? "POV Vehicle 2 (Bike)" : "POV Vehicle 2"}
               </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCameraPerspective("IMPACT_FOCUS")}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${cameraPerspective === "IMPACT_FOCUS"
+                ? "bg-rose-600 text-white shadow-sm ring-2 ring-rose-400"
+                : "text-rose-600 hover:bg-rose-50"
+                }`}
+              title="Snap Camera Directly onto Crash Point"
+            >
+              <Eye className="w-3.5 h-3.5 text-rose-500" />
+              <span>Crash Focus</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCameraPerspective("CCTV_CAM")}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${cameraPerspective === "CCTV_CAM"
+                ? "bg-slate-900 text-white shadow-sm"
+                : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+                }`}
+              title="Camera Angle Matching CCTV Video Feed"
+            >
+              <Video className="w-3.5 h-3.5 text-blue-500" />
+              <span>CCTV Cam</span>
+            </button>
+
+            <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
+
+            <button
+              type="button"
+              onClick={() => setShowBuildings(!showBuildings)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${showBuildings
+                ? "bg-slate-900 text-white shadow-sm"
+                : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+                }`}
+              title="Toggle Background 3D Buildings"
+            >
+              <span>{showBuildings ? "Buildings ON" : "Buildings OFF"}</span>
             </button>
 
             <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />

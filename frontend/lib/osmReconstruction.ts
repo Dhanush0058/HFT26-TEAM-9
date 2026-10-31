@@ -50,11 +50,12 @@ export function generateProceduralOsmData(centerLat: number, centerLon: number):
   const trees: TreeFeature[] = [];
 
   // Corner Blocks surrounding intersection (North-West, North-East, South-West, South-East)
+  // Push buildings far back (>36m) to prevent EVER obstructing roadway, vehicles, or collision zone
   const blocks = [
-    { xMin: -45, xMax: -14, zMin: -50, zMax: -14 }, // NW
-    { xMin: 14, xMax: 45, zMin: -50, zMax: -14 },  // NE
-    { xMin: -45, xMax: -14, zMin: 14, zMax: 50 },  // SW
-    { xMin: 14, xMax: 45, zMin: 14, zMax: 50 },   // SE
+    { xMin: -75, xMax: -38, zMin: -75, zMax: -38 }, // NW (distant)
+    { xMin: 38, xMax: 75, zMin: -75, zMax: -38 },  // NE (distant)
+    { xMin: -75, xMax: -38, zMin: 38, zMax: 75 },  // SW (distant)
+    { xMin: 38, xMax: 75, zMin: 38, zMax: 75 },   // SE (distant)
   ];
 
   const colors = [0xdcd6cb, 0xd5cfc3, 0xded9cd, 0xdfdacf];
