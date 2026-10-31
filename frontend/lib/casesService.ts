@@ -107,7 +107,7 @@ export const DEFAULT_INDIAN_CASES: CaseDetail[] = [
     status: "Flagged Contradiction",
     confidence: 94,
     videoUrl: "/uploads/WhatsApp_Video_2026-10-31_at_12.07.45.mp4",
-    scenario: "roundabout",
+    scenario: "ROUNDABOUT_ENCLOACHMENT",
     evidenceList: [
       {
         id: "EV-9597-01",
@@ -1173,7 +1173,8 @@ function ensureCaseUpdatesAndFields(cases: CaseDetail[]): CaseDetail[] {
     const defaultMatch = DEFAULT_INDIAN_CASES.find((d) => d.id === c.id || d.caseNumber === c.caseNumber);
     
     // Ensure all evidence items have rich, incident-specific extracted data
-    const evidenceList = c.evidenceList.map((ev) => {
+    const rawList = Array.isArray(c.evidenceList) ? c.evidenceList : (defaultMatch?.evidenceList || []);
+    const evidenceList = rawList.map((ev) => {
       const matchEv = defaultMatch?.evidenceList.find((de) => de.name === ev.name || de.id === ev.id);
       const summaryText = ev.extractedData?.summary || "";
       const isPlaceholderSummary = isPlaceholderForensicSummary(summaryText);
@@ -1303,11 +1304,15 @@ export function getStoredCases(): CaseDetail[] {
       if (matchIdx === -1) {
         cleaned.unshift(defCase);
       } else {
+        const defScenario = defCase.id === "CASE-2026-9597" ? "ROUNDABOUT_ENCLOACHMENT" : defCase.scenario;
         cleaned[matchIdx] = {
           ...defCase,
           ...cleaned[matchIdx],
+          scenario: defScenario || cleaned[matchIdx].scenario,
           videoUrl: defCase.videoUrl || cleaned[matchIdx].videoUrl,
-          evidenceList: defCase.evidenceList || cleaned[matchIdx].evidenceList
+          evidenceList: (cleaned[matchIdx].evidenceList && cleaned[matchIdx].evidenceList.length > 0)
+            ? cleaned[matchIdx].evidenceList 
+            : defCase.evidenceList
         };
       }
     }

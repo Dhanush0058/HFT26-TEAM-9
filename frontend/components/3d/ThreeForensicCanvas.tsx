@@ -63,12 +63,13 @@ export default function ThreeForensicCanvas({
 
   // Auto-detect scenario and junction based on case summary, keywords, reports, and evidence data
   const autoDetectScenarioAndJunction = (srcUrlOrName?: string): { scenario: ScenarioType; junction: JunctionType } => {
-    if (defaultScenario) {
-      const j: JunctionType = defaultScenario === "CAR_VS_LORRY" ? "T_JUNCTION" : defaultScenario === "HIGHWAY_REAR_END" ? "EXPRESSWAY" : "FOUR_WAY";
-      return { scenario: defaultScenario, junction: j };
-    }
-    const combined = `${caseTitle} ${caseDescription} ${caseSummary} ${srcUrlOrName || ""} ${evidenceList.map(e => `${e.name} ${e.extractedData?.summary || ""}`).join(" ")}`.toLowerCase();
+    const rawDef = defaultScenario ? String(defaultScenario).toLowerCase() : "";
+    const combined = `${rawDef} ${caseTitle} ${caseDescription} ${caseSummary} ${srcUrlOrName || ""} ${evidenceList.map(e => `${e.name} ${e.extractedData?.summary || ""}`).join(" ")}`.toLowerCase();
 
+    // 1. Roundabout Encroachment (Same carriageway/lane approach into circle)
+    if (/roundabout|circle|traffic circle|masab tank|c31617fa|9597|whatsapp_video|encloach|encroach/i.test(combined)) {
+      return { scenario: "ROUNDABOUT_ENCLOACHMENT", junction: "ROUNDABOUT" };
+    }
     if (/lorry|truck|semi|trailer|hauler|container|heavy|commercial|tanker/i.test(combined)) {
       return { scenario: "CAR_VS_LORRY", junction: "T_JUNCTION" };
     }
@@ -80,9 +81,6 @@ export default function ThreeForensicCanvas({
     }
     if (/t[\s_-]?bone|tbone|broadside|side[\s_-]?impact|perpendicular|lateral/i.test(combined)) {
       return { scenario: "INTERSECTION_TBONE", junction: "FOUR_WAY" };
-    }
-    if (/roundabout|circle|traffic circle|masab tank|c31617fa|9597|whatsapp_video/i.test(combined)) {
-      return { scenario: "ROUNDABOUT_ENCLOACHMENT", junction: "ROUNDABOUT" };
     }
     if (/bike|motorcycle|moto|two[\s_-]?wheel|scooter|rider|rickshaw|auto/i.test(combined)) {
       return { scenario: "CAR_VS_BIKE", junction: "FOUR_WAY" };
@@ -117,6 +115,7 @@ export default function ThreeForensicCanvas({
   const flyoverGroupRef = useRef<THREE.Group | null>(null);
   const osmGroupRef = useRef<THREE.Group | null>(null);
   const splineTracksRef = useRef(buildScenarioSplineTracks(activeScenario));
+  const carPaintMatRef = useRef<THREE.MeshStandardMaterial | null>(null);
 
   // Load surrounding OSM geometry (buildings & trees) dynamically for coordinates
   useEffect(() => {
@@ -279,8 +278,8 @@ export default function ThreeForensicCanvas({
     const camera = new THREE.PerspectiveCamera(36, width / height, 0.1, 1000);
     const isRoundaboutScenario = activeScenario === "ROUNDABOUT_ENCLOACHMENT" || activeJunction === "ROUNDABOUT";
     if (isRoundaboutScenario) {
-      camera.position.set(-14, 18, 26);
-      camera.lookAt(-4.0, 0.5, 3.5);
+      camera.position.set(-16.0, 14.0, 22.0);
+      camera.lookAt(-2.5, 0.5, 6.0);
     } else {
       camera.position.set(20, 20, 20);
       camera.lookAt(0, 0.5, 0);
@@ -310,7 +309,11 @@ export default function ThreeForensicCanvas({
     controls.maxPolarAngle = Math.PI / 2 - 0.04;
     controls.minDistance = 4;
     controls.maxDistance = 85;
-    controls.target.set(0, 0.5, 0);
+    if (isRoundaboutScenario) {
+      controls.target.set(-2.5, 0.5, 6.0);
+    } else {
+      controls.target.set(0, 0.5, 0);
+    }
     controlsRef.current = controls;
 
     // 5. Lighting: Crisp 45-degree directional sunlight casting sharp clean shadows
@@ -910,7 +913,13 @@ export default function ThreeForensicCanvas({
     // VEHICLE A: Performance Sedan (Metallic Crimson Red)
     // ─────────────────────────────────────────────────────────────
     const carAGroup = new THREE.Group();
-    const paintAMat = new THREE.MeshStandardMaterial({ color: 0xbe123c, metalness: 0.85, roughness: 0.18 });
+    const isRoundaboutInit = activeScenario === "ROUNDABOUT_ENCLOACHMENT" || activeJunction === "ROUNDABOUT";
+    const paintAMat = new THREE.MeshStandardMaterial({ 
+      color: isRoundaboutInit ? 0x1e242d : 0xbe123c, 
+      metalness: 0.85, 
+      roughness: 0.18 
+    });
+    carPaintMatRef.current = paintAMat;
     const glassMat = new THREE.MeshStandardMaterial({ color: 0x050811, roughness: 0.05, metalness: 0.95 });
 
     const chassisA = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.65, 2.05), paintAMat);
@@ -1273,7 +1282,9 @@ export default function ThreeForensicCanvas({
       if (suvMeshRef.current) suvMeshRef.current.visible = false;
       if (lorryMeshRef.current) lorryMeshRef.current.visible = false;
       if (carARef.current) carARef.current.visible = true;
+      if (carPaintMatRef.current) carPaintMatRef.current.color.setHex(0x1e242d);
     } else if (activeScenario === "CAR_VS_LORRY") {
+      if (carPaintMatRef.current) carPaintMatRef.current.color.setHex(0xbe123c);
       setActiveJunction("T_JUNCTION");
     } else if (activeScenario === "HIGHWAY_REAR_END") {
       setActiveJunction("EXPRESSWAY");
@@ -1293,92 +1304,103 @@ export default function ThreeForensicCanvas({
 
     if (activeScenario === "ROUNDABOUT_ENCLOACHMENT") {
       // ─────────────────────────────────────────────────────────────
-      // EXACT KINEMATICS FOR ROUNDABOUT ACCIDENT VIDEO (CAR VS MOTORCYCLE)
+      // EXACT KINEMATICS FOR ROUNDABOUT ACCIDENT VIDEO (SAME-LANE TRAVEL)
+      // Both vehicles approach along -Z down the SAME dual-lane carriageway:
+      // - Motorcycle (Victim): Inner Left Lane (X ≈ -3.4, Z: 25 -> 1.0)
+      // - Dark Crossover SUV (Accused): Adjacent Right Corridor (X ≈ +1.8, Z: 30 -> 0.5)
+      // - Front heading down road along -Z: yaw = Math.PI / 2
+      // - Euler order 'YXZ' ensures true forward heading and accurate roll onto shoulder
       // ─────────────────────────────────────────────────────────────
-      // Vehicle 2: Dark Crossover SUV (Vehicle B) encroaching left into motorcycle lane
-      let xCar = 1.4;
-      let zCar = 27.0 - (t * 6.5);
-      let rotCar = 0;
+      if (carARef.current) carARef.current.rotation.order = "YXZ";
+      if (vehicleBGroupRef.current) vehicleBGroupRef.current.rotation.order = "YXZ";
+
+      // 1. VEHICLE A: Dark Crossover SUV (Nissan Qashqai type)
+      let xCar = 1.8;
+      let zCar = 30.0 - (t * 6.6);
+      let yawCar = Math.PI / 2;
       let pitchCar = 0;
       let isBrakingCar = false;
 
-      if (t < 2.2) {
-        // Cruising alongside in right lane
-        xCar = 1.4;
-        zCar = 27.0 - (t * 6.8);
-        rotCar = 0;
+      if (t < 2.4) {
+        // Cruising down the same approach road in adjacent right corridor
+        xCar = 1.8;
+        zCar = 30.0 - (t * 6.6);
+        yawCar = Math.PI / 2;
+        pitchCar = 0;
         isBrakingCar = false;
       } else if (t < 3.8) {
-        // Encroaching left into motorcycle lane
-        const factor = (t - 2.2) / 1.6;
-        xCar = 1.4 - (factor * 3.2); // Veers from +1.4 to -1.8
-        zCar = 12.0 - ((t - 2.2) * 5.8);
-        rotCar = -0.32; // Angled left cutting across corridor
+        // Accelerated overtake with unauthorized lateral lane encroachment:
+        // Veers left across the centerline into the motorcycle's inner travel path
+        const factor = (t - 2.4) / 1.4;
+        xCar = 1.8 - (factor * 3.4); // Cuts from +1.8 to -1.6 (crosses -0.8 divider!)
+        zCar = 14.16 - ((t - 2.4) * 5.8);
+        yawCar = Math.PI / 2 + 0.24; // Angled left cutting across corridor
+        pitchCar = 0;
         isBrakingCar = false;
       } else {
-        // Emergency ABS threshold braking
+        // Emergency ABS threshold braking right at the roundabout yield line
         const dtPost = t - 3.8;
-        xCar = -1.8 + Math.min(0.4, dtPost * 0.2);
-        zCar = 2.7 - Math.min(4.8, dtPost * 4.2);
-        rotCar = -0.15;
+        xCar = -1.6 + Math.min(0.2, dtPost * 0.15);
+        zCar = 6.04 - Math.min(5.5, dtPost * 4.6);
+        yawCar = Math.PI / 2 + 0.05; // Straightened out in entrance lane
         pitchCar = -0.024; // ABS nose dive
         isBrakingCar = true;
       }
 
       if (carARef.current) {
         carARef.current.position.set(xCar, 0, zCar);
-        carARef.current.rotation.set(0, rotCar, pitchCar);
+        carARef.current.rotation.set(0, yawCar, pitchCar);
       }
 
       brakeLightsARef.current.forEach((bl) => {
         const mat = bl.material as THREE.MeshStandardMaterial;
         mat.emissive.setHex(isBrakingCar ? 0xff0020 : 0x550000);
-        mat.emissiveIntensity = isBrakingCar ? 3.5 : 0.3;
+        mat.emissiveIntensity = isBrakingCar ? 3.8 : 0.3;
       });
 
-      // Vehicle 1: Motorcycle (Vehicle A in inner lane, swerving and downing)
-      let xMoto = -3.2;
+      // 2. VEHICLE B: Black Sport Motorcycle (Victim in inner lane)
+      let xMoto = -3.4;
       let yMoto = 0;
-      let zMoto = 24.0 - (t * 5.2);
-      let rotMoto = 0;
+      let zMoto = 25.0 - (t * 5.2);
+      let yawMoto = Math.PI / 2;
       let rollMoto = 0;
 
-      if (t < 3.6) {
-        // Approaching inner lane normally
-        xMoto = -3.2;
+      if (t < 3.5) {
+        // Cruising smoothly along inner left lane heading toward roundabout
+        xMoto = -3.4;
         yMoto = 0;
-        zMoto = 24.0 - (t * 5.2);
-        rotMoto = 0;
+        zMoto = 25.0 - (t * 5.2);
+        yawMoto = Math.PI / 2;
         rollMoto = 0;
-      } else if (t < 4.2) {
-        // Evasive swerve left onto paved shoulder
-        const factor = (t - 3.6) / 0.6;
-        xMoto = -3.2 - (factor * 3.2); // Shifts to -6.4
-        zMoto = 5.2 - ((t - 3.6) * 4.8);
-        rotMoto = 0.25;
-        rollMoto = -factor * 1.35; // Tilting over (-77 degrees)
-        yMoto = factor * 0.15;
+      } else if (t < 4.1) {
+        // Squeezed by encroaching SUV: Emergency evasive swerve onto left paved shoulder
+        const factor = (t - 3.5) / 0.6;
+        xMoto = -3.4 - (factor * 3.8); // Mounts left paved curb shoulder at -7.2
+        zMoto = 6.8 - ((t - 3.5) * 4.6);
+        yawMoto = Math.PI / 2 + 0.35; // Pointing front towards left refuge
+        rollMoto = -factor * 1.45; // Rapid left roll tilt onto side (-83 degrees)
+        yMoto = factor * 0.18;
       } else {
-        // Low-side crash on shoulder, bike sliding on side
-        const dtFall = t - 4.2;
-        xMoto = -6.4 - Math.min(0.8, dtFall * 0.4);
-        yMoto = 0.22; // Flat on pavement
-        zMoto = 2.3 - Math.min(1.8, dtFall * 0.8);
-        rotMoto = 0.35;
-        rollMoto = -1.45; // Flat on ground (-83 degrees)
+        // Low-side downfall and slide across paved shoulder
+        const dtFall = t - 4.1;
+        xMoto = -7.2 - Math.min(0.5, dtFall * 0.2);
+        yMoto = 0.22; // Resting flat on pavement
+        zMoto = 3.1 - Math.min(2.0, dtFall * 1.1);
+        yawMoto = Math.PI / 2 + 0.42;
+        rollMoto = -1.45; // Low-side resting flat on left side
       }
 
       if (vehicleBGroupRef.current) {
         vehicleBGroupRef.current.position.set(xMoto, yMoto, zMoto);
-        vehicleBGroupRef.current.rotation.set(0, rotMoto, rollMoto);
+        vehicleBGroupRef.current.rotation.set(rollMoto, yawMoto, 0);
       }
 
-      // Impact ring indicator at point of conflict (T=4.0 to T=4.2)
+      // Point of Conflict indicator on pavement
       if (impactRingRef.current) {
         const ringMat = impactRingRef.current.material as THREE.MeshBasicMaterial;
-        impactRingRef.current.position.set(-4.5, 0.08, 2.5);
-        if (t >= 3.8 && t <= 4.2) {
-          const factor = (t - 3.8) / 0.4;
+        impactRingRef.current.position.set(-5.5, 0.08, 4.0);
+        if (t >= 3.5 && t <= 4.2) {
+          const factor = (t - 3.5) / 0.7;
           ringMat.opacity = Math.max(0, 0.95 - factor);
           impactRingRef.current.scale.set(1 + factor * 3.5, 1 + factor * 3.5, 1);
         } else {
@@ -1637,7 +1659,7 @@ export default function ThreeForensicCanvas({
       if (cameraPerspective === "CAR_POV") {
         controlsRef.current.enabled = false;
         if (activeScenario === "ROUNDABOUT_ENCLOACHMENT") {
-          const rotY = carARef.current?.rotation.y || 0;
+          const rotY = (carARef.current?.rotation.y || Math.PI / 2) - Math.PI / 2;
           cameraRef.current.position.set(xA, 1.45, zA - 0.2);
           cameraRef.current.lookAt(xA + Math.sin(rotY) * 12, 1.0, zA - Math.cos(rotY) * 16);
         } else {
@@ -1659,8 +1681,9 @@ export default function ThreeForensicCanvas({
       } else if (cameraPerspective === "CCTV_CAM") {
         controlsRef.current.enabled = false;
         if (activeScenario === "ROUNDABOUT_ENCLOACHMENT") {
-          cameraRef.current.position.set(8.5, 16.0, 18.0);
-          cameraRef.current.lookAt(-3.5, 0.4, 2.0);
+          // Exactly matches the physical CCTV camera mounted on pole looking UP the approach road
+          cameraRef.current.position.set(-8.2, 4.6, -3.8);
+          cameraRef.current.lookAt(-2.2, 0.9, 14.0);
         } else {
           cameraRef.current.position.set(-13, 14, -13);
           cameraRef.current.lookAt(1.6, 0.5, 1.6);

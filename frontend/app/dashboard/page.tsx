@@ -22,8 +22,18 @@ export default function DashboardMetricsPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const loadData = () => {
-    setCases(getStoredCases());
-    setActivities(getRecentActivities());
+    try {
+      const stored = getStoredCases();
+      if (Array.isArray(stored) && stored.length > 0) {
+        setCases(stored);
+      }
+      const acts = getRecentActivities();
+      if (Array.isArray(acts)) {
+        setActivities(acts);
+      }
+    } catch (e) {
+      console.error("Failed to load dashboard data", e);
+    }
   };
 
   useEffect(() => {
@@ -39,13 +49,13 @@ export default function DashboardMetricsPage() {
   // Dynamic Case & Evidence Metrics (100% Honest, Factual Counts)
   const totalCases = cases.length;
   const activeCases = cases.filter(c => c.status === "In Review" || c.status === "Flagged Contradiction").length;
-  const totalEvidence = cases.reduce((acc, c) => acc + c.evidenceList.length, 0);
+  const totalEvidence = cases.reduce((acc, c) => acc + (c.evidenceList?.length || 0), 0);
 
   // Evidence breakdown by type
   const evidenceCounts = useMemo(() => {
     let video = 0, sensor = 0, audio = 0, docs = 0;
     cases.forEach(c => {
-      c.evidenceList.forEach(e => {
+      (c.evidenceList || []).forEach(e => {
         if (e.dataType === "Video") video++;
         else if (e.dataType === "Sensor") sensor++;
         else if (e.dataType === "Audio") audio++;
@@ -79,7 +89,7 @@ export default function DashboardMetricsPage() {
       const baseHeight = [42, 60, 48, 76, 95, 72, 55][idx];
       const dynamicHeight = count > 0 ? Math.min(100, baseHeight + count * 8) : baseHeight;
       const displayValue = count > 0 
-        ? `${count} active (${matching.reduce((acc, c) => acc + c.evidenceList.length, 0)} files)` 
+        ? `${count} active (${matching.reduce((acc, c) => acc + (c.evidenceList?.length || 0), 0)} files)` 
         : `${Math.round(baseHeight * 0.45)} dossiers`;
 
       return {
@@ -97,10 +107,10 @@ export default function DashboardMetricsPage() {
     if (!searchQuery.trim()) return [];
     const q = searchQuery.toLowerCase();
     return cases.filter(c => 
-      c.name.toLowerCase().includes(q) ||
-      c.id.toLowerCase().includes(q) ||
-      c.address.toLowerCase().includes(q) ||
-      c.status.toLowerCase().includes(q) ||
+      (c.name || "").toLowerCase().includes(q) ||
+      (c.id || "").toLowerCase().includes(q) ||
+      (c.address || "").toLowerCase().includes(q) ||
+      (c.status || "").toLowerCase().includes(q) ||
       (c.filedBy && c.filedBy.toLowerCase().includes(q))
     );
   }, [cases, searchQuery]);
@@ -514,7 +524,7 @@ export default function DashboardMetricsPage() {
 
                   <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 text-xs">
                     <span className="text-slate-500 font-medium">
-                      {caseItem.evidenceList.length} evidence source{caseItem.evidenceList.length !== 1 ? "s" : ""}
+                      {(caseItem.evidenceList?.length || 0)} evidence source{(caseItem.evidenceList?.length || 0) !== 1 ? "s" : ""}
                     </span>
 
                     <Link
