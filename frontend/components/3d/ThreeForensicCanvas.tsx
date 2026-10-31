@@ -3,10 +3,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { 
-  Play, 
-  Pause, 
-  RotateCcw, 
+import {
+  Play,
+  Pause,
+  RotateCcw,
   Video,
   MapPin,
   Compass,
@@ -35,7 +35,7 @@ interface ThreeForensicCanvasProps {
   longitude?: number;
   address?: string;
   evidenceVideoUrl?: string;
-  evidenceList?: Array<{ name: string; dataType?: string; extractedData?: { summary?: string; [key: string]: unknown } }>;
+  evidenceList?: Array<{ name: string; dataType?: string; extractedData?: { summary?: string;[key: string]: unknown } }>;
   defaultScenario?: ScenarioType;
   onVideoUploaded?: (file: File) => void;
 }
@@ -194,7 +194,7 @@ export default function ThreeForensicCanvas({
     const width = containerRef.current.clientWidth || 800;
     const height = containerRef.current.clientHeight || 520;
 
-    // Helper to generate light blue background with very low-opacity transparent grid boxes
+    // Helper to generate light blue background with clearly visible transparent grid boxes
     const createBackgroundSkyGridTexture = () => {
       const size = 512;
       const canvas = document.createElement("canvas");
@@ -206,9 +206,9 @@ export default function ThreeForensicCanvas({
         ctx.fillStyle = "#dce7f3";
         ctx.fillRect(0, 0, size, size);
 
-        // Very faint, low-opacity transparent grid boxes (subtle technical blueprint grid)
-        ctx.strokeStyle = "rgba(100, 116, 139, 0.14)";
-        ctx.lineWidth = 1.0;
+        // Distinct, clearly visible blueprint grid boxes (35% opacity slate)
+        ctx.strokeStyle = "rgba(71, 85, 105, 0.35)";
+        ctx.lineWidth = 1.5;
         const cellSize = 32;
         for (let x = 0; x <= size; x += cellSize) {
           ctx.beginPath();
@@ -226,6 +226,8 @@ export default function ThreeForensicCanvas({
       const tex = new THREE.CanvasTexture(canvas);
       tex.wrapS = THREE.RepeatWrapping;
       tex.wrapT = THREE.RepeatWrapping;
+      tex.minFilter = THREE.NearestFilter;
+      tex.magFilter = THREE.NearestFilter;
       return tex;
     };
 
@@ -295,32 +297,44 @@ export default function ThreeForensicCanvas({
       canvas.height = size;
       const ctx = canvas.getContext("2d");
       if (ctx) {
-        ctx.fillStyle = "#edf2f7"; // soft crisp light grayish-blue ground
+        ctx.fillStyle = "#edf2f7"; // clean blueprint ground
         ctx.fillRect(0, 0, size, size);
-        ctx.strokeStyle = "#d4dee9"; // subtle architectural grid line
-        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = "#94a3b8"; // clearly visible slate-400 grid lines
+        ctx.lineWidth = 2.0;
         ctx.strokeRect(0, 0, size, size);
       }
       const tex = new THREE.CanvasTexture(canvas);
       tex.wrapS = THREE.RepeatWrapping;
       tex.wrapT = THREE.RepeatWrapping;
-      tex.repeat.set(40, 40);
+      tex.repeat.set(36, 36);
       return tex;
     };
 
     const gridTexture = createArchitecturalGridTexture();
-    const groundMat = new THREE.MeshStandardMaterial({ 
-      map: gridTexture, 
+    const groundMat = new THREE.MeshStandardMaterial({
+      map: gridTexture,
       roughness: 0.92,
       metalness: 0.03
     });
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(140, 140), groundMat);
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(160, 160), groundMat);
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     scene.add(ground);
 
-    const roadMat = new THREE.MeshStandardMaterial({ color: 0x5a6778, roughness: 0.85 }); // matte slate road from reference
-    const curbMat = new THREE.MeshStandardMaterial({ color: 0xd9e0ea, roughness: 0.5 }); // clean light architectural sidewalk
+    // Apply the architectural grid texture to curbs/sidewalks too so they never hide the grid!
+    const curbMat = new THREE.MeshStandardMaterial({ 
+      map: gridTexture, 
+      roughness: 0.85, 
+      metalness: 0.04 
+    });
+
+    // 3D Blueprint Vector Grid overlay sitting on top of the intersection blocks
+    const worldGrid = new THREE.GridHelper(160, 80, 0x475569, 0x94a3b8);
+    (worldGrid.material as THREE.Material).transparent = true;
+    (worldGrid.material as THREE.Material).opacity = 0.35;
+    worldGrid.position.y = 0.285;
+    scene.add(worldGrid);
+    const roadMat = new THREE.MeshStandardMaterial({ color: 0x5a6778, roughness: 0.85 });
     const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff }); // continuous crisp white lane lines
     const lampPostMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.8, roughness: 0.3 });
 
@@ -1262,7 +1276,7 @@ export default function ThreeForensicCanvas({
   return (
     <div className="space-y-3">
       {/* Hidden File Input for Video Drag-and-Drop / Upload */}
-      <input 
+      <input
         ref={fileInputRef}
         type="file"
         accept="video/mp4,video/webm,video/mov,video/quicktime,video/avi"
@@ -1271,26 +1285,25 @@ export default function ThreeForensicCanvas({
       />
 
       {/* Main Forensic Player Viewport (100% Full-Width 3D Canvas) */}
-      <div 
+      <div
         ref={containerRef}
         onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
         onDragLeave={() => setIsDragOver(false)}
         onDrop={handleDrop}
         style={{
           backgroundImage: `
-            linear-gradient(to right, rgba(100, 116, 139, 0.14) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(100, 116, 139, 0.14) 1px, transparent 1px)
+            linear-gradient(to right, rgba(100, 116, 139, 0.14) 1px, transparent 30px),
+            linear-gradient(to bottom, rgba(100, 116, 139, 0.14) 1px, transparent 30px)
           `,
           backgroundSize: '32px 32px',
           backgroundColor: '#dce7f3'
         }}
-        className={`relative w-full h-[520px] rounded-xl overflow-hidden border shadow-xl flex flex-col justify-between transition-colors ${
-          isDragOver ? "border-blue-500 bg-sky-100" : "border-slate-200"
-        }`}
+        className={`relative w-full h-[520px] rounded-xl overflow-hidden border shadow-xl flex flex-col justify-between transition-colors ${isDragOver ? "border-blue-500 bg-sky-100" : "border-slate-200"
+          }`}
       >
         {/* PURE 100% FULL-WIDTH THREE.JS FORENSIC CANVAS */}
-        <canvas 
-          ref={canvasRef} 
+        <canvas
+          ref={canvasRef}
           className="w-full h-full block cursor-grab active:cursor-grabbing"
         />
 
@@ -1313,11 +1326,10 @@ export default function ThreeForensicCanvas({
             <button
               type="button"
               onClick={() => setCameraPerspective("ORBIT")}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-                cameraPerspective === "ORBIT"
-                  ? "bg-slate-900 text-white shadow-sm"
-                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
-              }`}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${cameraPerspective === "ORBIT"
+                ? "bg-slate-900 text-white shadow-sm"
+                : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+                }`}
             >
               <Compass className="w-3.5 h-3.5" />
               <span>Free Roam</span>
@@ -1326,11 +1338,10 @@ export default function ThreeForensicCanvas({
             <button
               type="button"
               onClick={() => setCameraPerspective("CAR_POV")}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-                cameraPerspective === "CAR_POV"
-                  ? "bg-slate-900 text-white shadow-sm"
-                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
-              }`}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${cameraPerspective === "CAR_POV"
+                ? "bg-slate-900 text-white shadow-sm"
+                : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+                }`}
             >
               <Eye className="w-3.5 h-3.5 text-rose-500" />
               <span>POV Vehicle 1</span>
@@ -1339,11 +1350,10 @@ export default function ThreeForensicCanvas({
             <button
               type="button"
               onClick={() => setCameraPerspective("LORRY_POV")}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-                cameraPerspective === "LORRY_POV"
-                  ? "bg-slate-900 text-white shadow-sm"
-                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
-              }`}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${cameraPerspective === "LORRY_POV"
+                ? "bg-slate-900 text-white shadow-sm"
+                : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+                }`}
             >
               <Eye className="w-3.5 h-3.5 text-blue-500" />
               <span>
@@ -1412,7 +1422,7 @@ export default function ThreeForensicCanvas({
               onChange={(e) => onTimeChange(parseFloat(e.target.value))}
               className="flex-1 accent-blue-500 h-2 bg-slate-800 rounded-lg cursor-pointer"
             />
-    
+
             <span className="font-mono text-xs font-bold text-white shrink-0 min-w-[65px]">
               T+{scrubberTime < 10 ? `0${scrubberTime.toFixed(1)}` : scrubberTime.toFixed(1)}s
             </span>
