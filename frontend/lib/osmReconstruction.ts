@@ -147,19 +147,26 @@ export async function fetchOsmSurroundings(
   const bbox = `${centerLat - delta},${centerLon - delta},${centerLat + delta},${centerLon + delta}`;
   const overpassQuery = `[out:json][timeout:4];(way["building"](${bbox});node["natural"="tree"](${bbox}););out body;>;out skel qt;`;
   
+  // Fast French Overpass API mirror (https://openstreetmap.fr) with resilient fallbacks
   const endpoints = [
-    `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`,
-    `https://overpass.kumi.systems/api/interpreter?data=${encodeURIComponent(overpassQuery)}`
+    "https://overpass.openstreetmap.fr/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass-api.de/api/interpreter"
   ];
 
   for (const endpoint of endpoints) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3800);
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
 
       const res = await fetch(endpoint, {
+        method: "POST",
         signal: controller.signal,
-        headers: { Accept: "application/json" }
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Accept": "application/json"
+        },
+        body: `data=${encodeURIComponent(overpassQuery)}`
       });
       clearTimeout(timeoutId);
 
