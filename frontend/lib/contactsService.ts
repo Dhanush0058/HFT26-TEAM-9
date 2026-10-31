@@ -50,8 +50,8 @@ export interface ContactsMetrics {
   identityVerified: number;
 }
 
-const CONTACTS_STORAGE_KEY = "rekishi_case_contacts";
-const HISTORY_STORAGE_KEY = "rekishi_case_contact_history_v2";
+const CONTACTS_STORAGE_KEY = "rekishi_case_contacts_v6";
+const HISTORY_STORAGE_KEY = "rekishi_case_contact_history_v6";
 
 // Pre-seeded Indian witness coordination contacts (Includes requested number +91 63035 31123)
 export const DEFAULT_CONTACTS: ContactItem[] = [

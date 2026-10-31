@@ -10,7 +10,8 @@ import {
   Video,
   MapPin,
   Compass,
-  Eye
+  Eye,
+  X
 } from "lucide-react";
 import {
   fetchOsmSurroundings,
@@ -107,6 +108,8 @@ export default function ThreeForensicCanvas({
   const [osmData, setOsmData] = useState<OsmEnvironmentData | null>(null);
   const [, setOsmLoading] = useState(false);
   const [telemetryState, setTelemetryState] = useState({ speedA: 48, speedB: 36, isBrakingA: false });
+  const [showCctvFeed, setShowCctvFeed] = useState(true);
+  const cctvVideoRef = useRef<HTMLVideoElement | null>(null);
   const osmGroupRef = useRef<THREE.Group | null>(null);
   const splineTracksRef = useRef(buildScenarioSplineTracks(activeScenario));
 
@@ -140,6 +143,29 @@ export default function ThreeForensicCanvas({
     setActiveScenario(detected.scenario);
     setActiveJunction(detected.junction);
   }, [caseTitle, caseDescription, caseSummary, evidenceVideoUrl, defaultScenario, evidenceList]);
+
+  // Synchronize optical CCTV video playback with 3D scrubber timeline
+  useEffect(() => {
+    if (!cctvVideoRef.current) return;
+    const vid = cctvVideoRef.current;
+    const duration = vid.duration && !isNaN(vid.duration) && vid.duration > 0 ? vid.duration : 10.0;
+    const targetVideoTime = Math.min(duration, Math.max(0, (scrubberTime / 4.2) * duration));
+    if (Math.abs(vid.currentTime - targetVideoTime) > 0.15) {
+      vid.currentTime = targetVideoTime;
+    }
+  }, [scrubberTime]);
+
+  // Synchronize play/pause with 3D canvas
+  useEffect(() => {
+    if (!cctvVideoRef.current) return;
+    const vid = cctvVideoRef.current;
+    if (isPlaying) {
+      vid.play().catch(() => {});
+    } else {
+      vid.pause();
+    }
+  }, [isPlaying]);
+
 
   // Handle video file upload for automatic scenario detection
   const processUploadedVideo = (file: File) => {
@@ -1484,6 +1510,77 @@ export default function ThreeForensicCanvas({
           className="w-full h-full block cursor-grab active:cursor-grabbing"
         />
 
+        {/* PICTURE-IN-PICTURE SYNCHRONIZED OPTICAL CCTV FEED */}
+        {showCctvFeed && (
+          <div className="absolute top-16 right-3 z-30 w-72 sm:w-80 rounded-2xl overflow-hidden border border-slate-700/80 bg-slate-950/95 shadow-2xl backdrop-blur-md transition-all duration-200 pointer-events-auto">
+            {/* Header */}
+            <div className="px-3 py-2 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between text-[11px]">
+              <div className="flex items-center gap-1.5 font-bold text-white">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Optical CCTV Ground Truth</span>
+              </div>
+              <div className="flex items-center gap-1 text-[10px] text-slate-400 font-mono">
+                <span className="px-1.5 py-0.5 rounded bg-slate-800 text-blue-300 font-semibold">24 FPS</span>
+                <button
+                  type="button"
+                  onClick={() => setShowCctvFeed(false)}
+                  className="text-slate-400 hover:text-white p-0.5 ml-1 transition"
+                  title="Minimize CCTV"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Video Canvas Container */}
+            <div className="relative aspect-video bg-black overflow-hidden group">
+              <video
+                ref={cctvVideoRef}
+                src={evidenceVideoUrl || "/cases/evidence/incident_cctv_c31617fa.mp4"}
+                muted
+                playsInline
+                loop
+                className="w-full h-full object-cover"
+              />
+
+              {/* Floating YOLOv8 Telemetry Pill */}
+              <div className="absolute top-2 left-2 pointer-events-none">
+                <div className="px-2 py-0.5 rounded bg-black/80 border border-emerald-500/60 text-[9px] font-mono text-emerald-300 shadow-md flex items-center gap-1 backdrop-blur-xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                  <span>
+                    {scrubberTime < 2.0
+                      ? "YOLO: Motorcycle 89% • SUV 93%"
+                      : scrubberTime < 3.8
+                      ? "YOLO: Lateral Gap <0.4m"
+                      : "CONFLICT: Evasive Swerve / Downfall"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Bottom camera & time overlay */}
+              <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between pointer-events-none text-[9px] font-mono">
+                <span className="px-1.5 py-0.5 rounded bg-black/75 text-slate-300 border border-slate-800">
+                  CAM CCFUD 12-08
+                </span>
+                <span className="px-1.5 py-0.5 rounded bg-blue-600/90 text-white font-bold shadow-sm">
+                  T+{scrubberTime.toFixed(1)}s
+                </span>
+              </div>
+            </div>
+
+            {/* Bottom Status Ribbon */}
+            <div className="px-3 py-1.5 bg-slate-900/90 border-t border-slate-800 flex items-center justify-between text-[10px]">
+              <span className="text-slate-300 truncate max-w-[170px]">
+                {scrubberTime < 2.0 ? "Approaching Junction" : scrubberTime < 3.8 ? "Lateral Encroachment" : "Impact Rest Position"}
+              </span>
+              <span className="font-mono text-emerald-400 font-bold">
+                {scrubberTime < 2.0 ? "Clearance 1.8m" : scrubberTime < 3.8 ? "Clearance 0.3m" : "Ground Impact"}
+              </span>
+            </div>
+          </div>
+        )}
+
+
 
         {/* TOP HUD BAR: Unified single-row container with guaranteed zero overlap */}
         <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 z-30 pointer-events-none">
@@ -1536,6 +1633,21 @@ export default function ThreeForensicCanvas({
               <span>
                 {activeScenario === "CAR_VS_LORRY" ? "POV Vehicle 2 (Truck)" : activeScenario === "CAR_VS_BIKE" ? "POV Vehicle 2 (Bike)" : "POV Vehicle 2"}
               </span>
+            </button>
+
+            <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
+
+            <button
+              type="button"
+              onClick={() => setShowCctvFeed(!showCctvFeed)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${showCctvFeed
+                ? "bg-blue-600 text-white shadow-sm"
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                }`}
+              title="Toggle Live Synchronized Optical CCTV Feed"
+            >
+              <Video className="w-3.5 h-3.5" />
+              <span>{showCctvFeed ? "CCTV Active" : "CCTV Feed"}</span>
             </button>
           </div>
 

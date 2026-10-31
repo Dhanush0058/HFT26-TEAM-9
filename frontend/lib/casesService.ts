@@ -92,6 +92,283 @@ export interface ActivityFeedItem {
 // 2 Realistic Indian Context Cases
 export const DEFAULT_INDIAN_CASES: CaseDetail[] = [
   {
+    id: "CASE-2026-9597",
+    name: "Masab Tank Roundabout Car vs Motorcycle Incident",
+    caseNumber: "CASE-2026-9597",
+    filedBy: "Inspector R. K. Sharma",
+    filedDate: "Oct 30, 2026, 10:33 PM",
+    address: "Masab Tank Traffic Circle Roundabout, Banjara Hills Carriageway, Hyderabad, Telangana",
+    latitude: 17.3995,
+    longitude: 78.4485,
+    accidentDate: "Oct 30, 2026, 10:10 PM",
+    description: "Intersection incident at a multi-lane roundabout entry involving a black motorcycle (Vehicle A) in the inner lane and a dark crossover SUV (Vehicle B) in the outer lane. Optical CV and Gemini 2.5 Flash analysis confirm lateral encroachment and evasive downing of the two-wheeler.",
+    summary: "At approximately 10:10 PM, a black motorcycle (Vehicle A) approaching the Masab Tank roundabout in the inner lane was overtaken by a dark Nissan crossover SUV (Vehicle B, partial plate LK 18 XXX). CCTV optical tracking and YOLOv8 object detection confirm that between T=3.0s and T=4.2s, Vehicle B closed distance aggressively and executed an unauthorized lateral lane encroachment, forcing Vehicle A into an emergency evasive swerve resulting in a low-side fall onto the paved shoulder. The rider's helmet was ejected upon impact. Sensor telemetry indicates peak emergency deceleration of -0.82 G from 48 km/h to standstill. An automated Twilio outreach call (Male Voice • Polly.Matthew) was dispatched to eyewitness Ravi Kumar, confirming the 3-day reporting timeline.",
+    lastAnalyzedAt: "Oct 31, 2026, 11:30 AM",
+    status: "Flagged Contradiction",
+    confidence: 94,
+    videoUrl: "/cases/evidence/incident_cctv_c31617fa.mp4",
+    scenario: "roundabout",
+    evidenceList: [
+      {
+        id: "EV-9597-01",
+        name: "overhead_roundabout_cctv_c31617fa.mp4",
+        uploadDate: "Oct 31, 2026, 10:15 AM",
+        size: "1.1 MB",
+        dataType: "Video",
+        fileUrl: "/cases/evidence/incident_cctv_c31617fa.mp4",
+        accidentTime: "10:10 PM, 30th Oct",
+        is_data_extracted: 1,
+        status: "Extracted",
+        extractedData: {
+          summary: "Overhead CCTV stream processed with YOLOv8 Computer Vision and Gemini 2.5 Flash VLM. 10 objects detected (motorcycle, SUV, 5 passenger vehicles, 1 pedestrian). Confirms lateral lane encroachment by Vehicle B between T=3.0s and T=4.2s causing Vehicle A to lose control and fall to the left shoulder.",
+          keyObservations: [
+            "Optical YOLO tracking: Motorcycle detected in inner lane (conf 89.2%), Crossover SUV in adjacent right lane (conf 93.4%).",
+            "Vehicle B speed differential: Rapidly closed distance from rear to alongside Vehicle A before lateral shift.",
+            "Point of Conflict at T=4.2s: Motorcycle executed evasive swerve onto paved shoulder; helmet separated.",
+            "Final Rest at T=7.0s: SUV stopped in right lane; rider conscious and mobile attending front-left corner.",
+            "OCR Overlays: Camera stamp 'CCFUD 12-08 00:10:38:09', vehicle license plate partial 'LK 18 XXX', road 'GIVE WAY' markings."
+          ],
+          fields: {
+            "Computer Vision Engine": "YOLOv8 + OpenCV Frame Extractor (24.0 FPS)",
+            "Multimodal Reasoning Model": "Google Gemini 2.5 Flash",
+            "Primary Vehicle A (Victim)": "Black Standard Naked Motorcycle (Rider in dark gear)",
+            "Primary Vehicle B (Accused)": "Dark Crossover SUV (Nissan Qashqai type - Plate: LK 18 XXX)",
+            "Collision Point Timestamp": "T=4.2 seconds into footage",
+            "Extracted CCTV Overlay": "CCFUD 12-08 00:10:38:09 (Clock Discrepancy Flagged)",
+            "Road Markings Detected": "Give Way (Yield) triangular markings, solid white shoulder edge",
+            "Weather & Lighting": "Clear daylight, dry bituminous pavement, no road defects"
+          }
+        }
+      },
+      {
+        id: "EV-9597-02",
+        name: "cctv_frame_t4.2s_impact_swerve_cv.jpg",
+        uploadDate: "Oct 31, 2026, 10:20 AM",
+        size: "245 KB",
+        dataType: "Image",
+        fileUrl: "/cases/evidence/frame_t4.2s_impact_swerve_cv.jpg",
+        accidentTime: "10:10 PM, 30th Oct",
+        is_data_extracted: 1,
+        status: "Extracted",
+        extractedData: {
+          summary: "High-resolution annotated keyframe at T=4.2s capturing point of impact and lateral lane encroachment. YOLO bounding boxes identify Motorcycle (yellow box) and SUV (green box) in spatial proximity.",
+          keyObservations: [
+            "Lateral clearance between vehicles reduced from 1.8m to <0.3m.",
+            "Motorcycle lean angle: >45° leftward roll indicating loss of traction during evasive maneuver."
+          ],
+          fields: {
+            "Detection Model": "YOLOv8 Object Detection (PyTorch Core)",
+            "Vehicle A Bounding Box": "[X: 184.2, Y: 210.5, W: 64.0, H: 88.0] - Motorcycle 91.2%",
+            "Vehicle B Bounding Box": "[X: 242.0, Y: 195.0, W: 142.0, H: 110.0] - Car 94.6%",
+            "Optical Disparity": "Encroachment into Vehicle A's demarcated corridor"
+          }
+        }
+      },
+      {
+        id: "EV-9597-03",
+        name: "eyewitness_ravi_kumar_audio_statement.wav",
+        uploadDate: "Oct 31, 2026, 10:25 AM",
+        size: "2.8 MB",
+        dataType: "Audio",
+        accidentTime: "10:10 PM, 30th Oct",
+        is_data_extracted: 1,
+        status: "Extracted",
+        extractedData: {
+          transcript: "I was standing near the pedestrian crossing. The dark car came fast from behind on the right and cut right in front of the bike entering the circle. The biker had to swerve left onto the footpath and fell. The car driver then stopped ahead.",
+          summary: "Eyewitness Ravi Kumar corroborates CCTV video: dark SUV cut into motorcycle's lane entering the roundabout, forcing evasive swerve onto shoulder.",
+          fields: {
+            "Deponent": "Ravi Kumar (+91 63035 31123, Eyewitness)",
+            "Audio Transcription": "Groq Whisper Large v3 (Accuracy 98.4%)",
+            "Automated Outreach": "Twilio AI Voice Assistant (Male • Polly.Matthew) Dispatched",
+            "Corroboration Index": "100% Corroborated by CCTV Optical Tracking",
+            "Notice Status": "3-Day Station Visit Notice Delivered"
+          }
+        }
+      },
+      {
+        id: "EV-9597-04",
+        name: "vehicle_b_can_bus_telemetry.csv",
+        uploadDate: "Oct 31, 2026, 10:30 AM",
+        size: "1.2 MB",
+        dataType: "Sensor",
+        accidentTime: "10:10 PM, 30th Oct",
+        is_data_extracted: 1,
+        status: "Extracted",
+        extractedData: {
+          summary: "CAN bus ECU telemetry registers emergency brake application at T=4.2s. Speed drops from 48 km/h to 0 km/h in 1.4s with peak deceleration of -0.82 G.",
+          fields: {
+            "Sensor Bus Source": "OBD-II High-Speed CAN (500 kbps)",
+            "Initial Cruising Speed": "48.2 km/h",
+            "Brake Pedal Sensor": "Engaged at T+4.18s (Pressure: 82 Bar)",
+            "Peak Deceleration Rate": "-0.82 G (ABS Actuation Triggered)",
+            "Full Stop Timestamp": "T+5.60s (Final Speed: 0.0 km/h)",
+            "Steering Angle Sensor": "-14.2° Leftward drift at T+3.8s (Confirms lane encroachment)"
+          }
+        }
+      }
+    ],
+    timeline: [
+      {
+        id: "TL-9597-01",
+        evidenceName: "overhead_roundabout_cctv_c31617fa.mp4",
+        accidentTime: "10:10:00 PM",
+        uploadedTime: "Oct 31, 2026, 10:15 AM",
+        title: "Approaching Carriageway Traffic",
+        description: "Motorcycle (Vehicle A) enters left corridor lane; SUV (Vehicle B) approaches in adjacent right lane.",
+        dataType: "Video",
+        classification: "OBSERVATION",
+        confidence: 98
+      },
+      {
+        id: "TL-9597-02",
+        evidenceName: "overhead_roundabout_cctv_c31617fa.mp4",
+        accidentTime: "10:10:02 PM",
+        uploadedTime: "Oct 31, 2026, 10:15 AM",
+        title: "Speed Differential & Gap Closure",
+        description: "YOLO optical flow tracks SUV velocity higher than motorcycle, closing the distance rapidly.",
+        dataType: "Video",
+        classification: "OBSERVATION",
+        confidence: 94
+      },
+      {
+        id: "TL-9597-03",
+        evidenceName: "cctv_frame_t4.2s_impact_swerve_cv.jpg",
+        accidentTime: "10:10:04 PM",
+        uploadedTime: "Oct 31, 2026, 10:20 AM",
+        title: "Lateral Lane Encroachment & Evasive Swerve",
+        description: "Vehicle B executes leftward drift into Vehicle A's lane. Motorcycle swerves onto shoulder and downfalls.",
+        dataType: "Image",
+        classification: "OBSERVATION",
+        confidence: 96
+      },
+      {
+        id: "TL-9597-04",
+        evidenceName: "vehicle_b_can_bus_telemetry.csv",
+        accidentTime: "10:10:04 PM",
+        uploadedTime: "Oct 31, 2026, 10:30 AM",
+        title: "Emergency ABS Braking & Steering Drift",
+        description: "CAN telemetry records -14.2° steering angle and peak -0.82 G deceleration to zero.",
+        dataType: "Sensor",
+        classification: "OBSERVATION",
+        confidence: 99
+      },
+      {
+        id: "TL-9597-05",
+        evidenceName: "eyewitness_ravi_kumar_audio_statement.wav",
+        accidentTime: "10:10:06 PM",
+        uploadedTime: "Oct 31, 2026, 10:25 AM",
+        title: "Eyewitness Deposition Corroboration",
+        description: "Eyewitness Ravi Kumar corroborates SUV lane cut. Corroborated with Twilio AI outreach.",
+        dataType: "Audio",
+        classification: "INFERENCE",
+        confidence: 92
+      }
+    ],
+    updates: [
+      {
+        id: "UPD-9597-01",
+        updateNumber: "01",
+        dateTime: "31 Oct 2026, 10:15 AM",
+        summaryText: "1 CCTV optical stream uploaded (Roundabout Overhead)",
+        files: [
+          { name: "overhead_roundabout_cctv_c31617fa.mp4", dataType: "Video", size: "1.1 MB" }
+        ],
+        conflict: {
+          hasConflict: false,
+          explanation: "Optical baseline established via YOLOv8 and Gemini 2.5 Flash VLM. Tracks Motorcycle (Vehicle A) and Nissan SUV (Vehicle B)."
+        },
+        reconstructedTimeline: [
+          {
+            time: "10:10:00 PM",
+            label: "Approach Phase (T=0.0s)",
+            detail: "Vehicle A in inner lane; Vehicle B in outer lane approaching roundabout.",
+            isConflict: false,
+            status: "SAME"
+          },
+          {
+            time: "10:10:02 PM",
+            label: "Gap Closure (T=2.4s)",
+            detail: "Vehicle B accelerates alongside Vehicle A; distance reduces to <0.5m.",
+            isConflict: false,
+            status: "SAME"
+          },
+          {
+            time: "10:10:04 PM",
+            label: "Conflict & Downfall (T=4.2s)",
+            detail: "Motorcycle undergoes evasive swerve onto paved shoulder; falls to left.",
+            isConflict: false,
+            status: "SAME"
+          }
+        ]
+      },
+      {
+        id: "UPD-9597-02",
+        updateNumber: "02",
+        dateTime: "31 Oct 2026, 10:25 AM",
+        summaryText: "1 eyewitness audio deposition ingested",
+        files: [
+          { name: "eyewitness_ravi_kumar_audio_statement.wav", dataType: "Audio", size: "2.8 MB" }
+        ],
+        conflict: {
+          hasConflict: false,
+          explanation: "Eyewitness testimony 100% corroborates CCTV video: dark SUV cut into motorcycle's path entering the circle."
+        },
+        reconstructedTimeline: [
+          {
+            time: "10:10:00 PM",
+            label: "Approach Phase (T=0.0s)",
+            detail: "Corridor traffic proceeding towards roundabout circle.",
+            isConflict: false,
+            status: "SAME"
+          },
+          {
+            time: "10:10:04 PM",
+            label: "Corroborated Lane Cut (T=4.2s)",
+            detail: "Witness corroborates optical detection: SUV cut in front of bike, causing swerve onto shoulder.",
+            isConflict: false,
+            status: "UPDATED"
+          }
+        ]
+      },
+      {
+        id: "UPD-9597-03",
+        updateNumber: "03",
+        dateTime: "31 Oct 2026, 10:30 AM",
+        summaryText: "1 CAN bus telemetry log ingested",
+        files: [
+          { name: "vehicle_b_can_bus_telemetry.csv", dataType: "Sensor", size: "1.2 MB" }
+        ],
+        conflict: {
+          hasConflict: true,
+          explanation: "Clock discrepancy identified: CCTV camera timestamp overlay jumps non-linearly (00:10:38 -> 00:10:34), but physical CAN bus telemetry and optical deceleration (-0.82 G) establish continuous real-time ground truth at T=4.2s."
+        },
+        reconstructedTimeline: [
+          {
+            time: "10:10:02 PM",
+            label: "Leftward Steering Drift",
+            detail: "CAN bus registers -14.2° steering angle, proving physical trajectory encroachment into bike's lane.",
+            isConflict: false,
+            status: "NEW"
+          },
+          {
+            time: "10:10:04 PM",
+            label: "Emergency ABS Braking Spike",
+            detail: "Brake pressure hits 82 Bar; deceleration reaches -0.82 G; vehicle stops at T=5.6s.",
+            isConflict: false,
+            status: "NEW"
+          },
+          {
+            time: "10:10:05 PM",
+            label: "CCTV Clock Discrepancy Flagged",
+            detail: "CCTV overlay shows out-of-order clock timestamp, resolved by cross-referencing CAN bus clock.",
+            isConflict: true,
+            status: "CONFLICT"
+          }
+        ]
+      }
+    ]
+  },
+  {
     id: "CASE-2026-1042",
     name: "Outer Ring Road Gachibowli Junction Collision",
     caseNumber: "CASE-2026-1042",
@@ -583,10 +860,10 @@ export const DEFAULT_INDIAN_CASES: CaseDetail[] = [
   }
 ];
 
-const STORAGE_KEY = "rekishi_cases_store_v3";
-const LEGACY_STORAGE_KEY = "rikeshi_cases_store_v3";
-const ACTIVITY_KEY = "rekishi_activity_feed_v3";
-const LEGACY_ACTIVITY_KEY = "rikeshi_activity_feed_v3";
+const STORAGE_KEY = "rekishi_cases_store_v4";
+const LEGACY_STORAGE_KEY = "rekishi_cases_store_v3";
+const ACTIVITY_KEY = "rekishi_activity_feed_v4";
+const LEGACY_ACTIVITY_KEY = "rekishi_activity_feed_v3";
 
 const PURGED_CASE_IDS = new Set([
   "CASE-2026-9952",

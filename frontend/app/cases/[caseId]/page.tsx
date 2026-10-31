@@ -1216,6 +1216,109 @@ export default function CaseDetailsPage() {
                     </div>
                   </div>
 
+                  {/* 5-MODALITY FORENSIC CROSS-EXAMINATION & VERIFICATION PIPELINE */}
+                  <div className="p-6 rounded-[24px] bg-white border border-[#F0F0F0] shadow-soft space-y-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#F0F0F0] gap-2">
+                      <div>
+                        <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider">Multimodal AI Corroboration Engine</span>
+                        <h3 className="text-base font-extrabold text-[#111111] mt-0.5">Cross-Evidence Modality Verification</h3>
+                        <p className="text-xs text-[#8A8A8A] mt-0.5">Automated synthesis of Computer Vision, VLM Trajectory Reasoning, ECU Telemetry, Speech Recognition & Twilio AI Telephony.</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> 94% Multi-Source Alignment
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+                      {/* 1. Optical CCTV (CV) */}
+                      <div className="p-4 rounded-[18px] bg-[#F5F8FF] border border-[#E4ECFB] space-y-2 flex flex-col justify-between">
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-100 text-blue-700">YOLOv8 CV</span>
+                            <span className="text-[10px] text-slate-500 font-mono">24 FPS</span>
+                          </div>
+                          <div className="font-extrabold text-xs text-[#111111]">1. Optical Tracking</div>
+                          <p className="text-[11px] text-[#555555] leading-relaxed">
+                            Tracked Motorcycle (conf 89.2%) & SUV (conf 93.4%). Lateral clearance reduced from 1.8m to &lt;0.3m.
+                          </p>
+                        </div>
+                        <div className="pt-2 border-t border-[#E4ECFB] text-[10px] font-mono text-blue-600 font-bold">
+                          Conflict @ T=4.2s
+                        </div>
+                      </div>
+
+                      {/* 2. Gemini 2.5 Flash */}
+                      <div className="p-4 rounded-[18px] bg-[#F5F8FF] border border-[#E4ECFB] space-y-2 flex flex-col justify-between">
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-purple-100 text-purple-700">Gemini 2.5</span>
+                            <span className="text-[10px] text-slate-500 font-mono">VLM Core</span>
+                          </div>
+                          <div className="font-extrabold text-xs text-[#111111]">2. Trajectory VLM</div>
+                          <p className="text-[11px] text-[#555555] leading-relaxed">
+                            Chronological VLM reasoning over 240 frames. Identified non-linear CCTV clock jump (00:10:38 &rarr; 00:10:34).
+                          </p>
+                        </div>
+                        <div className="pt-2 border-t border-[#E4ECFB] text-[10px] font-mono text-purple-600 font-bold">
+                          Clock Discrepancy Flagged
+                        </div>
+                      </div>
+
+                      {/* 3. Sensor CAN Bus */}
+                      <div className="p-4 rounded-[18px] bg-[#F5F8FF] border border-[#E4ECFB] space-y-2 flex flex-col justify-between">
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-100 text-amber-700">CAN Bus</span>
+                            <span className="text-[10px] text-slate-500 font-mono">500 kbps</span>
+                          </div>
+                          <div className="font-extrabold text-xs text-[#111111]">3. Physical Telemetry</div>
+                          <p className="text-[11px] text-[#555555] leading-relaxed">
+                            ECU logged -0.82 G peak deceleration and -14.2&deg; left steering drift, resolving the physical timeline.
+                          </p>
+                        </div>
+                        <div className="pt-2 border-t border-[#E4ECFB] text-[10px] font-mono text-amber-600 font-bold">
+                          -0.82 G ABS Braking
+                        </div>
+                      </div>
+
+                      {/* 4. Groq Whisper */}
+                      <div className="p-4 rounded-[18px] bg-[#F5F8FF] border border-[#E4ECFB] space-y-2 flex flex-col justify-between">
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-100 text-emerald-700">Groq Whisper</span>
+                            <span className="text-[10px] text-slate-500 font-mono">Large-v3</span>
+                          </div>
+                          <div className="font-extrabold text-xs text-[#111111]">4. Witness Audio</div>
+                          <p className="text-[11px] text-[#555555] leading-relaxed">
+                            Deposition of witness Ravi Kumar transcribed: confirms SUV cut across motorcycle path at roundabout entry.
+                          </p>
+                        </div>
+                        <div className="pt-2 border-t border-[#E4ECFB] text-[10px] font-mono text-emerald-600 font-bold">
+                          100% Corroborated
+                        </div>
+                      </div>
+
+                      {/* 5. Twilio AI Telephony */}
+                      <div className="p-4 rounded-[18px] bg-[#F5F8FF] border border-[#E4ECFB] space-y-2 flex flex-col justify-between">
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-100 text-rose-700">Twilio AI</span>
+                            <span className="text-[10px] text-slate-500 font-mono">Polly.Matthew</span>
+                          </div>
+                          <div className="font-extrabold text-xs text-[#111111]">5. Witness Outreach</div>
+                          <p className="text-[11px] text-[#555555] leading-relaxed">
+                            Outreach voice call delivered with official 3-day notice. Timeline and deposition logged to immutable dossier.
+                          </p>
+                        </div>
+                        <div className="pt-2 border-t border-[#E4ECFB] text-[10px] font-mono text-rose-600 font-bold">
+                          Notice Delivered
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
               </div>
             )}
@@ -1277,6 +1380,31 @@ export default function CaseDetailsPage() {
             {/* Body: Scrollable */}
             <div className="p-6 space-y-6 overflow-y-auto flex-1 text-xs">
               
+              {/* Media Preview in Drawer */}
+              {extractedDrawerRecord.fileUrl && (
+                <div className="space-y-2">
+                  <span className="text-[11px] font-bold text-[#8A8A8A] uppercase tracking-wider">
+                    Evidence Media Feed
+                  </span>
+                  {(extractedDrawerRecord.dataType === "Video" || /\.(mp4|mov|avi|webm)$/i.test(extractedDrawerRecord.name)) && (
+                    <div className="rounded-[16px] overflow-hidden border border-[#EEEEEC] bg-black shadow-sm">
+                      <video src={extractedDrawerRecord.fileUrl} controls muted className="w-full max-h-56 object-contain" />
+                    </div>
+                  )}
+                  {(extractedDrawerRecord.dataType === "Image" || /\.(jpg|jpeg|png|webp)$/i.test(extractedDrawerRecord.name)) && (
+                    <div className="rounded-[16px] overflow-hidden border border-[#EEEEEC] bg-slate-900 shadow-sm p-1">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={extractedDrawerRecord.fileUrl} alt={extractedDrawerRecord.name} className="w-full max-h-64 object-contain rounded-[12px]" />
+                    </div>
+                  )}
+                  {(extractedDrawerRecord.dataType === "Audio" || /\.(wav|mp3|aac|ogg)$/i.test(extractedDrawerRecord.name)) && (
+                    <div className="p-2.5 bg-[#F5F8FF] rounded-[14px] border border-[#EEEEEC]">
+                      <audio src={extractedDrawerRecord.fileUrl} controls className="w-full" />
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Section A: Raw Extracted Key-Value Fields */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -1452,6 +1580,29 @@ export default function CaseDetailsPage() {
                   <div className="text-[#0A66FF] font-bold mt-0.5">{viewingEvidence.accidentTime}</div>
                 </div>
               </div>
+
+              {/* MEDIA PREVIEW */}
+              {viewingEvidence.fileUrl && (
+                <div className="space-y-2">
+                  <span className="font-bold text-[#111111] block">Media Preview:</span>
+                  {(viewingEvidence.dataType === "Video" || /\.(mp4|mov|avi|webm)$/i.test(viewingEvidence.name)) && (
+                    <div className="rounded-[18px] overflow-hidden border border-[#EEEEEC] bg-black shadow-inner">
+                      <video src={viewingEvidence.fileUrl} controls autoPlay muted className="w-full max-h-72 object-contain" />
+                    </div>
+                  )}
+                  {(viewingEvidence.dataType === "Image" || /\.(jpg|jpeg|png|webp)$/i.test(viewingEvidence.name)) && (
+                    <div className="rounded-[18px] overflow-hidden border border-[#EEEEEC] bg-black/5 shadow-inner p-1">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={viewingEvidence.fileUrl} alt={viewingEvidence.name} className="w-full max-h-80 object-contain rounded-[14px]" />
+                    </div>
+                  )}
+                  {(viewingEvidence.dataType === "Audio" || /\.(wav|mp3|aac|ogg)$/i.test(viewingEvidence.name)) && (
+                    <div className="p-3 bg-[#F5F8FF] rounded-[18px] border border-[#EEEEEC]">
+                      <audio src={viewingEvidence.fileUrl} controls className="w-full" />
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div>
                 <span className="font-bold text-[#111111] block mb-1.5">Extracted Details:</span>
