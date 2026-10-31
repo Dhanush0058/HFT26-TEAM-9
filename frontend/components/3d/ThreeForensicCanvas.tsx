@@ -186,8 +186,8 @@ export default function ThreeForensicCanvas({
 
     // 1. Scene & Atmospheric Fog
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x060911);
-    scene.fog = new THREE.FogExp2(0x060911, 0.010);
+    scene.background = new THREE.Color(0xd6e8fa);
+    scene.fog = new THREE.FogExp2(0xd6e8fa, 0.0045);
     sceneRef.current = scene;
 
     // 2. Camera: Cinematic unobstructed isometric perspective
@@ -223,10 +223,13 @@ export default function ThreeForensicCanvas({
     controlsRef.current = controls;
 
     // 5. Lighting
-    const ambientLight = new THREE.AmbientLight(0x94a3b8, 0.55);
+    const hemiLight = new THREE.HemisphereLight(0xedf6ff, 0xccd8c2, 1.15);
+    scene.add(hemiLight);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
     scene.add(ambientLight);
 
-    const mainSun = new THREE.DirectionalLight(0xffffff, 1.35);
+    const mainSun = new THREE.DirectionalLight(0xfffaea, 2.0);
     mainSun.position.set(22, 36, 16);
     mainSun.castShadow = true;
     mainSun.shadow.mapSize.width = 2048;
@@ -234,21 +237,21 @@ export default function ThreeForensicCanvas({
     mainSun.shadow.bias = -0.0001;
     scene.add(mainSun);
 
-    const rimLight = new THREE.DirectionalLight(0x38bdf8, 0.45);
+    const rimLight = new THREE.DirectionalLight(0xbfdbfe, 0.65);
     rimLight.position.set(-20, 18, -18);
     scene.add(rimLight);
 
     // 6. Base Ground Plane
-    const asphaltMat = new THREE.MeshStandardMaterial({ color: 0x0c111a, roughness: 0.85 });
+    const asphaltMat = new THREE.MeshStandardMaterial({ color: 0x8eb27b, roughness: 0.95 });
     const ground = new THREE.Mesh(new THREE.PlaneGeometry(130, 130), asphaltMat);
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     scene.add(ground);
 
-    const roadMat = new THREE.MeshStandardMaterial({ color: 0x141a27, roughness: 0.72 });
-    const curbMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.65 });
+    const roadMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8 });
+    const curbMat = new THREE.MeshStandardMaterial({ color: 0xcfd7e3, roughness: 0.6 });
     const lineMat = new THREE.MeshBasicMaterial({ color: 0xf8fafc });
-    const lampPostMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.8, roughness: 0.3 });
+    const lampPostMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.8, roughness: 0.3 });
 
     // Helper for Streetlamps (placed safely outside camera lines)
     const addStreetLamp = (targetGroup: THREE.Group, x: number, z: number, rotY: number) => {
@@ -269,7 +272,7 @@ export default function ThreeForensicCanvas({
       head.position.set(3.0, 7.1, 0);
       g.add(head);
 
-      const light = new THREE.SpotLight(0xfef08a, 2.2, 24, Math.PI / 4, 0.45);
+      const light = new THREE.SpotLight(0xfef08a, 0.0, 24, Math.PI / 4, 0.45);
       light.position.set(3.0, 7.0, 0);
       const target = new THREE.Object3D();
       target.position.set(3.0, 0, 0);
@@ -1135,8 +1138,8 @@ export default function ThreeForensicCanvas({
         onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
         onDragLeave={() => setIsDragOver(false)}
         onDrop={handleDrop}
-        className={`relative w-full h-[520px] bg-slate-950 rounded-xl overflow-hidden border shadow-2xl flex flex-col justify-between transition-colors ${
-          isDragOver ? "border-blue-500 bg-slate-900" : "border-slate-800"
+        className={`relative w-full h-[520px] bg-[#d6e8fa] rounded-xl overflow-hidden border shadow-xl flex flex-col justify-between transition-colors ${
+          isDragOver ? "border-blue-500 bg-sky-100" : "border-slate-200"
         }`}
       >
         {/* PURE 100% FULL-WIDTH THREE.JS FORENSIC CANVAS */}

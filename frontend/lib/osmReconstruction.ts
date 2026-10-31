@@ -56,7 +56,7 @@ export function generateProceduralOsmData(centerLat: number, centerLon: number):
     { xMin: 14, xMax: 45, zMin: 14, zMax: 50 },   // SE
   ];
 
-  const colors = [0xdbeafe, 0xe2e8f0, 0xf1f5f9, 0xede9fe, 0xfce7f3, 0xf8fafc];
+  const colors = [0xffffff, 0xf8fafc, 0xf1f5f9, 0xe2e8f0, 0xfef3c7, 0xe0e7ff];
 
   blocks.forEach((block, bIdx) => {
     // 2-3 buildings per quadrant block
@@ -235,9 +235,9 @@ export function createProceduralEnvironmentGroup(data: OsmEnvironmentData): THRE
   group.name = "OSM_ENVIRONMENT_GROUP";
 
   const defaultBldMat = new THREE.MeshStandardMaterial({
-    color: 0xe2e8f0,
-    roughness: 0.75,
-    metalness: 0.15
+    color: 0xf8fafc,
+    roughness: 0.7,
+    metalness: 0.1
   });
 
   const roofMat = new THREE.MeshStandardMaterial({
@@ -246,13 +246,13 @@ export function createProceduralEnvironmentGroup(data: OsmEnvironmentData): THRE
   });
 
   const trunkMat = new THREE.MeshStandardMaterial({
-    color: 0x5d4037,
+    color: 0x78350f,
     roughness: 0.9
   });
 
   const foliageMat = new THREE.MeshStandardMaterial({
-    color: 0x2e7d32,
-    roughness: 0.6
+    color: 0x16a34a,
+    roughness: 0.65
   });
 
   // 1. Extrude Buildings from vector polygon footprints
@@ -407,3 +407,4 @@ export function buildScenarioSplineTracks(scenario: string): VehicleSplineTracks
     };
   }
 }
+

@@ -34,7 +34,7 @@ import type { ScenarioType } from "@/components/3d/ThreeForensicCanvas";
 const ThreeForensicCanvas = dynamic(() => import("@/components/3d/ThreeForensicCanvas"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-[520px] bg-slate-950 rounded-xl flex items-center justify-center text-slate-400 text-xs font-mono">
+    <div className="w-full h-[520px] bg-[#d6e8fa] rounded-xl flex items-center justify-center text-slate-600 text-xs font-mono">
       Initializing 3D Forensic Canvas...
     </div>
   )
