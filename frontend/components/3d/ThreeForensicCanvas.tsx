@@ -90,10 +90,8 @@ export default function ThreeForensicCanvas({
   const [activeScenario, setActiveScenario] = useState<ScenarioType>(initialDetection.scenario);
   const [activeJunction, setActiveJunction] = useState<JunctionType>(initialDetection.junction);
   const [cameraPerspective, setCameraPerspective] = useState<CameraPerspective>("ORBIT");
-  const [mapLayerMode, setMapLayerMode] = useState<"ARCHITECTURAL" | "SATELLITE">("ARCHITECTURAL");
   const groundMeshRef = useRef<THREE.Mesh | null>(null);
   const groundMatRef = useRef<THREE.MeshStandardMaterial | null>(null);
-  const satelliteMatRef = useRef<THREE.MeshStandardMaterial | null>(null);
   const perspectiveRef = useRef<CameraPerspective>("ORBIT");
   useEffect(() => {
     perspectiveRef.current = cameraPerspective;
@@ -102,16 +100,7 @@ export default function ThreeForensicCanvas({
     }
   }, [cameraPerspective]);
 
-  // Real-time Basemap Layer Switcher (3D Architectural Blueprint vs ESRI Aerial Satellite Orthophoto)
-  useEffect(() => {
-    if (groundMeshRef.current) {
-      if (mapLayerMode === "SATELLITE" && satelliteMatRef.current) {
-        groundMeshRef.current.material = satelliteMatRef.current;
-      } else if (groundMatRef.current) {
-        groundMeshRef.current.material = groundMatRef.current;
-      }
-    }
-  }, [mapLayerMode]);
+
   const [isExporting, setIsExporting] = useState(false);
   const [exportNotice, setExportNotice] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -327,16 +316,7 @@ export default function ThreeForensicCanvas({
     });
     groundMatRef.current = groundMat;
 
-    // High-resolution real satellite orthophoto basemap for Gachibowli ORR
-    const textureLoader = new THREE.TextureLoader();
-    const satelliteTexture = textureLoader.load("/satellite_gachibowli.jpg");
-    satelliteTexture.colorSpace = THREE.SRGBColorSpace;
-    const satelliteMat = new THREE.MeshStandardMaterial({
-      map: satelliteTexture,
-      roughness: 0.88,
-      metalness: 0.04
-    });
-    satelliteMatRef.current = satelliteMat;
+
 
     const ground = new THREE.Mesh(new THREE.PlaneGeometry(160, 160), groundMat);
     ground.rotation.x = -Math.PI / 2;
@@ -1559,36 +1539,7 @@ export default function ThreeForensicCanvas({
             </button>
           </div>
 
-          {/* Map Layer Mode Switcher (3D Schematic vs Real Aerial Satellite) */}
-          <div className="pointer-events-auto bg-white/95 backdrop-blur-md p-1 rounded-full border border-slate-200/90 shadow-sm flex items-center gap-1 shrink-0">
-            <button
-              type="button"
-              onClick={() => setMapLayerMode("ARCHITECTURAL")}
-              className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1 cursor-pointer whitespace-nowrap ${
-                mapLayerMode === "ARCHITECTURAL"
-                  ? "bg-slate-900 text-white shadow-sm"
-                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
-              }`}
-              title="Clean Architectural 3D Schematic"
-            >
-              <span>🏛️</span>
-              <span className="hidden sm:inline">Schematic</span>
-            </button>
 
-            <button
-              type="button"
-              onClick={() => setMapLayerMode("SATELLITE")}
-              className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1 cursor-pointer whitespace-nowrap ${
-                mapLayerMode === "SATELLITE"
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
-              }`}
-              title="High-Resolution Real Aerial Satellite Orthophoto"
-            >
-              <span>🛰️</span>
-              <span className="hidden sm:inline">Satellite</span>
-            </button>
-          </div>
 
           {/* 3. Telemetry Speedometer & ABS Status */}
           <div className="pointer-events-auto bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-slate-200/90 shadow-sm shrink-0 flex items-center gap-3">
