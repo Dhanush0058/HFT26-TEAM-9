@@ -1037,6 +1037,9 @@ export default function CaseDetailsPage() {
                     caseTitle={caseData.name}
                     caseDescription={caseData.description}
                     caseSummary={caseData.summary}
+                    latitude={caseData.latitude}
+                    longitude={caseData.longitude}
+                    address={caseData.address}
                     evidenceList={caseData.evidenceList}
                     evidenceVideoUrl={uploadedVideoUrl || (caseData as unknown as Record<string, string>).videoUrl || caseData.evidenceList.find(e => (e.dataType === "Video" || /\.(mp4|mov|avi|webm)$/i.test(e.name)) && e.fileUrl)?.fileUrl}
                     defaultScenario={(caseData as unknown as { scenario?: ScenarioType }).scenario}

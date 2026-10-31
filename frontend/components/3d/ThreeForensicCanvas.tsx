@@ -9,6 +9,12 @@ import {
   RotateCcw, 
   Video
 } from "lucide-react";
+import {
+  fetchOsmSurroundings,
+  createProceduralEnvironmentGroup,
+  buildScenarioSplineTracks,
+  OsmEnvironmentData
+} from "@/lib/osmReconstruction";
 
 export type ScenarioType = "CAR_VS_LORRY" | "CAR_VS_BIKE" | "HIGHWAY_REAR_END" | "HEAD_ON" | "INTERSECTION_TBONE";
 export type JunctionType = "T_JUNCTION" | "FOUR_WAY" | "EXPRESSWAY";
@@ -22,6 +28,9 @@ interface ThreeForensicCanvasProps {
   caseTitle?: string;
   caseDescription?: string;
   caseSummary?: string;
+  latitude?: number;
+  longitude?: number;
+  address?: string;
   evidenceVideoUrl?: string;
   evidenceList?: Array<{ name: string; dataType?: string; extractedData?: { summary?: string; [key: string]: unknown } }>;
   defaultScenario?: ScenarioType;
@@ -36,6 +45,9 @@ export default function ThreeForensicCanvas({
   caseTitle = "Intersection Collision Reconstruction",
   caseDescription = "",
   caseSummary = "",
+  latitude = 17.4401,
+  longitude = 78.3489,
+  address = "ORR Junction near Gachibowli, Hyderabad",
   evidenceVideoUrl,
   evidenceList = [],
   defaultScenario,
@@ -78,6 +90,35 @@ export default function ThreeForensicCanvas({
   const [isExporting, setIsExporting] = useState(false);
   const [exportNotice, setExportNotice] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [osmData, setOsmData] = useState<OsmEnvironmentData | null>(null);
+  const [osmLoading, setOsmLoading] = useState(false);
+  const [telemetryState, setTelemetryState] = useState({ speedA: 48, speedB: 36, isBrakingA: false });
+  const osmGroupRef = useRef<THREE.Group | null>(null);
+  const splineTracksRef = useRef(buildScenarioSplineTracks(activeScenario));
+
+  // Load surrounding OSM geometry (buildings & trees) dynamically for coordinates
+  useEffect(() => {
+    let isMounted = true;
+    setOsmLoading(true);
+    const validLat = typeof latitude === "number" && !isNaN(latitude) ? latitude : 17.4401;
+    const validLon = typeof longitude === "number" && !isNaN(longitude) ? longitude : 78.3489;
+
+    fetchOsmSurroundings(validLat, validLon).then((data) => {
+      if (isMounted) {
+        setOsmData(data);
+        setOsmLoading(false);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [latitude, longitude]);
+
+  // Sync spline paths whenever activeScenario updates
+  useEffect(() => {
+    splineTracksRef.current = buildScenarioSplineTracks(activeScenario);
+  }, [activeScenario]);
 
   // Automatically select scenario & junction from case keywords, summary & evidence
   useEffect(() => {
@@ -697,6 +738,25 @@ export default function ThreeForensicCanvas({
     };
   }, []);
 
+  // Mount / Update OSM Procedural Environment in 3D Scene
+  useEffect(() => {
+    if (!sceneRef.current || !osmData) return;
+    if (osmGroupRef.current) {
+      sceneRef.current.remove(osmGroupRef.current);
+      osmGroupRef.current = null;
+    }
+    const group = createProceduralEnvironmentGroup(osmData);
+    osmGroupRef.current = group;
+    sceneRef.current.add(group);
+
+    return () => {
+      if (osmGroupRef.current && sceneRef.current) {
+        sceneRef.current.remove(osmGroupRef.current);
+        osmGroupRef.current = null;
+      }
+    };
+  }, [osmData]);
+
   // Update Road Environment when Junction Type changes
   useEffect(() => {
     if (tJunctionRoadGroupRef.current) {
@@ -731,6 +791,11 @@ export default function ThreeForensicCanvas({
   // Update Kinematics & Camera Perspectives based on Scrubber Time & State
   useEffect(() => {
     const t = scrubberTime;
+    const tracks = splineTracksRef.current;
+    const curSpeedA = tracks.speedAAt(t);
+    const curSpeedB = tracks.speedBAt(t);
+    const curBrake = tracks.brakeAAt(t);
+    setTelemetryState({ speedA: curSpeedA, speedB: curSpeedB, isBrakingA: curBrake });
 
     if (activeScenario === "CAR_VS_LORRY") {
       // ─────────────────────────────────────────────────────────────
@@ -1077,8 +1142,52 @@ export default function ThreeForensicCanvas({
         {/* PURE 100% FULL-WIDTH THREE.JS FORENSIC CANVAS */}
         <canvas 
           ref={canvasRef} 
-          className="w-full h-full block cursor-grab active:cursor-grabbing" 
+          className="w-full h-full block cursor-grab active:cursor-grabbing"
         />
+
+
+        {/* Top-Left: OSM Reconstruction Pipeline Status HUD */}
+        <div className="absolute top-3.5 left-3.5 bg-slate-950/85 backdrop-blur-md px-3.5 py-2.5 rounded-xl border border-slate-800/80 shadow-xl z-20 pointer-events-none max-w-sm sm:max-w-md">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span className="text-[11px] font-mono font-bold tracking-wider text-emerald-400 uppercase">
+              REKISHI 3D DIGITAL TWIN • OSM RECONSTRUCTION
+            </span>
+          </div>
+          <div className="text-xs text-slate-200 font-semibold mt-1 truncate">
+            {address}
+          </div>
+          <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 text-[10px] font-mono text-slate-400 mt-1">
+            <span>📍 {latitude.toFixed(4)}° N, {longitude.toFixed(4)}° E</span>
+            <span>•</span>
+            <span className="text-slate-300">
+              {osmLoading
+                ? "Extracting OSM data..."
+                : `${osmData?.buildingsCount || 8} Extruded Buildings • ${osmData?.treesCount || 20} Trees`}
+            </span>
+            <span>•</span>
+            <span className="text-blue-400">360° Free Orbit</span>
+          </div>
+        </div>
+
+        {/* Top-Right: Dynamic Telemetry Kinematics HUD */}
+        <div className="absolute top-3.5 right-3.5 bg-slate-950/85 backdrop-blur-md px-3.5 py-2.5 rounded-xl border border-slate-800/80 shadow-xl z-20 pointer-events-none text-right font-mono text-[11px]">
+          <div className="text-slate-400 flex items-center justify-end gap-1.5">
+            <span>VEHICLE A:</span>
+            <span className="font-bold text-white text-xs">{telemetryState.speedA} km/h</span>
+            {telemetryState.isBrakingA && (
+              <span className="px-1.5 py-0.2 rounded bg-rose-950 text-rose-400 font-bold text-[9px] border border-rose-800 animate-pulse">
+                ABS
+              </span>
+            )}
+          </div>
+          <div className="text-slate-400 flex items-center justify-end gap-1.5 mt-1">
+            <span>VEHICLE B:</span>
+            <span className="font-bold text-white text-xs">{telemetryState.speedB} km/h</span>
+          </div>
+        </div>
+ 
+
 
         {/* BOTTOM CONTROLS: Clean Timeline Scrubber, Playback, and High-Resolution Video Export */}
         <div className="absolute bottom-3 left-3 right-3 bg-slate-950/90 backdrop-blur-md p-3 rounded-lg border border-slate-800 flex items-center gap-4 shadow-xl z-30">
@@ -1110,6 +1219,7 @@ export default function ThreeForensicCanvas({
               onChange={(e) => onTimeChange(parseFloat(e.target.value))}
               className="flex-1 accent-blue-500 h-2 bg-slate-800 rounded-lg cursor-pointer"
             />
+    
             <span className="font-mono text-xs font-bold text-white shrink-0 min-w-[65px]">
               T+{scrubberTime < 10 ? `0${scrubberTime.toFixed(1)}` : scrubberTime.toFixed(1)}s
             </span>
