@@ -194,10 +194,46 @@ export default function ThreeForensicCanvas({
     const width = containerRef.current.clientWidth || 800;
     const height = containerRef.current.clientHeight || 520;
 
-    // 1. Scene & Atmospheric Fog (Crisp Daylight Isometric Blueprint Aesthetic)
+    // Helper to generate light blue background with very low-opacity transparent grid boxes
+    const createBackgroundSkyGridTexture = () => {
+      const size = 512;
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        // Base light blue background color
+        ctx.fillStyle = "#dce7f3";
+        ctx.fillRect(0, 0, size, size);
+
+        // Very faint, low-opacity transparent grid boxes (subtle technical blueprint grid)
+        ctx.strokeStyle = "rgba(100, 116, 139, 0.14)";
+        ctx.lineWidth = 1.0;
+        const cellSize = 32;
+        for (let x = 0; x <= size; x += cellSize) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, size);
+          ctx.stroke();
+        }
+        for (let y = 0; y <= size; y += cellSize) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(size, y);
+          ctx.stroke();
+        }
+      }
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      return tex;
+    };
+
+    // 1. Scene & Atmospheric Fog with subtle background grid boxes
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xdce7f3);
-    scene.fog = new THREE.FogExp2(0xdce7f3, 0.0035);
+    const bgGridTexture = createBackgroundSkyGridTexture();
+    scene.background = bgGridTexture;
+    scene.fog = new THREE.FogExp2(0xdce7f3, 0.0025);
     sceneRef.current = scene;
 
     // 2. Camera: True 45-degree Isometric High-Angle Perspective
@@ -1240,7 +1276,15 @@ export default function ThreeForensicCanvas({
         onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
         onDragLeave={() => setIsDragOver(false)}
         onDrop={handleDrop}
-        className={`relative w-full h-[520px] bg-[#d6e8fa] rounded-xl overflow-hidden border shadow-xl flex flex-col justify-between transition-colors ${
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, rgba(100, 116, 139, 0.14) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(100, 116, 139, 0.14) 1px, transparent 1px)
+          `,
+          backgroundSize: '32px 32px',
+          backgroundColor: '#dce7f3'
+        }}
+        className={`relative w-full h-[520px] rounded-xl overflow-hidden border shadow-xl flex flex-col justify-between transition-colors ${
           isDragOver ? "border-blue-500 bg-sky-100" : "border-slate-200"
         }`}
       >
