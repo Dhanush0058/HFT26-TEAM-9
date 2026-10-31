@@ -7,7 +7,10 @@ import {
   Play, 
   Pause, 
   RotateCcw, 
-  Video
+  Video,
+  MapPin,
+  Compass,
+  Eye
 } from "lucide-react";
 import {
   fetchOsmSurroundings,
@@ -45,8 +48,8 @@ export default function ThreeForensicCanvas({
   caseTitle = "Intersection Collision Reconstruction",
   caseDescription = "",
   caseSummary = "",
-  latitude = 17.4401,
-  longitude = 78.3489,
+  latitude = 17.440598,
+  longitude = 78.360779,
   address = "ORR Junction near Gachibowli, Hyderabad",
   evidenceVideoUrl,
   evidenceList = [],
@@ -86,7 +89,7 @@ export default function ThreeForensicCanvas({
   const initialDetection = autoDetectScenarioAndJunction(evidenceVideoUrl);
   const [activeScenario, setActiveScenario] = useState<ScenarioType>(initialDetection.scenario);
   const [activeJunction, setActiveJunction] = useState<JunctionType>(initialDetection.junction);
-  const [cameraPerspective] = useState<CameraPerspective>("ORBIT");
+  const [cameraPerspective, setCameraPerspective] = useState<CameraPerspective>("ORBIT");
   const [isExporting, setIsExporting] = useState(false);
   const [exportNotice, setExportNotice] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -100,8 +103,8 @@ export default function ThreeForensicCanvas({
   useEffect(() => {
     let isMounted = true;
     setOsmLoading(true);
-    const validLat = typeof latitude === "number" && !isNaN(latitude) ? latitude : 17.4401;
-    const validLon = typeof longitude === "number" && !isNaN(longitude) ? longitude : 78.3489;
+    const validLat = typeof latitude === "number" && !isNaN(latitude) ? latitude : 17.440598;
+    const validLon = typeof longitude === "number" && !isNaN(longitude) ? longitude : 78.360779;
 
     fetchOsmSurroundings(validLat, validLon).then((data) => {
       if (isMounted) {
@@ -815,13 +818,13 @@ export default function ThreeForensicCanvas({
         isBrakingA = false;
       } else if (t < 2.7) {
         const dtBrake = t - 2.0;
-        xA = -3.0 + (dtBrake * 5.4);
+        xA = -5.8 + (dtBrake * 5.4);
         isBrakingA = true;
         pitchA = -0.025; // ABS nose dive
       } else {
         const dtPost = t - 2.7;
-        xA = 0.8 + Math.min(0.2, dtPost * 0.1);
-        rotA = -Math.min(0.18, dtPost * 0.2); // Rebound deflection
+        xA = -2.08 - Math.min(0.22, dtPost * 0.15);
+        rotA = -Math.min(0.24, dtPost * 0.26); // Rebound deflection
         isBrakingA = true;
         pitchA = 0;
       }
@@ -851,7 +854,7 @@ export default function ThreeForensicCanvas({
         zB = -26.0 + (t * 8.9);
       } else {
         const dt = t - 2.7;
-        zB = -1.97 + Math.min(3.8, dt * 2.4);
+        zB = -2.2 + (dt * 5.4);
         rollLorry = Math.sin(dt * 7.0) * 0.04 * Math.exp(-dt * 2.5); // Suspension rock
       }
 
@@ -862,7 +865,7 @@ export default function ThreeForensicCanvas({
 
       if (impactRingRef.current) {
         const ringMat = impactRingRef.current.material as THREE.MeshBasicMaterial;
-        impactRingRef.current.position.set(1.6, 0.1, 1.6);
+        impactRingRef.current.position.set(0.3, 0.1, 1.6);
         if (t >= 2.6 && t <= 3.4) {
           const factor = (t - 2.6) / 0.8;
           ringMat.opacity = Math.max(0, 0.95 - factor);
@@ -971,12 +974,12 @@ export default function ThreeForensicCanvas({
         pitchA = 0;
       } else if (t < 2.8) {
         const dtBrake = t - 2.0;
-        xA = -3.0 + (dtBrake * 4.5);
+        xA = -5.8 + (dtBrake * 4.6);
         isBrakingA = true;
         pitchA = -0.022;
       } else {
         const dtPost = t - 2.8;
-        xA = 0.6 + Math.min(0.4, dtPost * 0.3);
+        xA = -2.12 - Math.min(0.15, dtPost * 0.1);
         rotA = -Math.min(0.12, dtPost * 0.15);
         isBrakingA = true;
         pitchA = 0;
@@ -1050,12 +1053,15 @@ export default function ThreeForensicCanvas({
 
       if (cameraPerspective === "CAR_POV") {
         controlsRef.current.enabled = false;
-        cameraRef.current.position.set(xA + 0.6, 1.25, zA);
-        cameraRef.current.lookAt(xA + 25, 1.25, zA);
+        const rotY = carARef.current?.rotation.y || 0;
+        cameraRef.current.position.set(xA + 0.3 * Math.cos(rotY), 1.25, zA - 0.3 * Math.sin(rotY));
+        cameraRef.current.lookAt(xA + 25 * Math.cos(rotY), 1.15, zA - 25 * Math.sin(rotY));
       } else if (cameraPerspective === "LORRY_POV") {
         controlsRef.current.enabled = false;
-        cameraRef.current.position.set(xB, 3.2, zB - 0.4);
-        cameraRef.current.lookAt(xB, 0.6, zB + 28);
+        const isLorry = activeScenario === "CAR_VS_LORRY";
+        const camHeight = isLorry ? 2.9 : 1.55;
+        cameraRef.current.position.set(xB, camHeight, zB);
+        cameraRef.current.lookAt(xB, camHeight - 0.25, zB + 28);
       } else if (cameraPerspective === "CCTV_CAM") {
         controlsRef.current.enabled = false;
         cameraRef.current.position.set(-13, 14, -13);
@@ -1149,48 +1155,89 @@ export default function ThreeForensicCanvas({
         />
 
 
-        {/* Top-Left: OSM Reconstruction Pipeline Status HUD */}
-        <div className="absolute top-3.5 left-3.5 bg-slate-950/85 backdrop-blur-md px-3.5 py-2.5 rounded-xl border border-slate-800/80 shadow-xl z-20 pointer-events-none max-w-sm sm:max-w-md">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span className="text-[11px] font-mono font-bold tracking-wider text-emerald-400 uppercase">
-              REKISHI 3D DIGITAL TWIN • OSM RECONSTRUCTION
-            </span>
-          </div>
-          <div className="text-xs text-slate-200 font-semibold mt-1 truncate">
+        {/* Top-Left: Location & Coordinates (Clean Rekishi Design Language) */}
+        <div className="absolute top-3.5 left-3.5 bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-[16px] border border-[#F0F0F0] shadow-soft z-20 pointer-events-none max-w-xs sm:max-w-sm">
+          <div className="text-xs font-bold text-[#111111] leading-snug">
             {address}
           </div>
-          <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 text-[10px] font-mono text-slate-400 mt-1">
-            <span>📍 {latitude.toFixed(4)}° N, {longitude.toFixed(4)}° E</span>
-            <span>•</span>
-            <span className="text-slate-300">
-              {osmLoading
-                ? "Extracting OSM data..."
-                : `${osmData?.buildingsCount || 8} Extruded Buildings • ${osmData?.treesCount || 20} Trees`}
+          <div className="flex items-center gap-1.5 text-[11px] font-mono text-[#8A8A8A] mt-0.5">
+            <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+            <span>{latitude.toFixed(6)}° N, {longitude.toFixed(6)}° E</span>
+          </div>
+        </div>
+
+        {/* Top-Center: Camera Perspective Switchers (Free Roam, POV Vehicle 1, POV Vehicle 2) */}
+        <div className="absolute top-3.5 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md p-1 rounded-full border border-[#F0F0F0] shadow-soft z-30 flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setCameraPerspective("ORBIT")}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer ${
+              cameraPerspective === "ORBIT"
+                ? "bg-[#121212] text-white shadow-sm"
+                : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F5F8FF]"
+            }`}
+          >
+            <Compass className="w-3.5 h-3.5" />
+            <span>Free Roam</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setCameraPerspective("CAR_POV")}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer ${
+              cameraPerspective === "CAR_POV"
+                ? "bg-[#121212] text-white shadow-sm"
+                : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F5F8FF]"
+            }`}
+          >
+            <Eye className="w-3.5 h-3.5 text-rose-500" />
+            <span>POV Vehicle 1</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setCameraPerspective("LORRY_POV")}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer ${
+              cameraPerspective === "LORRY_POV"
+                ? "bg-[#121212] text-white shadow-sm"
+                : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F5F8FF]"
+            }`}
+          >
+            <Eye className="w-3.5 h-3.5 text-blue-500" />
+            <span>POV Vehicle 2</span>
+          </button>
+        </div>
+
+        {/* Top-Right: Telemetry Speedometer (Clean Rekishi Design Language) */}
+        <div className="absolute top-3.5 right-3.5 bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-[16px] border border-[#F0F0F0] shadow-soft z-20 pointer-events-none flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0"></span>
+            <div>
+              <div className="text-[10px] font-semibold text-[#8A8A8A] uppercase tracking-wider leading-none">Vehicle 1</div>
+              <div className="text-xs font-bold text-[#111111] font-mono leading-tight mt-0.5">
+                {telemetryState.speedA} <span className="text-[10px] text-[#8A8A8A] font-sans font-normal">km/h</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="w-[1px] h-6 bg-[#F0F0F0]"></div>
+
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0"></span>
+            <div>
+              <div className="text-[10px] font-semibold text-[#8A8A8A] uppercase tracking-wider leading-none">Vehicle 2</div>
+              <div className="text-xs font-bold text-[#111111] font-mono leading-tight mt-0.5">
+                {telemetryState.speedB} <span className="text-[10px] text-[#8A8A8A] font-sans font-normal">km/h</span>
+              </div>
+            </div>
+          </div>
+
+          {telemetryState.isBrakingA && (
+            <span className="px-2 py-0.5 rounded-full bg-rose-50 border border-rose-200 text-rose-600 font-bold text-[9px] animate-pulse">
+              ABS
             </span>
-            <span>•</span>
-            <span className="text-blue-400">360° Free Orbit</span>
-          </div>
+          )}
         </div>
-
-        {/* Top-Right: Dynamic Telemetry Kinematics HUD */}
-        <div className="absolute top-3.5 right-3.5 bg-slate-950/85 backdrop-blur-md px-3.5 py-2.5 rounded-xl border border-slate-800/80 shadow-xl z-20 pointer-events-none text-right font-mono text-[11px]">
-          <div className="text-slate-400 flex items-center justify-end gap-1.5">
-            <span>VEHICLE A:</span>
-            <span className="font-bold text-white text-xs">{telemetryState.speedA} km/h</span>
-            {telemetryState.isBrakingA && (
-              <span className="px-1.5 py-0.2 rounded bg-rose-950 text-rose-400 font-bold text-[9px] border border-rose-800 animate-pulse">
-                ABS
-              </span>
-            )}
-          </div>
-          <div className="text-slate-400 flex items-center justify-end gap-1.5 mt-1">
-            <span>VEHICLE B:</span>
-            <span className="font-bold text-white text-xs">{telemetryState.speedB} km/h</span>
-          </div>
-        </div>
- 
-
 
         {/* BOTTOM CONTROLS: Clean Timeline Scrubber, Playback, and High-Resolution Video Export */}
         <div className="absolute bottom-3 left-3 right-3 bg-slate-950/90 backdrop-blur-md p-3 rounded-lg border border-slate-800 flex items-center gap-4 shadow-xl z-30">

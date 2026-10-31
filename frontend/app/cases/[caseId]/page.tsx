@@ -1061,48 +1061,104 @@ export default function CaseDetailsPage() {
                     }}
                   />
 
-                  {/* Secondary Visual Charts: Kinematics & Corroboration */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                    <div className="p-5 rounded-[20px] bg-[#F5F8FF] border border-[#EEEEEC] space-y-2">
+                  {/* Secondary Visual Charts: Kinematics & Corroboration (Rekishi Design Language) */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-3">
+                    {/* Live Deceleration Kinematics Card */}
+                    <div className="p-6 rounded-[24px] bg-white border border-[#F0F0F0] shadow-soft space-y-3">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-[#111111]">Vehicle Deceleration Kinematics</span>
-                        <span className="text-[10px] text-[#8A8A8A]">CAN Telemetry Derived</span>
+                        <div>
+                          <span className="font-bold text-[#111111] text-sm">Vehicle Deceleration Kinematics</span>
+                          <p className="text-[11px] text-[#8A8A8A] mt-0.5">CAN Bus Telemetry & Optical Tracking</p>
+                        </div>
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold bg-[#F5F8FF] text-blue-600 border border-blue-100">
+                          {scrubberTime >= 1.8 ? "-0.82 G Peak Decel" : "Cruising 0.00 G"}
+                        </span>
                       </div>
-                      <div className="h-28 flex items-end gap-1.5 pt-4 px-2 border-b border-l border-[#EEEEEC]">
-                        {[48, 48, 47, 46, 42, 36, 26, 18, 14, 0].map((speed, i) => (
-                          <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                            <div 
-                              className={`w-full rounded-t transition-all ${
-                                i >= 5 ? "bg-rose-500" : "bg-blue-600"
-                              }`} 
-                              style={{ height: `${(speed / 50) * 100}%` }}
-                            ></div>
-                            <span className="text-[8px] font-mono text-[#8A8A8A]">T+{i}</span>
-                          </div>
-                        ))}
+
+                      {/* Interactive Telemetry Chart */}
+                      <div className="h-36 flex items-end gap-2 pt-6 pb-1 px-3 border-b border-[#F0F0F0] bg-[#FAFAFA] rounded-[16px] relative overflow-hidden">
+                        {[48, 48, 47, 44, 38, 28, 18, 12, 4, 0].map((speed, i) => {
+                          const activeStep = Math.min(9, Math.floor((scrubberTime / 4.2) * 10));
+                          const isActive = i === activeStep;
+                          const isBraking = i >= 4;
+
+                          return (
+                            <div key={i} className="flex-1 h-full flex flex-col justify-end items-center gap-1 group relative">
+                              {isActive && (
+                                <div className="absolute -top-1 px-1.5 py-0.5 rounded bg-[#121212] text-white text-[9px] font-mono font-bold shadow-sm whitespace-nowrap animate-bounce">
+                                  {speed} km/h
+                                </div>
+                              )}
+                              <div
+                                className={`w-full rounded-t-md transition-all duration-150 ${
+                                  isActive
+                                    ? isBraking ? "bg-rose-600 ring-2 ring-rose-400" : "bg-blue-600 ring-2 ring-blue-400"
+                                    : i <= activeStep
+                                      ? isBraking ? "bg-rose-400" : "bg-blue-500"
+                                      : "bg-[#E5E7EB]"
+                                }`}
+                                style={{ height: `${Math.max(6, (speed / 50) * 100)}%` }}
+                              ></div>
+                              <span className={`text-[9px] font-mono mt-1 ${isActive ? "font-bold text-[#111111]" : "text-[#8A8A8A]"}`}>
+                                T+${(i * 0.42).toFixed(1)}s
+                              </span>
+                            </div>
+                          );
+                        })}
                       </div>
-                      <p className="text-[11px] text-[#8A8A8A] mt-1">
-                        Emergency brake actuation occurred at T-0.7s with peak deceleration rate of -0.82 G.
-                      </p>
+
+                      <div className="flex items-center justify-between text-[11px] text-[#8A8A8A] pt-1">
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-blue-500"></span> Normal Speed
+                          <span className="w-2 h-2 rounded-full bg-rose-500 ml-2"></span> ABS Threshold Braking
+                        </span>
+                        <span className="font-mono text-[#111111] font-semibold">
+                          Current: {scrubberTime < 1.8 ? "48 km/h" : scrubberTime < 2.4 ? "28 km/h" : "0 km/h"}
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="p-5 rounded-[20px] bg-[#F5F8FF] border border-[#EEEEEC] space-y-2">
+                    {/* Source Correlation Index Card */}
+                    <div className="p-6 rounded-[24px] bg-white border border-[#F0F0F0] shadow-soft space-y-3">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-[#111111]">Source Correlation Index</span>
-                        <span className="text-[10px] font-bold text-rose-600">Discrepancy Detected</span>
+                        <div>
+                          <span className="font-bold text-[#111111] text-sm">Source Correlation Index</span>
+                          <p className="text-[11px] text-[#8A8A8A] mt-0.5">Cross-Evidence Corroboration Engine</p>
+                        </div>
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-600 border border-rose-200">
+                          Discrepancy Detected
+                        </span>
                       </div>
-                      <div className="space-y-2 pt-1 text-xs">
-                        <div className="flex items-center justify-between p-2.5 rounded-[12px] bg-white border border-[#EEEEEC]">
-                          <span className="text-[#8A8A8A]">Video vs Sensor Timing:</span>
-                          <span className="font-bold text-emerald-600">99.2% Aligned</span>
+
+                      <div className="space-y-2.5 pt-1 text-xs">
+                        <div className="p-3 rounded-[16px] bg-[#FAFAFA] border border-[#F0F0F0] flex items-center justify-between">
+                          <div>
+                            <div className="font-semibold text-[#111111]">Video vs Sensor Timing</div>
+                            <div className="text-[10px] text-[#8A8A8A]">Optical flow synchrony with CAN clock</div>
+                          </div>
+                          <span className="font-mono font-bold text-emerald-600 text-xs px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200">
+                            99.2% Aligned
+                          </span>
                         </div>
-                        <div className="flex items-center justify-between p-2.5 rounded-[12px] bg-white border border-[#EEEEEC]">
-                          <span className="text-[#8A8A8A]">Witness Audio vs Video:</span>
-                          <span className="font-bold text-rose-600">62.0% Discrepant (Light State)</span>
+
+                        <div className="p-3 rounded-[16px] bg-[#FAFAFA] border border-[#F0F0F0] flex items-center justify-between">
+                          <div>
+                            <div className="font-semibold text-[#111111]">Witness Audio vs Video</div>
+                            <div className="text-[10px] text-[#8A8A8A]">Disputed traffic signal phase claim</div>
+                          </div>
+                          <span className="font-mono font-bold text-rose-600 text-xs px-2.5 py-1 rounded-full bg-rose-50 border border-rose-200">
+                            62.0% Discrepant
+                          </span>
                         </div>
-                        <div className="flex items-center justify-between p-2.5 rounded-[12px] bg-white border border-[#EEEEEC]">
-                          <span className="text-[#8A8A8A]">Speed Estimate Consistency:</span>
-                          <span className="font-bold text-emerald-600">94.5% Corroborated</span>
+
+                        <div className="p-3 rounded-[16px] bg-[#FAFAFA] border border-[#F0F0F0] flex items-center justify-between">
+                          <div>
+                            <div className="font-semibold text-[#111111]">Speed Estimate Consistency</div>
+                            <div className="text-[10px] text-[#8A8A8A]">Tire marks vs dashboard telemetry</div>
+                          </div>
+                          <span className="font-mono font-bold text-emerald-600 text-xs px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200">
+                            94.5% Corroborated
+                          </span>
                         </div>
                       </div>
                     </div>
