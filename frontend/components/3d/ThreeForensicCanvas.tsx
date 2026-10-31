@@ -206,9 +206,9 @@ export default function ThreeForensicCanvas({
         ctx.fillStyle = "#dce7f3";
         ctx.fillRect(0, 0, size, size);
 
-        // Distinct, clearly visible blueprint grid boxes (35% opacity slate)
-        ctx.strokeStyle = "rgba(71, 85, 105, 0.35)";
-        ctx.lineWidth = 1.5;
+        // Soft, low-contrast blueprint grid boxes
+        ctx.strokeStyle = "rgba(100, 116, 139, 0.18)";
+        ctx.lineWidth = 1.0;
         const cellSize = 32;
         for (let x = 0; x <= size; x += cellSize) {
           ctx.beginPath();
@@ -289,7 +289,7 @@ export default function ThreeForensicCanvas({
     rimLight.position.set(-20, 18, -18);
     scene.add(rimLight);
 
-    // 6. Base Ground Plane with Architectural Square Grid Texture (Exact match to reference)
+    // 6. Base Ground Plane with Architectural Square Grid Texture (Subtle, elegant low-opacity)
     const createArchitecturalGridTexture = () => {
       const size = 128;
       const canvas = document.createElement("canvas");
@@ -297,10 +297,10 @@ export default function ThreeForensicCanvas({
       canvas.height = size;
       const ctx = canvas.getContext("2d");
       if (ctx) {
-        ctx.fillStyle = "#edf2f7"; // clean blueprint ground
+        ctx.fillStyle = "#edf2f7"; // soft light blueprint ground
         ctx.fillRect(0, 0, size, size);
-        ctx.strokeStyle = "#94a3b8"; // clearly visible slate-400 grid lines
-        ctx.lineWidth = 2.0;
+        ctx.strokeStyle = "rgba(148, 163, 184, 0.40)"; // soft, subtle architectural grid lines
+        ctx.lineWidth = 1.0;
         ctx.strokeRect(0, 0, size, size);
       }
       const tex = new THREE.CanvasTexture(canvas);
@@ -321,19 +321,12 @@ export default function ThreeForensicCanvas({
     ground.receiveShadow = true;
     scene.add(ground);
 
-    // Apply the architectural grid texture to curbs/sidewalks too so they never hide the grid!
+    // Subtle grid on sidewalks without cutting through the asphalt road
     const curbMat = new THREE.MeshStandardMaterial({ 
       map: gridTexture, 
       roughness: 0.85, 
       metalness: 0.04 
     });
-
-    // 3D Blueprint Vector Grid overlay sitting on top of the intersection blocks
-    const worldGrid = new THREE.GridHelper(160, 80, 0x475569, 0x94a3b8);
-    (worldGrid.material as THREE.Material).transparent = true;
-    (worldGrid.material as THREE.Material).opacity = 0.35;
-    worldGrid.position.y = 0.285;
-    scene.add(worldGrid);
     const roadMat = new THREE.MeshStandardMaterial({ color: 0x5a6778, roughness: 0.85 });
     const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff }); // continuous crisp white lane lines
     const lampPostMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.8, roughness: 0.3 });
