@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { 
   ArrowLeft, 
@@ -29,7 +30,15 @@ import {
   Info
 } from "lucide-react";
 import TopHeader from "@/components/TopHeader";
-import ThreeForensicCanvas, { ScenarioType } from "@/components/3d/ThreeForensicCanvas";
+import type { ScenarioType } from "@/components/3d/ThreeForensicCanvas";
+const ThreeForensicCanvas = dynamic(() => import("@/components/3d/ThreeForensicCanvas"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[520px] bg-slate-950 rounded-xl flex items-center justify-center text-slate-400 text-xs font-mono">
+      Initializing 3D Forensic Canvas...
+    </div>
+  )
+});
 import DetailedCaseReport from "@/components/DetailedCaseReport";
 import { 
   getStoredCaseById, 

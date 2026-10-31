@@ -1,4 +1,3 @@
-import { jsPDF } from "jspdf";
 import { CaseDetail, EvidenceRecord } from "./casesService";
 
 export interface ForensicDetailedReport {
@@ -272,7 +271,8 @@ export function generateDetailedForensicReport(caseData: CaseDetail): ForensicDe
 /**
  * Downloads a high-fidelity PDF report formatted with jsPDF
  */
-export function downloadPdfReport(caseData: CaseDetail): void {
+export async function downloadPdfReport(caseData: CaseDetail): Promise<void> {
+  const { jsPDF } = await import("jspdf");
   const report = generateDetailedForensicReport(caseData);
   const doc = new jsPDF({
     orientation: "portrait",

@@ -22,10 +22,10 @@ export default function DetailedCaseReport({ caseData }: DetailedCaseReportProps
 
   const report = useMemo(() => generateDetailedForensicReport(caseData), [caseData]);
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     setIsDownloading(true);
     try {
-      downloadPdfReport(caseData);
+      await downloadPdfReport(caseData);
     } catch (err) {
       console.error("PDF generation failed:", err);
     } finally {
