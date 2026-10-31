@@ -799,33 +799,20 @@ export default function ThreeForensicCanvas({
     const animate = () => {
       animId = requestAnimationFrame(animate);
 
-      // Continuous lock to vehicle front when in POV mode
+      // Angled POV camera movement tracking vehicles with realistic driver angle
       if (perspectiveRef.current === "CAR_POV" && carARef.current && cameraRef.current) {
         const xA = carARef.current.position.x;
         const zA = carARef.current.position.z;
         const rotY = carARef.current.rotation.y;
-        const fwdX = Math.cos(rotY);
-        const fwdZ = -Math.sin(rotY);
-        cameraRef.current.position.set(xA + 2.1 * fwdX, 1.15, zA + 2.1 * fwdZ);
-        cameraRef.current.lookAt(xA + 30 * fwdX, 1.05, zA + 30 * fwdZ);
+        cameraRef.current.position.set(xA + 0.3 * Math.cos(rotY), 1.25, zA - 0.3 * Math.sin(rotY));
+        cameraRef.current.lookAt(xA + 25 * Math.cos(rotY), 1.15, zA - 25 * Math.sin(rotY));
       } else if (perspectiveRef.current === "LORRY_POV" && vehicleBGroupRef.current && cameraRef.current) {
         const xB = vehicleBGroupRef.current.position.x;
         const zB = vehicleBGroupRef.current.position.z;
         const isLorry = lorryMeshRef.current?.visible;
-        const isBike = motorcycleMeshRef.current?.visible;
-        if (isLorry) {
-          // Front of heavy commercial truck cab (Z+4.6m)
-          cameraRef.current.position.set(xB, 2.6, zB + 4.6);
-          cameraRef.current.lookAt(xB, 2.3, zB + 35);
-        } else if (isBike) {
-          // Front of motorcycle handlebars/headlight (Z+1.25m)
-          cameraRef.current.position.set(xB, 1.35, zB + 1.25);
-          cameraRef.current.lookAt(xB, 1.15, zB + 30);
-        } else {
-          // Front of SUV bumper (X+2.2m)
-          cameraRef.current.position.set(xB + 2.2, 1.25, zB);
-          cameraRef.current.lookAt(xB + 30, 1.15, zB);
-        }
+        const camHeight = isLorry ? 3.0 : 1.55;
+        cameraRef.current.position.set(xB, camHeight, isLorry ? zB - 0.4 : zB);
+        cameraRef.current.lookAt(xB, 0.7, zB + 28);
       } else if (controlsRef.current && perspectiveRef.current === "ORBIT") {
         controlsRef.current.update();
       }
@@ -1163,28 +1150,14 @@ export default function ThreeForensicCanvas({
       if (cameraPerspective === "CAR_POV") {
         controlsRef.current.enabled = false;
         const rotY = carARef.current?.rotation.y || 0;
-        const fwdX = Math.cos(rotY);
-        const fwdZ = -Math.sin(rotY);
-        // Mounted directly on the front bumper/hood of Vehicle 1
-        cameraRef.current.position.set(xA + 2.1 * fwdX, 1.15, zA + 2.1 * fwdZ);
-        cameraRef.current.lookAt(xA + 30 * fwdX, 1.05, zA + 30 * fwdZ);
+        cameraRef.current.position.set(xA + 0.3 * Math.cos(rotY), 1.25, zA - 0.3 * Math.sin(rotY));
+        cameraRef.current.lookAt(xA + 25 * Math.cos(rotY), 1.15, zA - 25 * Math.sin(rotY));
       } else if (cameraPerspective === "LORRY_POV") {
         controlsRef.current.enabled = false;
         const isLorry = activeScenario === "CAR_VS_LORRY";
-        const isBike = activeScenario === "CAR_VS_BIKE";
-        if (isLorry) {
-          // Mounted on the front windshield of the truck cab
-          cameraRef.current.position.set(xB, 2.6, zB + 4.6);
-          cameraRef.current.lookAt(xB, 2.3, zB + 35);
-        } else if (isBike) {
-          // Mounted on the front handlebars/headlight of motorcycle
-          cameraRef.current.position.set(xB, 1.35, zB + 1.25);
-          cameraRef.current.lookAt(xB, 1.15, zB + 30);
-        } else {
-          // Mounted on the front bumper of SUV
-          cameraRef.current.position.set(xB + 2.2, 1.25, zB);
-          cameraRef.current.lookAt(xB + 30, 1.15, zB);
-        }
+        const camHeight = isLorry ? 3.0 : 1.55;
+        cameraRef.current.position.set(xB, camHeight, isLorry ? zB - 0.4 : zB);
+        cameraRef.current.lookAt(xB, 0.7, zB + 28);
       } else if (cameraPerspective === "CCTV_CAM") {
         controlsRef.current.enabled = false;
         cameraRef.current.position.set(-13, 14, -13);
