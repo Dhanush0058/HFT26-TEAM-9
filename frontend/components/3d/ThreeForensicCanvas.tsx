@@ -90,6 +90,13 @@ export default function ThreeForensicCanvas({
   const [activeScenario, setActiveScenario] = useState<ScenarioType>(initialDetection.scenario);
   const [activeJunction, setActiveJunction] = useState<JunctionType>(initialDetection.junction);
   const [cameraPerspective, setCameraPerspective] = useState<CameraPerspective>("ORBIT");
+  const perspectiveRef = useRef<CameraPerspective>("ORBIT");
+  useEffect(() => {
+    perspectiveRef.current = cameraPerspective;
+    if (cameraPerspective === "ORBIT" && cameraRef.current && controlsRef.current) {
+      controlsRef.current.enabled = true;
+    }
+  }, [cameraPerspective]);
   const [isExporting, setIsExporting] = useState(false);
   const [exportNotice, setExportNotice] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -718,9 +725,38 @@ export default function ThreeForensicCanvas({
     let animId: number;
     const animate = () => {
       animId = requestAnimationFrame(animate);
-      if (controlsRef.current) {
+
+      // Continuous lock to vehicle front when in POV mode
+      if (perspectiveRef.current === "CAR_POV" && carARef.current && cameraRef.current) {
+        const xA = carARef.current.position.x;
+        const zA = carARef.current.position.z;
+        const rotY = carARef.current.rotation.y;
+        const fwdX = Math.cos(rotY);
+        const fwdZ = -Math.sin(rotY);
+        cameraRef.current.position.set(xA + 2.1 * fwdX, 1.15, zA + 2.1 * fwdZ);
+        cameraRef.current.lookAt(xA + 30 * fwdX, 1.05, zA + 30 * fwdZ);
+      } else if (perspectiveRef.current === "LORRY_POV" && vehicleBGroupRef.current && cameraRef.current) {
+        const xB = vehicleBGroupRef.current.position.x;
+        const zB = vehicleBGroupRef.current.position.z;
+        const isLorry = lorryMeshRef.current?.visible;
+        const isBike = motorcycleMeshRef.current?.visible;
+        if (isLorry) {
+          // Front of heavy commercial truck cab (Z+4.6m)
+          cameraRef.current.position.set(xB, 2.6, zB + 4.6);
+          cameraRef.current.lookAt(xB, 2.3, zB + 35);
+        } else if (isBike) {
+          // Front of motorcycle handlebars/headlight (Z+1.25m)
+          cameraRef.current.position.set(xB, 1.35, zB + 1.25);
+          cameraRef.current.lookAt(xB, 1.15, zB + 30);
+        } else {
+          // Front of SUV bumper (X+2.2m)
+          cameraRef.current.position.set(xB + 2.2, 1.25, zB);
+          cameraRef.current.lookAt(xB + 30, 1.15, zB);
+        }
+      } else if (controlsRef.current && perspectiveRef.current === "ORBIT") {
         controlsRef.current.update();
       }
+
       if (rendererRef.current && sceneRef.current && cameraRef.current) {
         rendererRef.current.render(sceneRef.current, cameraRef.current);
       }
@@ -1054,14 +1090,28 @@ export default function ThreeForensicCanvas({
       if (cameraPerspective === "CAR_POV") {
         controlsRef.current.enabled = false;
         const rotY = carARef.current?.rotation.y || 0;
-        cameraRef.current.position.set(xA + 0.3 * Math.cos(rotY), 1.25, zA - 0.3 * Math.sin(rotY));
-        cameraRef.current.lookAt(xA + 25 * Math.cos(rotY), 1.15, zA - 25 * Math.sin(rotY));
+        const fwdX = Math.cos(rotY);
+        const fwdZ = -Math.sin(rotY);
+        // Mounted directly on the front bumper/hood of Vehicle 1
+        cameraRef.current.position.set(xA + 2.1 * fwdX, 1.15, zA + 2.1 * fwdZ);
+        cameraRef.current.lookAt(xA + 30 * fwdX, 1.05, zA + 30 * fwdZ);
       } else if (cameraPerspective === "LORRY_POV") {
         controlsRef.current.enabled = false;
         const isLorry = activeScenario === "CAR_VS_LORRY";
-        const camHeight = isLorry ? 2.9 : 1.55;
-        cameraRef.current.position.set(xB, camHeight, zB);
-        cameraRef.current.lookAt(xB, camHeight - 0.25, zB + 28);
+        const isBike = activeScenario === "CAR_VS_BIKE";
+        if (isLorry) {
+          // Mounted on the front windshield of the truck cab
+          cameraRef.current.position.set(xB, 2.6, zB + 4.6);
+          cameraRef.current.lookAt(xB, 2.3, zB + 35);
+        } else if (isBike) {
+          // Mounted on the front handlebars/headlight of motorcycle
+          cameraRef.current.position.set(xB, 1.35, zB + 1.25);
+          cameraRef.current.lookAt(xB, 1.15, zB + 30);
+        } else {
+          // Mounted on the front bumper of SUV
+          cameraRef.current.position.set(xB + 2.2, 1.25, zB);
+          cameraRef.current.lookAt(xB + 30, 1.15, zB);
+        }
       } else if (cameraPerspective === "CCTV_CAM") {
         controlsRef.current.enabled = false;
         cameraRef.current.position.set(-13, 14, -13);
@@ -1166,12 +1216,12 @@ export default function ThreeForensicCanvas({
           </div>
         </div>
 
-        {/* Top-Center: Camera Perspective Switchers (Free Roam, POV Vehicle 1, POV Vehicle 2) */}
-        <div className="absolute top-3.5 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md p-1 rounded-full border border-[#F0F0F0] shadow-soft z-30 flex items-center gap-1">
+        {/* Top-Center: Camera Perspective Controls (Free Roam, POV Vehicle 1, POV Vehicle 2) */}
+        <div className="absolute top-3.5 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md p-1.5 rounded-full border border-[#F0F0F0] shadow-soft z-30 flex items-center gap-1">
           <button
             type="button"
             onClick={() => setCameraPerspective("ORBIT")}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer ${
               cameraPerspective === "ORBIT"
                 ? "bg-[#121212] text-white shadow-sm"
                 : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F5F8FF]"
@@ -1184,7 +1234,7 @@ export default function ThreeForensicCanvas({
           <button
             type="button"
             onClick={() => setCameraPerspective("CAR_POV")}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer ${
               cameraPerspective === "CAR_POV"
                 ? "bg-[#121212] text-white shadow-sm"
                 : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F5F8FF]"
@@ -1197,14 +1247,16 @@ export default function ThreeForensicCanvas({
           <button
             type="button"
             onClick={() => setCameraPerspective("LORRY_POV")}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer ${
               cameraPerspective === "LORRY_POV"
                 ? "bg-[#121212] text-white shadow-sm"
                 : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F5F8FF]"
             }`}
           >
             <Eye className="w-3.5 h-3.5 text-blue-500" />
-            <span>POV Vehicle 2</span>
+            <span>
+              {activeScenario === "CAR_VS_LORRY" ? "POV Vehicle 2 (Truck)" : activeScenario === "CAR_VS_BIKE" ? "POV Vehicle 2 (Bike)" : "POV Vehicle 2"}
+            </span>
           </button>
         </div>
 
