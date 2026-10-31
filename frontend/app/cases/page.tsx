@@ -56,23 +56,23 @@ export default function CasesPage() {
       >
         <div className="space-y-6">
             
-            {/* New Case Card (24px radius, Black pill button, clean minimalist style) */}
-            <div className="bg-white rounded-[24px] p-6 shadow-soft border border-slate-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <span className="text-[13px] font-medium text-[#8A8A8A]">
+            {/* New Case Card (Blue Background with White Text to Differentiate) */}
+            <div className="relative overflow-hidden bg-gradient-to-r from-[#0A66FF] via-[#1E40AF] to-[#2563EB] rounded-[24px] p-6 sm:p-7 shadow-lg shadow-blue-600/15 border border-blue-400/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="relative z-10">
+                <span className="text-[13px] font-semibold text-blue-100 tracking-wide uppercase">
                   New Investigation Intake
                 </span>
-                <h2 className="text-xl font-extrabold text-[#111111] mt-0.5">
+                <h2 className="text-xl sm:text-2xl font-extrabold text-white mt-1">
                   Register Incident Dossier
                 </h2>
-                <p className="text-xs text-[#8A8A8A] mt-1">
+                <p className="text-xs sm:text-sm text-blue-100/90 mt-1 max-w-xl leading-relaxed">
                   Upload multi-format evidence (dashcam, audio notes, police files, sensor logs).
                 </p>
               </div>
 
               <Link
                 href="/cases/new"
-                className="h-11 px-6 rounded-full bg-[#121212] text-white hover:bg-black text-xs font-semibold flex items-center justify-center gap-2 transition shrink-0 shadow-sm"
+                className="relative z-10 h-11 px-6 rounded-full bg-white text-[#0A66FF] hover:bg-blue-50 text-xs font-bold flex items-center justify-center gap-2 transition shrink-0 shadow-md hover:shadow-lg active:scale-95"
               >
                 <Plus className="w-4 h-4 stroke-[2.5]" />
                 <span>New Case</span>
