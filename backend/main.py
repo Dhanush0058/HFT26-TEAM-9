@@ -4,6 +4,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.routers.cases import router as cases_router
+from app.routers.contacts import router as contacts_router
+from app.routers.twilio_webhook import router as twilio_router
 from app.core.config import settings
 
 app = FastAPI(
@@ -35,6 +37,8 @@ app.add_middleware(
 
 # Register Forensics Router
 app.include_router(cases_router)
+app.include_router(contacts_router)
+app.include_router(twilio_router)
 
 @app.get("/")
 def root():

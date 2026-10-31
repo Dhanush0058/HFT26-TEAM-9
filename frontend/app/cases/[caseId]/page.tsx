@@ -8,6 +8,8 @@ import {
   FileText, 
   Database, 
   Eye, 
+  Users, 
+  Phone, 
   Calendar, 
   MapPin, 
   User, 
@@ -30,6 +32,7 @@ import {
 } from "lucide-react";
 import TopHeader from "@/components/TopHeader";
 import ThreeForensicCanvas, { ScenarioType } from "@/components/3d/ThreeForensicCanvas";
+import CaseContactsTab from "@/components/cases/CaseContactsTab";
 import { 
   getStoredCaseById, 
   CaseDetail, 
@@ -46,7 +49,7 @@ export default function CaseDetailsPage() {
   const caseId = params?.caseId as string;
 
   const [caseData, setCaseData] = useState<CaseDetail | null>(null);
-  const [activeTab, setActiveTab] = useState<"details" | "records" | "visuals">("details");
+  const [activeTab, setActiveTab] = useState<"details" | "records" | "visuals" | "contacts">("details");
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [viewingEvidence, setViewingEvidence] = useState<EvidenceRecord | null>(null);
   const [extractedDrawerRecord, setExtractedDrawerRecord] = useState<EvidenceRecord | null>(null);
@@ -335,6 +338,22 @@ export default function CaseDetailsPage() {
                   <span className="text-sm font-medium">Visuals</span>
                 </div>
                 {activeTab === "visuals" && <ChevronRight className="w-4 h-4 text-white/80" />}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("contacts")}
+                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-full text-xs font-semibold transition-all duration-150 ${
+                  activeTab === "contacts"
+                    ? "bg-[#121212] text-white shadow-sm"
+                    : "text-[#8A8A8A] hover:text-[#111111] hover:bg-[#F5F8FF]"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Users className={`w-4 h-4 ${activeTab === "contacts" ? "text-white" : "text-[#8A8A8A]"}`} />
+                  <span className="text-sm font-medium">Contacts</span>
+                </div>
+                {activeTab === "contacts" && <ChevronRight className="w-4 h-4 text-white/80" />}
               </button>
             </nav>
           </div>
@@ -1144,6 +1163,19 @@ export default function CaseDetailsPage() {
 
                 </div>
               </div>
+            )}
+
+            {/* Contacts Tab */}
+            {activeTab === "contacts" && (
+              <CaseContactsTab
+                caseId={caseData.id}
+                caseTitle={caseData.name}
+                assignedOfficer={caseData.filedBy}
+                onStatementLinked={() => {
+                  const fresh = getStoredCaseById(caseData.id);
+                  if (fresh) setCaseData({ ...fresh });
+                }}
+              />
             )}
 
           </div>

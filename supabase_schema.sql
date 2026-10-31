@@ -207,3 +207,91 @@ values (
 )
 on conflict (id) do nothing;
 
+
+
+-- ==============================================================================
+-- 11. TABLE: CONTACTS (Case-Based Contacts & Witness Coordination)
+-- ==============================================================================
+create table if not exists public.contacts (
+    id text primary key,
+    case_id text references public.cases(id) on delete cascade,
+    full_name text not null,
+    phone_number text not null,
+    contact_category text default 'Witness', -- 'Witness', 'Vehicle Owner', 'Informant', 'Other'
+    associated_vehicle text,
+    address text,
+    notes text,
+    contact_status text default 'Not Contacted', -- 'Not Contacted', 'Contact Attempted', 'Contacted', 'Callback Requested', 'Visit Scheduled', 'Identity Verified', 'Statement Collected', 'Unreachable'
+    preferred_contact_time text,
+    identity_verified boolean default false,
+    assigned_officer text default 'Inspector',
+    last_contact_date timestamptz,
+    next_follow_up timestamptz,
+    created_at timestamptz default timezone('utc'::text, now()) not null,
+    updated_at timestamptz default timezone('utc'::text, now()) not null
+);
+
+-- ==============================================================================
+-- 12. TABLE: CONTACT_HISTORY (Communication Audit Trail & Timelines)
+-- ==============================================================================
+create table if not exists public.contact_history (
+    id text primary key,
+    contact_id text references public.contacts(id) on delete cascade,
+    case_id text references public.cases(id) on delete cascade,
+    communication_type text default 'Manual Phone Call', -- 'Automated Twilio Call', 'Manual Phone Call', 'In-Person Visit', 'SMS'
+    outcome text not null,
+    notes text,
+    timestamp timestamptz default timezone('utc'::text, now()) not null,
+    next_follow_up timestamptz,
+    assigned_investigator text default 'Investigator'
+);
+
+-- ==============================================================================
+-- 13. TABLE: APPOINTMENTS (Official Witness & Investigator Scheduling)
+-- ==============================================================================
+create table if not exists public.appointments (
+    id text primary key,
+    contact_id text references public.contacts(id) on delete cascade,
+    case_id text references public.cases(id) on delete cascade,
+    scheduled_time timestamptz not null,
+    location_type text default 'Station Visit', -- 'Station Visit', 'Scene Inspection', 'Virtual Call'
+    status text default 'Scheduled', -- 'Scheduled', 'Completed', 'Cancelled'
+    notes text,
+    created_at timestamptz default timezone('utc'::text, now()) not null
+);
+
+-- Indexes for Contacts
+create index if not exists idx_contacts_case_id on public.contacts(case_id);
+create index if not exists idx_contacts_status on public.contacts(contact_status);
+create index if not exists idx_contact_history_contact_id on public.contact_history(contact_id);
+create index if not exists idx_contact_history_case_id on public.contact_history(case_id);
+create index if not exists idx_appointments_case_id on public.appointments(case_id);
+
+-- Enable RLS and Permissive Policies for Contacts
+alter table public.contacts enable row level security;
+alter table public.contact_history enable row level security;
+alter table public.appointments enable row level security;
+
+create policy "Allow all operations for contacts" on public.contacts for all using (true) with check (true);
+create policy "Allow all operations for contact_history" on public.contact_history for all using (true) with check (true);
+create policy "Allow all operations for appointments" on public.appointments for all using (true) with check (true);
+
+-- Seed Contacts Verification Data
+insert into public.contacts (
+    id, case_id, full_name, phone_number, contact_category, associated_vehicle, address, notes, contact_status, preferred_contact_time, identity_verified, assigned_officer
+)
+values (
+    'CNT-1042-01',
+    'CASE-2026-1042',
+    'Ramesh K. Patel',
+    '+91 63035 31123',
+    'Witness',
+    'Vehicle A (TS 09 UB 4412 Compact SUV)',
+    'Plot 42, Telecom Nagar, Gachibowli, Hyderabad, Telangana',
+    'Eyewitness positioned at pedestrian signal corner. Confirms traffic signal transitioned to green along main carriageway.',
+    'Contacted',
+    'Morning 10:30 AM - 12:00 PM',
+    true,
+    'Inspector R. K. Sharma'
+)
+on conflict (id) do nothing;
