@@ -65,7 +65,7 @@ export default function DashboardMetricsPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               
               {/* Card 1: Total Cases */}
-              <div className="bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] flex flex-col justify-between">
+              <div className="bg-white rounded-[24px] p-6 shadow-soft border border-slate-200/90 flex flex-col justify-between">
                 <div className="mb-4">
                   <span className="text-[13px] font-medium text-[#8A8A8A]">
                     Total Registered Cases
@@ -87,7 +87,7 @@ export default function DashboardMetricsPage() {
               </div>
 
               {/* Card 2: Active Investigations */}
-              <div className="bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] flex flex-col justify-between">
+              <div className="bg-white rounded-[24px] p-6 shadow-soft border border-slate-200/90 flex flex-col justify-between">
                 <div className="mb-4">
                   <span className="text-[13px] font-medium text-[#8A8A8A]">
                     Active Investigations
@@ -109,7 +109,7 @@ export default function DashboardMetricsPage() {
               </div>
 
               {/* Card 3: Evidence Files */}
-              <div className="bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] flex flex-col justify-between">
+              <div className="bg-white rounded-[24px] p-6 shadow-soft border border-slate-200/90 flex flex-col justify-between">
                 <div className="mb-4">
                   <span className="text-[13px] font-medium text-[#8A8A8A]">
                     Total Evidence Ingested
@@ -140,7 +140,7 @@ export default function DashboardMetricsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               
               {/* Capsule Chart Card (Span 7) */}
-              <div className="lg:col-span-7 bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] flex flex-col justify-between">
+              <div className="lg:col-span-7 bg-white rounded-[24px] p-6 shadow-soft border border-slate-200/90 flex flex-col justify-between">
                 <div className="mb-4">
                   <span className="text-[13px] font-medium text-[#8A8A8A]">
                     Intake Volume Over Time
@@ -195,7 +195,7 @@ export default function DashboardMetricsPage() {
               <div className="lg:col-span-5 space-y-6">
                 
                 {/* How Our System Works Card */}
-                <div className="bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] space-y-3">
+                <div className="bg-white rounded-[24px] p-6 shadow-soft border border-slate-200/90 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-[13px] font-medium text-[#8A8A8A]">
                       Platform Architecture
@@ -237,7 +237,7 @@ export default function DashboardMetricsPage() {
                 </div>
 
                 {/* Real Activity Feed Card */}
-                <div className="bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] space-y-3">
+                <div className="bg-white rounded-[24px] p-6 shadow-soft border border-slate-200/90 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-[13px] font-medium text-[#8A8A8A]">
                       Audit Trail
@@ -275,7 +275,7 @@ export default function DashboardMetricsPage() {
             </div>
 
             {/* Bottom Navigation CTA Card (24px radius, black button) */}
-            <div className="bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] flex items-center justify-between">
+            <div className="bg-white rounded-[24px] p-6 shadow-soft border border-slate-200/90 flex items-center justify-between">
               <div>
                 <h3 className="text-base font-bold text-[#111111]">Incident Dossiers</h3>
                 <p className="text-xs text-[#8A8A8A] mt-0.5">Explore active accident records or register a new intake.</p>

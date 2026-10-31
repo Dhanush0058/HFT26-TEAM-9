@@ -57,7 +57,7 @@ export default function CasesPage() {
         <div className="space-y-6">
             
             {/* New Case Card (24px radius, Black pill button, clean minimalist style) */}
-            <div className="bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="bg-white rounded-[24px] p-6 shadow-soft border border-slate-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <span className="text-[13px] font-medium text-[#8A8A8A]">
                   New Investigation Intake
@@ -85,7 +85,7 @@ export default function CasesPage() {
                 <Link
                   key={caseItem.id}
                   href={`/cases/${caseItem.id}`}
-                  className="group block bg-white rounded-[24px] p-6 shadow-soft border border-[#F0F0F0] hover:border-[#111111] transition-all duration-200 card-hover-shadow"
+                  className="group block bg-white rounded-[24px] p-6 shadow-soft border border-slate-200/90 hover:border-[#111111] transition-all duration-200 card-hover-shadow"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
@@ -155,7 +155,7 @@ export default function CasesPage() {
               ))}
 
               {filteredCases.length === 0 && (
-                <div className="bg-white rounded-[24px] p-12 text-center border border-[#F0F0F0] shadow-soft space-y-2">
+                <div className="bg-white rounded-[24px] p-12 text-center border border-slate-200/90 shadow-soft space-y-2">
                   <FileText className="w-10 h-10 text-[#8A8A8A] mx-auto opacity-40" />
                   <h4 className="text-sm font-bold text-[#111111]">No Cases Found</h4>
                   <p className="text-xs text-[#8A8A8A]">Try adjusting your search query or register a new case.</p>
