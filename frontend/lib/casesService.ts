@@ -1282,6 +1282,37 @@ export function analyzeCaseEvidence(caseId: string): CaseDetail {
   return caseItem;
 }
 
+
+/**
+ * Automatically extracts GPS coordinates (latitude, longitude) from incident text,
+ * police panchnama reports, evidence summaries, or raw telemetry.
+ */
+export function extractGpsCoordinatesFromText(text: string): { latitude: number; longitude: number } | null {
+  if (!text) return null;
+
+  // Pattern 1: Explicit labels e.g. "GPS Coordinates: 17.440598, 78.360779" or "Coordinates: 17.4401° N, 78.3489° E"
+  const labelMatch = text.match(/(?:gps|coords?|coordinates|location|lat[\s\/\-_]*lon)[:\s]+([0-8]?\d\.\d{3,8})\s*(?:°?\s*[NS])?\s*[,;\s]+\s*([0-1]?\d{1,2}\.\d{3,8})\s*(?:°?\s*[EW])?/i);
+  if (labelMatch) {
+    const lat = parseFloat(labelMatch[1]);
+    const lon = parseFloat(labelMatch[2]);
+    if (!isNaN(lat) && !isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
+      return { latitude: lat, longitude: lon };
+    }
+  }
+
+  // Pattern 2: Decimal degrees e.g. "17.440598, 78.360779"
+  const decMatch = text.match(/([0-8]?\d\.\d{4,8})\s*(?:°?\s*[NS])?\s*[,;\s]+\s*([0-1]?\d{1,2}\.\d{4,8})\s*(?:°?\s*[EW])?/i);
+  if (decMatch) {
+    const lat = parseFloat(decMatch[1]);
+    const lon = parseFloat(decMatch[2]);
+    if (!isNaN(lat) && !isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
+      return { latitude: lat, longitude: lon };
+    }
+  }
+
+  return null;
+}
+
 export function addEvidenceToCase(
   caseId: string, 
   file: { name: string; size: string; type: string; accidentTime?: string; fileUrl?: string }
@@ -1338,6 +1369,15 @@ export function addEvidenceToCase(
       transcript: forensicData.transcript
     }
   };
+
+  // Dynamically detect GPS coordinates from ingested evidence and sync to case
+  const detectedGps = extractGpsCoordinatesFromText(
+    `${file.name} ${newEv.extractedData?.summary || ""} ${JSON.stringify(newEv.extractedData?.fields || {})}`
+  );
+  if (detectedGps) {
+    caseItem.latitude = detectedGps.latitude;
+    caseItem.longitude = detectedGps.longitude;
+  }
 
   caseItem.evidenceList.push(newEv);
 
