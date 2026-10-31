@@ -221,20 +221,14 @@ export default function ThreeForensicCanvas({
         ctx.fillStyle = "#dce7f3";
         ctx.fillRect(0, 0, size, size);
 
-        // Soft, low-contrast blueprint grid boxes
-        ctx.strokeStyle = "rgba(100, 116, 139, 0.18)";
-        ctx.lineWidth = 1.0;
-        const cellSize = 32;
-        for (let x = 0; x <= size; x += cellSize) {
+        // Subtle diagonal gradient blue lines matching application theme
+        ctx.strokeStyle = "rgba(59, 130, 246, 0.13)";
+        ctx.lineWidth = 1.5;
+        const step = 20;
+        for (let i = -size; i <= size * 2; i += step) {
           ctx.beginPath();
-          ctx.moveTo(x, 0);
-          ctx.lineTo(x, size);
-          ctx.stroke();
-        }
-        for (let y = 0; y <= size; y += cellSize) {
-          ctx.beginPath();
-          ctx.moveTo(0, y);
-          ctx.lineTo(size, y);
+          ctx.moveTo(i, 0);
+          ctx.lineTo(i + size, size);
           ctx.stroke();
         }
       }
@@ -1490,10 +1484,15 @@ export default function ThreeForensicCanvas({
         onDrop={handleDrop}
         style={{
           backgroundImage: `
-            linear-gradient(to right, rgba(100, 116, 139, 0.14) 1px, transparent 30px),
-            linear-gradient(to bottom, rgba(100, 116, 139, 0.14) 1px, transparent 30px)
+            radial-gradient(ellipse at 50% 0%, rgba(59, 130, 246, 0.16), transparent 70%),
+            repeating-linear-gradient(
+              -45deg,
+              rgba(59, 130, 246, 0.12) 0px,
+              rgba(59, 130, 246, 0.12) 1.5px,
+              transparent 1.5px,
+              transparent 18px
+            )
           `,
-          backgroundSize: '32px 32px',
           backgroundColor: '#dce7f3'
         }}
         className={`relative w-full h-[520px] rounded-xl overflow-hidden border shadow-xl flex flex-col justify-between transition-colors ${isDragOver ? "border-blue-500 bg-sky-100" : "border-slate-200"
