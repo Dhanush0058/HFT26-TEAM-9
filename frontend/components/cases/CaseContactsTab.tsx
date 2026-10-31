@@ -18,7 +18,6 @@ import {
   X,
   History,
   ShieldCheck,
-  Sparkles,
   Info,
   Trash2
 } from "lucide-react";
@@ -1172,7 +1171,7 @@ export default function CaseContactsTab({
                                 </div>
                                 <div className="p-2.5 rounded-[10px] bg-white border-l-3 border-l-[#0A66FF] border border-[#E2E8F0]">
                                   <p className="text-xs text-[#1E293B] font-medium italic leading-relaxed">
-                                    "{spokenScript}"
+                                    &ldquo;{spokenScript}&rdquo;
                                   </p>
                                 </div>
                                 <div className="flex items-center justify-between text-[10px] text-[#64748B]">

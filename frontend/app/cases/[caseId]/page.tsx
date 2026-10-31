@@ -30,7 +30,6 @@ import {
   HelpCircle,
   Info
 } from "lucide-react";
-import dynamic from "next/dynamic";
 import TopHeader from "@/components/TopHeader";
 import type { ScenarioType } from "@/components/3d/ThreeForensicCanvas";
 import CaseContactsTab from "@/components/cases/CaseContactsTab";
