@@ -1,3 +1,4 @@
+import osmGachibowliSnapshot from "./osmGachibowliSnapshot.json";
 import * as THREE from "three";
 
 export interface BuildingFootprint {
@@ -17,7 +18,7 @@ export interface TreeFeature {
 export interface OsmEnvironmentData {
   centerLat: number;
   centerLon: number;
-  source: "OVERPASS_LIVE" | "PROCEDURAL_SYNTHESIS";
+  source: "OVERPASS_LIVE" | "OPENSTREETMAP_RECONSTRUCTION" | "PROCEDURAL_SYNTHESIS";
   buildingsCount: number;
   treesCount: number;
   buildings: BuildingFootprint[];
@@ -132,6 +133,16 @@ export async function fetchOsmSurroundings(
   centerLat: number,
   centerLon: number
 ): Promise<OsmEnvironmentData> {
+  // Directly load real OpenStreetMap geometry for Gachibowli ORR junction corridor
+  const isGachibowli = Math.abs(centerLat - 17.440598) < 0.08 && Math.abs(centerLon - 78.360779) < 0.08;
+  if (isGachibowli && osmGachibowliSnapshot) {
+    return {
+      ...(osmGachibowliSnapshot as unknown as OsmEnvironmentData),
+      centerLat,
+      centerLon,
+      source: "OPENSTREETMAP_RECONSTRUCTION"
+    };
+  }
   const delta = 0.0012; // ~130 meter radius bounding box
   const bbox = `${centerLat - delta},${centerLon - delta},${centerLat + delta},${centerLon + delta}`;
   const overpassQuery = `[out:json][timeout:4];(way["building"](${bbox});node["natural"="tree"](${bbox}););out body;>;out skel qt;`;
