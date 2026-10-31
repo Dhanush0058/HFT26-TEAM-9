@@ -7,10 +7,7 @@ import {
   Play, 
   Pause, 
   RotateCcw, 
-  Video, 
-  Camera, 
-  Layers, 
-  Sliders
+  Video
 } from "lucide-react";
 
 export type ScenarioType = "CAR_VS_LORRY" | "CAR_VS_BIKE" | "HIGHWAY_REAR_END" | "HEAD_ON" | "INTERSECTION_TBONE";
@@ -24,6 +21,7 @@ interface ThreeForensicCanvasProps {
   onTogglePlay: () => void;
   caseTitle?: string;
   caseDescription?: string;
+  caseSummary?: string;
   evidenceVideoUrl?: string;
   evidenceList?: Array<{ name: string; dataType?: string; extractedData?: { summary?: string; [key: string]: unknown } }>;
   defaultScenario?: ScenarioType;
@@ -37,6 +35,7 @@ export default function ThreeForensicCanvas({
   onTogglePlay,
   caseTitle = "Intersection Collision Reconstruction",
   caseDescription = "",
+  caseSummary = "",
   evidenceVideoUrl,
   evidenceList = [],
   defaultScenario,
@@ -46,60 +45,58 @@ export default function ThreeForensicCanvas({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-detect scenario based on case title, description, and uploaded evidence files
-  const autoDetectScenario = (srcUrlOrName?: string): ScenarioType => {
-    if (defaultScenario) return defaultScenario;
-    const combined = `${caseTitle} ${caseDescription} ${srcUrlOrName || ""} ${evidenceList.map(e => `${e.name} ${e.extractedData?.summary || ""}`).join(" ")}`.toLowerCase();
+  // Auto-detect scenario and junction based on case summary, keywords, reports, and evidence data
+  const autoDetectScenarioAndJunction = (srcUrlOrName?: string): { scenario: ScenarioType; junction: JunctionType } => {
+    if (defaultScenario) {
+      const j: JunctionType = defaultScenario === "CAR_VS_LORRY" ? "T_JUNCTION" : defaultScenario === "HIGHWAY_REAR_END" ? "EXPRESSWAY" : "FOUR_WAY";
+      return { scenario: defaultScenario, junction: j };
+    }
+    const combined = `${caseTitle} ${caseDescription} ${caseSummary} ${srcUrlOrName || ""} ${evidenceList.map(e => `${e.name} ${e.extractedData?.summary || ""}`).join(" ")}`.toLowerCase();
 
-    if (/lorry|truck|semi|trailer|hauler|container|heavy/i.test(combined)) {
-      return "CAR_VS_LORRY";
+    if (/lorry|truck|semi|trailer|hauler|container|heavy|commercial|tanker/i.test(combined)) {
+      return { scenario: "CAR_VS_LORRY", junction: "T_JUNCTION" };
     }
-    if (/rear[\s_-]?end|highway|interstate|trailing|102/i.test(combined)) {
-      return "HIGHWAY_REAR_END";
+    if (/rear[\s_-]?end|highway|expressway|freeway|trailing|tailgating|flyover|102/i.test(combined)) {
+      return { scenario: "HIGHWAY_REAR_END", junction: "EXPRESSWAY" };
     }
-    if (/head[\s_-]?on|opposite|oncoming|crossover/i.test(combined)) {
-      return "HEAD_ON";
+    if (/head[\s_-]?on|opposite|oncoming|crossover|headon/i.test(combined)) {
+      return { scenario: "HEAD_ON", junction: "FOUR_WAY" };
     }
-    if (/bike|motorcycle|moto|two[\s_-]?wheel|scooter|rider/i.test(combined)) {
-      return "CAR_VS_BIKE";
+    if (/t[\s_-]?bone|tbone|broadside|side[\s_-]?impact|perpendicular|lateral/i.test(combined)) {
+      return { scenario: "INTERSECTION_TBONE", junction: "FOUR_WAY" };
     }
-    return "CAR_VS_BIKE";
+    if (/bike|motorcycle|moto|two[\s_-]?wheel|scooter|rider|rickshaw|auto/i.test(combined)) {
+      return { scenario: "CAR_VS_BIKE", junction: "FOUR_WAY" };
+    }
+    return { scenario: "CAR_VS_BIKE", junction: "FOUR_WAY" };
   };
 
-  const [activeScenario, setActiveScenario] = useState<ScenarioType>(() => autoDetectScenario(evidenceVideoUrl));
-  const [activeJunction, setActiveJunction] = useState<JunctionType>(() => {
-    const scen = autoDetectScenario(evidenceVideoUrl);
-    if (scen === "CAR_VS_LORRY") return "T_JUNCTION";
-    if (scen === "HIGHWAY_REAR_END") return "EXPRESSWAY";
-    return "FOUR_WAY";
-  });
-  const [cameraPerspective, setCameraPerspective] = useState<CameraPerspective>("ORBIT");
+  const initialDetection = autoDetectScenarioAndJunction(evidenceVideoUrl);
+  const [activeScenario, setActiveScenario] = useState<ScenarioType>(initialDetection.scenario);
+  const [activeJunction, setActiveJunction] = useState<JunctionType>(initialDetection.junction);
+  const [cameraPerspective] = useState<CameraPerspective>("ORBIT");
   const [isExporting, setIsExporting] = useState(false);
   const [exportNotice, setExportNotice] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
-  // Sync scenario when prop updates
+  // Automatically select scenario & junction from case keywords, summary & evidence
   useEffect(() => {
-    if (evidenceVideoUrl) {
-      const detected = autoDetectScenario(evidenceVideoUrl);
-      setActiveScenario(detected);
-      if (detected === "CAR_VS_LORRY") setActiveJunction("T_JUNCTION");
-      else if (detected === "HIGHWAY_REAR_END") setActiveJunction("EXPRESSWAY");
-    }
-  }, [evidenceVideoUrl]);
+    const detected = autoDetectScenarioAndJunction(evidenceVideoUrl);
+    setActiveScenario(detected.scenario);
+    setActiveJunction(detected.junction);
+  }, [caseTitle, caseDescription, caseSummary, evidenceVideoUrl, defaultScenario, evidenceList]);
 
   // Handle video file upload for automatic scenario detection
   const processUploadedVideo = (file: File) => {
-    const detected = autoDetectScenario(file.name);
-    setActiveScenario(detected);
-    if (detected === "CAR_VS_LORRY") setActiveJunction("T_JUNCTION");
-    else if (detected === "HIGHWAY_REAR_END") setActiveJunction("EXPRESSWAY");
+    const detected = autoDetectScenarioAndJunction(file.name);
+    setActiveScenario(detected.scenario);
+    setActiveJunction(detected.junction);
 
     if (onVideoUploaded) {
       onVideoUploaded(file);
     }
 
-    setExportNotice(`Analyzed ${file.name}: Synced 3D digital twin to ${detected.replace(/_/g, " ")}.`);
+    setExportNotice(`Analyzed ${file.name}: Synced 3D digital twin to ${detected.scenario.replace(/_/g, " ")}.`);
     setTimeout(() => setExportNotice(null), 4000);
   };
 
@@ -1082,102 +1079,6 @@ export default function ThreeForensicCanvas({
           ref={canvasRef} 
           className="w-full h-full block cursor-grab active:cursor-grabbing" 
         />
-
-        {/* TOP OVERLAY: Telemetry Badge + Junction Selector + Perspective Controls */}
-        <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none z-30 flex-wrap gap-2">
-          
-          {/* Top-Left: Sleek Rekishi Telemetry Badge */}
-          <div className="bg-slate-950/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-800 flex items-center gap-3 shadow-lg pointer-events-auto">
-            <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-white tracking-wide">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              REKISHI 3D DIGITAL TWIN {caseTitle && <span className="text-slate-400 font-normal">| {caseTitle}</span>}
-            </div>
-            <div className="h-3.5 w-px bg-slate-700"></div>
-            <div className="text-[11px] font-mono text-slate-300 flex items-center gap-2">
-              <span>VEHICLE A: <strong className="text-rose-400">{scrubberTime < 2.0 ? "48 km/h" : scrubberTime < 2.7 ? "18 km/h" : "0 km/h"}</strong></span>
-              <span className="text-slate-600">|</span>
-              <span>
-                {activeScenario === "CAR_VS_LORRY" ? (
-                  <>VEHICLE B (Lorry): <strong className="text-amber-400">{scrubberTime < 2.7 ? "32 km/h" : "0 km/h"}</strong></>
-                ) : activeScenario === "CAR_VS_BIKE" ? (
-                  <>VEHICLE B (Bike): <strong className="text-blue-400">{scrubberTime < 2.8 ? "36 km/h" : "0 km/h"}</strong></>
-                ) : (
-                  <>VEHICLE B: <strong className="text-blue-400">{scrubberTime < 2.6 ? "35 km/h" : "0 km/h"}</strong></>
-                )}
-              </span>
-              <span className="text-slate-600">|</span>
-              <span>SIGNAL: <strong className={scrubberTime < 1.4 ? "text-emerald-400" : scrubberTime < 2.1 ? "text-amber-400" : "text-rose-400"}>
-                {scrubberTime < 1.4 ? "GREEN" : scrubberTime < 2.1 ? "AMBER" : "RED"}
-              </strong></span>
-            </div>
-          </div>
-
-          {/* Top-Right: Scenario, Junction, & Camera Perspective Controls */}
-          <div className="flex items-center gap-2 pointer-events-auto flex-wrap">
-            
-            {/* Scenario Selector */}
-            <div className="bg-slate-950/90 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-800 flex items-center gap-1.5 text-xs font-medium text-slate-300 shadow-lg">
-              <span className="text-[11px] font-mono text-slate-400 flex items-center gap-1">
-                <Layers className="w-3 h-3 text-blue-400" /> Scenario:
-              </span>
-              <select
-                value={activeScenario}
-                onChange={(e) => setActiveScenario(e.target.value as ScenarioType)}
-                className="bg-slate-800 text-white rounded px-2 py-0.5 text-xs font-semibold border border-slate-700 outline-none cursor-pointer hover:bg-slate-700 transition"
-              >
-                <option value="CAR_VS_LORRY">🚛 Car vs Heavy Lorry / Truck Crash</option>
-                <option value="CAR_VS_BIKE">🏍️ Car vs Motorcycle Angle</option>
-                <option value="HIGHWAY_REAR_END">🛣️ Highway Rear-End Impact</option>
-                <option value="HEAD_ON">⚡ Head-On Collision</option>
-                <option value="INTERSECTION_TBONE">🚗 Car vs SUV 90° T-Bone</option>
-              </select>
-            </div>
-
-            {/* Junction Type Selector */}
-            <div className="bg-slate-950/90 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-800 flex items-center gap-1.5 text-xs font-medium text-slate-300 shadow-lg">
-              <span className="text-[11px] font-mono text-slate-400 flex items-center gap-1">
-                <Sliders className="w-3 h-3 text-emerald-400" /> Junction:
-              </span>
-              <select
-                value={activeJunction}
-                onChange={(e) => setActiveJunction(e.target.value as JunctionType)}
-                className="bg-slate-800 text-white rounded px-2 py-0.5 text-xs font-semibold border border-slate-700 outline-none cursor-pointer hover:bg-slate-700 transition"
-              >
-                <option value="T_JUNCTION">🛣️ T-Junction (Side-Road Crossing)</option>
-                <option value="FOUR_WAY">🚦 4-Way Signalized Crossroad</option>
-                <option value="EXPRESSWAY">🏭 Logistics Expressway Corridor</option>
-              </select>
-            </div>
-
-            {/* Camera Perspective Selector */}
-            <div className="bg-slate-950/90 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-800 flex items-center gap-1.5 text-xs font-medium text-slate-300 shadow-lg">
-              <span className="text-[11px] font-mono text-slate-400 flex items-center gap-1">
-                <Camera className="w-3 h-3 text-purple-400" /> View:
-              </span>
-              <select
-                value={cameraPerspective}
-                onChange={(e) => {
-                  const val = e.target.value as CameraPerspective;
-                  setCameraPerspective(val);
-                  if (val === "ORBIT" && cameraRef.current && controlsRef.current) {
-                    cameraRef.current.position.set(16, 14, 20);
-                    cameraRef.current.lookAt(0, 0.5, 0);
-                    controlsRef.current.target.set(0, 0.5, 0);
-                  }
-                }}
-                className="bg-slate-800 text-white rounded px-2 py-0.5 text-xs font-semibold border border-slate-700 outline-none cursor-pointer hover:bg-slate-700 transition"
-              >
-                <option value="ORBIT">🔄 3D Free Orbit (360° Drag)</option>
-                <option value="CAR_POV">🚗 Car Driver Windshield POV</option>
-                <option value="LORRY_POV">🚛 Lorry Truck Cab POV (High View)</option>
-                <option value="CCTV_CAM">📹 Traffic CCTV Corner Cam</option>
-                <option value="OVERHEAD_MAP">🧭 Overhead 2D Plan View</option>
-                <option value="IMPACT_FOCUS">💥 Crash Impact Focus (Close-up)</option>
-              </select>
-            </div>
-
-          </div>
-        </div>
 
         {/* BOTTOM CONTROLS: Clean Timeline Scrubber, Playback, and High-Resolution Video Export */}
         <div className="absolute bottom-3 left-3 right-3 bg-slate-950/90 backdrop-blur-md p-3 rounded-lg border border-slate-800 flex items-center gap-4 shadow-xl z-30">

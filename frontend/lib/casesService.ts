@@ -1174,7 +1174,7 @@ export function createNewCase(data: {
     return {
       id: `EV-${data.caseNumber}-${idx + 1}`,
       name: src.name,
-      uploadDate: nowStr,
+      uploadDate: data.filedDate || new Date().toLocaleString(),
       size: src.size || "1.5 MB",
       dataType: dataType,
       fileUrl: src.fileUrl,
@@ -1287,7 +1287,6 @@ export function analyzeCaseEvidence(caseId: string): CaseDetail {
   const cases = getStoredCases();
   const caseItem = cases.find((c) => c.id.toLowerCase() === caseId.toLowerCase() || c.caseNumber.toLowerCase() === caseId.toLowerCase());
   if (!caseItem) throw new Error("Case not found");
-
   const summary = autoGenerateSummary(caseItem);
   caseItem.summary = summary;
   caseItem.lastAnalyzedAt = new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) + " UTC";
