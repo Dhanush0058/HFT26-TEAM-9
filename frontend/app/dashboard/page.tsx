@@ -5,17 +5,10 @@ import Link from "next/link";
 import { 
   ArrowUpRight, 
   Search,
-  CheckCircle2,
-  AlertTriangle,
-  Clock,
   Activity,
-  FileText,
-  Video,
-  Radio,
   RefreshCw,
   X,
-  Play,
-  ShieldCheck
+  Play
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import TopHeader from "@/components/TopHeader";

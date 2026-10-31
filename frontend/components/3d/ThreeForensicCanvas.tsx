@@ -105,7 +105,7 @@ export default function ThreeForensicCanvas({
   const [exportNotice, setExportNotice] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [osmData, setOsmData] = useState<OsmEnvironmentData | null>(null);
-  const [osmLoading, setOsmLoading] = useState(false);
+  const [, setOsmLoading] = useState(false);
   const [telemetryState, setTelemetryState] = useState({ speedA: 48, speedB: 36, isBrakingA: false });
   const osmGroupRef = useRef<THREE.Group | null>(null);
   const splineTracksRef = useRef(buildScenarioSplineTracks(activeScenario));

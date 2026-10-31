@@ -5,7 +5,6 @@ import {
   BarChart3, 
   FileText, 
   Settings,
-  Shield,
   ChevronRight
 } from "lucide-react";
 
