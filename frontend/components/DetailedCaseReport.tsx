@@ -6,14 +6,9 @@ import {
   Printer, 
   ShieldCheck, 
   BookOpen, 
-  AlertTriangle, 
-  CheckCircle2, 
-  Clock, 
-  Car, 
-  UserCheck,
-  Compass,
-  ChevronDown,
-  ChevronUp
+  Eye, 
+  X,
+  FileText
 } from "lucide-react";
 import { CaseDetail } from "@/lib/casesService";
 import { generateDetailedForensicReport, downloadPdfReport } from "@/lib/reportGenerator";
@@ -23,15 +18,8 @@ interface DetailedCaseReportProps {
 }
 
 export default function DetailedCaseReport({ caseData }: DetailedCaseReportProps) {
-  const [activeChapter, setActiveChapter] = useState<"all" | "narrative" | "investigation" | "conflicts" | "findings">("all");
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [expandedPhases, setExpandedPhases] = useState<Record<string, boolean>>({
-    "Phase A": true,
-    "Phase B": true,
-    "Phase C": true,
-    "Phase D": true,
-    "Phase E": true
-  });
 
   const report = useMemo(() => generateDetailedForensicReport(caseData), [caseData]);
 
@@ -46,467 +34,386 @@ export default function DetailedCaseReport({ caseData }: DetailedCaseReportProps
     }
   };
 
-  const togglePhase = (phaseKey: string) => {
-    setExpandedPhases(prev => ({ ...prev, [phaseKey]: !prev[phaseKey] }));
-  };
-
   return (
-    <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-soft border border-[#F0F0F0] space-y-8">
-      
-      {/* ── TOP HEADER & ACTIONS ── */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-[#F0F0F0]">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="text-[13px] font-medium text-[#8A8A8A]">
-              Official Investigation Dossier
-            </span>
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#DCF5E3] text-[#1A7A2E] border border-[#C3ECCB] flex items-center gap-1">
-              <ShieldCheck className="w-3 h-3" /> Certified Dossier
-            </span>
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EBF3FF] text-[#0A66FF] border border-[#D0E2FF]">
-              Ref: {report.caseMetadata.caseNumber}
-            </span>
-          </div>
-          <h3 className="text-xl sm:text-2xl font-extrabold text-[#111111] flex items-center gap-2.5">
-            <BookOpen className="w-6 h-6 text-[#0A66FF]" />
-            Comprehensive Forensic Investigation Report
-          </h3>
-          <p className="text-xs text-[#8A8A8A] max-w-2xl leading-relaxed">
-            Detailed case dossier containing the full investigative progression, cross-evidence conflict reconciliations, and the step-by-step narrative of what actually occurred.
-          </p>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2.5 self-start lg:self-auto flex-wrap">
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="h-10 px-4 rounded-full text-xs font-semibold text-[#111111] bg-[#F5F5F3] hover:bg-[#EAEAEA] border border-[#E0E0DE] transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
-            title="Print or Save via Browser"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Print Report</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleDownload}
-            disabled={isDownloading}
-            className="h-10 px-5 rounded-full text-xs font-bold text-white bg-[#121212] hover:bg-black transition flex items-center gap-2 cursor-pointer shadow-sm disabled:opacity-75"
-            title="Download formatted PDF report"
-          >
-            {isDownloading ? (
-              <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              <Download className="w-3.5 h-3.5" />
-            )}
-            <span>{isDownloading ? "Generating PDF..." : "Download PDF Report"}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* ── CHAPTER SELECTOR PILLS ── */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-        {[
-          { key: "all", label: "Full Report Dossier" },
-          { key: "narrative", label: "The Incident Story" },
-          { key: "investigation", label: "Investigative Progression" },
-          { key: "conflicts", label: "Conflict Reconciliation" },
-          { key: "findings", label: "Findings & Liability" }
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => setActiveChapter(tab.key as typeof activeChapter)}
-            className={`px-4 py-2 rounded-full font-bold whitespace-nowrap transition cursor-pointer ${
-              activeChapter === tab.key
-                ? "bg-[#121212] text-white shadow-2xs"
-                : "bg-[#F5F5F3] text-[#666666] hover:bg-[#EBEBEB] hover:text-[#111111]"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* ── SECTION I: THE INCIDENT STORY NARRATIVE ("WHAT ACTUALLY HAPPENED") ── */}
-      {(activeChapter === "all" || activeChapter === "narrative") && (
-        <div className="space-y-4 pt-2">
-          <div className="flex items-center justify-between border-b border-[#F0F0F0] pb-3">
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#0A66FF]">
-                Chapter 01 &bull; Empirical Reconstruction
-              </span>
-              <h4 className="text-lg font-extrabold text-[#111111] mt-0.5 flex items-center gap-2">
-                <Car className="w-4 h-4 text-[#0A66FF]" />
-                The Incident Narrative: What Actually Happened
-              </h4>
-            </div>
-            <span className="text-[11px] text-[#8A8A8A]">
-              Physical Dynamics &amp; Optical Timecodes
-            </span>
-          </div>
-
-          <div className="space-y-3">
-            {/* Phase A */}
-            <div className="p-5 rounded-[20px] bg-[#F5F8FF] border border-[#E0EBFB] space-y-2">
-              <div 
-                className="flex items-center justify-between cursor-pointer select-none"
-                onClick={() => togglePhase("Phase A")}
-              >
-                <div className="flex items-center gap-2.5">
-                  <span className="w-6 h-6 rounded-full bg-[#0A66FF] text-white font-mono text-xs font-bold flex items-center justify-center">
-                    A
-                  </span>
-                  <span className="text-sm font-extrabold text-[#111111]">
-                    Pre-Collision Approach &amp; Roadway Environment
-                  </span>
-                </div>
-                {expandedPhases["Phase A"] ? <ChevronUp className="w-4 h-4 text-[#8A8A8A]" /> : <ChevronDown className="w-4 h-4 text-[#8A8A8A]" />}
-              </div>
-              {expandedPhases["Phase A"] && (
-                <p className="text-xs sm:text-[13px] text-[#333333] leading-relaxed pt-1 pl-8">
-                  {report.incidentStoryNarrative.preCollisionApproach}
-                </p>
-              )}
-            </div>
-
-            {/* Phase B */}
-            <div className="p-5 rounded-[20px] bg-[#F5F8FF] border border-[#E0EBFB] space-y-2">
-              <div 
-                className="flex items-center justify-between cursor-pointer select-none"
-                onClick={() => togglePhase("Phase B")}
-              >
-                <div className="flex items-center gap-2.5">
-                  <span className="w-6 h-6 rounded-full bg-[#0A66FF] text-white font-mono text-xs font-bold flex items-center justify-center">
-                    B
-                  </span>
-                  <span className="text-sm font-extrabold text-[#111111]">
-                    Perception-Reaction Window &amp; Emergency Braking
-                  </span>
-                </div>
-                {expandedPhases["Phase B"] ? <ChevronUp className="w-4 h-4 text-[#8A8A8A]" /> : <ChevronDown className="w-4 h-4 text-[#8A8A8A]" />}
-              </div>
-              {expandedPhases["Phase B"] && (
-                <p className="text-xs sm:text-[13px] text-[#333333] leading-relaxed pt-1 pl-8">
-                  {report.incidentStoryNarrative.reactionAndCriticalWindow}
-                </p>
-              )}
-            </div>
-
-            {/* Phase C */}
-            <div className="p-5 rounded-[20px] bg-[#FFF8F7] border border-[#FFE7E5] space-y-2">
-              <div 
-                className="flex items-center justify-between cursor-pointer select-none"
-                onClick={() => togglePhase("Phase C")}
-              >
-                <div className="flex items-center gap-2.5">
-                  <span className="w-6 h-6 rounded-full bg-[#E11D48] text-white font-mono text-xs font-bold flex items-center justify-center">
-                    C
-                  </span>
-                  <span className="text-sm font-extrabold text-[#111111]">
-                    Point of Impact Dynamics &amp; Structural Kinematics
-                  </span>
-                </div>
-                {expandedPhases["Phase C"] ? <ChevronUp className="w-4 h-4 text-[#8A8A8A]" /> : <ChevronDown className="w-4 h-4 text-[#8A8A8A]" />}
-              </div>
-              {expandedPhases["Phase C"] && (
-                <p className="text-xs sm:text-[13px] text-[#333333] leading-relaxed pt-1 pl-8">
-                  {report.incidentStoryNarrative.pointOfImpactDynamics}
-                </p>
-              )}
-            </div>
-
-            {/* Phase D */}
-            <div className="p-5 rounded-[20px] bg-[#F5F8FF] border border-[#E0EBFB] space-y-2">
-              <div 
-                className="flex items-center justify-between cursor-pointer select-none"
-                onClick={() => togglePhase("Phase D")}
-              >
-                <div className="flex items-center gap-2.5">
-                  <span className="w-6 h-6 rounded-full bg-[#0A66FF] text-white font-mono text-xs font-bold flex items-center justify-center">
-                    D
-                  </span>
-                  <span className="text-sm font-extrabold text-[#111111]">
-                    Post-Impact Rest Position &amp; Emergency Deployment
-                  </span>
-                </div>
-                {expandedPhases["Phase D"] ? <ChevronUp className="w-4 h-4 text-[#8A8A8A]" /> : <ChevronDown className="w-4 h-4 text-[#8A8A8A]" />}
-              </div>
-              {expandedPhases["Phase D"] && (
-                <p className="text-xs sm:text-[13px] text-[#333333] leading-relaxed pt-1 pl-8">
-                  {report.incidentStoryNarrative.postImpactRestAndEmergency}
-                </p>
-              )}
-            </div>
-
-            {/* Phase E */}
-            <div className="p-5 rounded-[20px] bg-[#F0FDF4] border border-[#DCFCE7] space-y-2">
-              <div 
-                className="flex items-center justify-between cursor-pointer select-none"
-                onClick={() => togglePhase("Phase E")}
-              >
-                <div className="flex items-center gap-2.5">
-                  <span className="w-6 h-6 rounded-full bg-[#1A7A2E] text-white font-mono text-xs font-bold flex items-center justify-center">
-                    E
-                  </span>
-                  <span className="text-sm font-extrabold text-[#111111]">
-                    Investigative Synthesis &amp; Objective Ground Truth
-                  </span>
-                </div>
-                {expandedPhases["Phase E"] ? <ChevronUp className="w-4 h-4 text-[#8A8A8A]" /> : <ChevronDown className="w-4 h-4 text-[#8A8A8A]" />}
-              </div>
-              {expandedPhases["Phase E"] && (
-                <p className="text-xs sm:text-[13px] text-[#1E3A1E] leading-relaxed pt-1 pl-8">
-                  {report.incidentStoryNarrative.investigativeSynthesis}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── SECTION II: INVESTIGATIVE PROGRESSION & INGESTION LOG ── */}
-      {(activeChapter === "all" || activeChapter === "investigation") && (
-        <div className="space-y-4 pt-2">
-          <div className="flex items-center justify-between border-b border-[#F0F0F0] pb-3">
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#0A66FF]">
-                Chapter 02 &bull; Investigative Methodology
-              </span>
-              <h4 className="text-lg font-extrabold text-[#111111] mt-0.5 flex items-center gap-2">
-                <Compass className="w-4 h-4 text-[#0A66FF]" />
-                How the Investigation Progressed
-              </h4>
-            </div>
-            <span className="text-[11px] text-[#8A8A8A]">
-              Sequential Evidence Acquisition
-            </span>
-          </div>
-
-          <p className="text-xs text-[#555555] leading-relaxed">
-            {report.investigationProgression.overview}
-          </p>
-
-          {/* Sequential Phases Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-            {report.investigationProgression.phases.map((phase) => (
-              <div key={phase.stepNumber} className="p-4 rounded-[18px] bg-[#F9F9F7] border border-[#EEEEEC] space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E4ECFB] text-[#0A66FF]">
-                    {phase.stepNumber}
-                  </span>
-                  <span className="text-[11px] text-[#8A8A8A] flex items-center gap-1">
-                    <Clock className="w-3 h-3" /> {phase.timestamp}
-                  </span>
-                </div>
-                <h5 className="text-xs font-bold text-[#111111]">
-                  {phase.title}
-                </h5>
-                <p className="text-[11px] text-[#666666] leading-relaxed">
-                  {phase.description}
-                </p>
-                <div className="pt-1 flex flex-wrap gap-1">
-                  {phase.evidenceAcquired.map((fName, i) => (
-                    <span key={i} className="px-2 py-0.5 rounded-md text-[10px] font-mono bg-white border border-[#E0E0DE] text-[#333333]">
-                      {fName}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Ingested Evidence Sources Table */}
-          <div className="overflow-x-auto rounded-[18px] border border-[#EEEEEC] pt-1">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-[#F9F9F7] border-b border-[#EEEEEC] text-[11px] font-bold text-[#666666]">
-                  <th className="py-2.5 px-4">Evidence Asset</th>
-                  <th className="py-2.5 px-3">Type</th>
-                  <th className="py-2.5 px-3">Size</th>
-                  <th className="py-2.5 px-4">Extraction Finding</th>
-                  <th className="py-2.5 px-4">Physical Telemetry</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#EEEEEC]">
-                {report.investigationProgression.evidenceRecords.map((rec, idx) => (
-                  <tr key={idx} className="hover:bg-[#FAFAFA] transition">
-                    <td className="py-2.5 px-4 font-mono font-medium text-[#111111]">
-                      {rec.name}
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#F0F0F0] text-[#444444]">
-                        {rec.type}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 text-[#777777]">{rec.size}</td>
-                    <td className="py-2.5 px-4 text-[#444444] leading-relaxed">{rec.observations}</td>
-                    <td className="py-2.5 px-4 font-mono text-[11px] text-[#0A66FF]">{rec.telemetry}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* ── SECTION III: CROSS-SOURCE CONFLICT ANALYSIS & RESOLUTION ── */}
-      {(activeChapter === "all" || activeChapter === "conflicts") && (
-        <div className="space-y-4 pt-2">
-          <div className="flex items-center justify-between border-b border-[#F0F0F0] pb-3">
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#0A66FF]">
-                Chapter 03 &bull; Cross-Source Conflict Resolution
-              </span>
-              <h4 className="text-lg font-extrabold text-[#111111] mt-0.5 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-500" />
-                Cross-Evidence Corroboration &amp; Discrepancy Resolution
-              </h4>
-            </div>
-            <span className="text-[11px] text-[#8A8A8A]">
-              Subjective Testimonies vs Hardware Ground Truth
-            </span>
-          </div>
-
-          <p className="text-xs text-[#555555] leading-relaxed">
-            {report.conflictAnalysis.summary}
-          </p>
-
-          <div className="space-y-3">
-            {report.conflictAnalysis.discrepancies.map((disc, idx) => (
-              <div key={idx} className="p-5 rounded-[20px] bg-white border border-[#EAEAEA] shadow-2xs space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold text-[#E11D48] flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-[#E11D48]" />
-                    Contradiction #{idx + 1}: {disc.disputedTopic}
-                  </span>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FFEAEA] text-[#E11D48]">
-                    Flagged Discrepancy
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                  <div className="p-3.5 rounded-[14px] bg-[#FFF8F7] border border-[#FFE7E5] space-y-1">
-                    <span className="text-[10px] font-bold uppercase text-[#B91C1C]">
-                      Subjective Witness Deposition:
-                    </span>
-                    <p className="text-xs text-[#444444] leading-relaxed">
-                      &ldquo;{disc.witnessClaim}&rdquo;
-                    </p>
-                  </div>
-
-                  <div className="p-3.5 rounded-[14px] bg-[#F5F8FF] border border-[#E0EBFB] space-y-1">
-                    <span className="text-[10px] font-bold uppercase text-[#0A66FF]">
-                      Empirical Optical &amp; Sensor Record:
-                    </span>
-                    <p className="text-xs text-[#1E3A8A] leading-relaxed">
-                      {disc.opticalSensorReality}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-3.5 rounded-[14px] bg-[#F0FDF4] border border-[#DCFCE7] space-y-1">
-                  <span className="text-[10px] font-bold uppercase text-[#1A7A2E] flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Forensic Determination:
-                  </span>
-                  <p className="text-xs text-[#155724] leading-relaxed">
-                    {disc.forensicConclusion}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── SECTION IV: FINDINGS, LIABILITY & SIGNOFF ── */}
-      {(activeChapter === "all" || activeChapter === "findings") && (
-        <div className="space-y-4 pt-2">
-          <div className="flex items-center justify-between border-b border-[#F0F0F0] pb-3">
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#0A66FF]">
-                Chapter 04 &bull; Official Determination
-              </span>
-              <h4 className="text-lg font-extrabold text-[#111111] mt-0.5 flex items-center gap-2">
-                <UserCheck className="w-4 h-4 text-[#0A66FF]" />
-                Forensic Causation, Liability &amp; Certification
-              </h4>
-            </div>
-            <span className="text-[11px] text-[#8A8A8A]">
-              Legal Admissibility Package
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Primary Cause */}
-            <div className="p-5 rounded-[20px] bg-[#F9F9F7] border border-[#EEEEEC] space-y-2">
-              <span className="text-[11px] font-bold uppercase text-[#8A8A8A]">
-                Primary Physical Causation
-              </span>
-              <p className="text-xs sm:text-[13px] font-bold text-[#111111] leading-relaxed">
-                {report.findingsAndLiability.primaryCause}
-              </p>
-            </div>
-
-            {/* Liability Assessment */}
-            <div className="p-5 rounded-[20px] bg-[#F9F9F7] border border-[#EEEEEC] space-y-2">
-              <span className="text-[11px] font-bold uppercase text-[#8A8A8A]">
-                Liability Allocation
-              </span>
-              <p className="text-xs sm:text-[13px] font-bold text-[#111111] leading-relaxed">
-                {report.findingsAndLiability.liabilityAssessment}
-              </p>
-            </div>
-          </div>
-
-          {/* Contributing Factors */}
-          <div className="p-5 rounded-[20px] bg-[#F5F8FF] border border-[#E0EBFB] space-y-2">
-            <span className="text-[11px] font-bold uppercase text-[#0A66FF]">
-              Contributing Environmental &amp; Roadway Factors
-            </span>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
-              {report.findingsAndLiability.contributingFactors.map((factor, idx) => (
-                <div key={idx} className="p-3 rounded-[14px] bg-white border border-[#E0EBFB] text-xs text-[#333333] leading-relaxed">
-                  &bull; {factor}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Certification Signoff Card */}
-          <div className="p-5 rounded-[20px] bg-[#F8FAFC] border border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <span className="text-[11px] font-bold uppercase text-[#64748B] flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#0A66FF]" /> Certified Digital Attestation
-              </span>
-              <div className="text-sm font-extrabold text-[#0F172A]">
-                {report.findingsAndLiability.investigatorSignoff.officer}
-              </div>
-              <div className="text-xs text-[#64748B]">
-                {report.findingsAndLiability.investigatorSignoff.credentials} &bull; Verified on {report.findingsAndLiability.investigatorSignoff.date}
-              </div>
-            </div>
-
+    <>
+      {/* ── DETAILS TAB: SINGLE BIG COLUMN DOSSIER CARD ── */}
+      <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-soft border border-[#F0F0F0] space-y-6">
+        
+        {/* Top Header & Actions */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#F0F0F0]">
+          <div>
             <div className="flex items-center gap-2">
-              <div className="text-right sm:block hidden">
-                <div className="text-[10px] font-mono text-[#94A3B8]">HASH ID</div>
-                <div className="text-[11px] font-mono font-bold text-[#0F172A]">REKISHI-SEAL-{caseData.caseNumber}</div>
-              </div>
-              <button
-                type="button"
-                onClick={handleDownload}
-                className="h-10 px-5 rounded-full text-xs font-bold text-white bg-[#0A66FF] hover:bg-[#0052D6] transition flex items-center gap-1.5 cursor-pointer shadow-sm"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>Export PDF</span>
-              </button>
+              <span className="text-[13px] font-medium text-[#8A8A8A]">
+                Official Case Dossier
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#DCF5E3] text-[#1A7A2E] border border-[#C3ECCB] flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3" /> Certified Dossier
+              </span>
             </div>
+            <h3 className="text-xl sm:text-2xl font-extrabold text-[#111111] mt-1 flex items-center gap-2.5">
+              <BookOpen className="w-6 h-6 text-[#0A66FF]" />
+              Comprehensive Forensic Investigation Report
+            </h3>
+            <p className="text-xs text-[#8A8A8A] mt-1 max-w-2xl leading-relaxed">
+              Complete multi-source investigative progression, cross-evidence conflict resolutions, and the full physical narrative reconstructing the sequence of events.
+            </p>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-3 self-start sm:self-auto flex-wrap">
+            <button
+              type="button"
+              onClick={() => setIsPreviewOpen(true)}
+              className="h-11 px-5 rounded-full text-xs font-bold text-[#111111] bg-[#F5F5F3] hover:bg-[#EAEAEA] border border-[#E0E0DE] transition flex items-center gap-2 cursor-pointer shadow-2xs"
+              title="Preview official forensic report in paper document viewer"
+            >
+              <Eye className="w-4 h-4 text-[#0A66FF]" />
+              <span>Preview Official Report</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleDownload}
+              disabled={isDownloading}
+              className="h-11 px-6 rounded-full text-xs font-bold text-white bg-[#121212] hover:bg-black transition flex items-center gap-2 cursor-pointer shadow-sm disabled:opacity-75"
+              title="Download official PDF report"
+            >
+              {isDownloading ? (
+                <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+              <span>{isDownloading ? "Generating PDF..." : "Download PDF Report"}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Executive Summary Briefing in Single Big Column */}
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+            <div>
+              <span className="text-[#8A8A8A] block text-[11px]">Case Identification</span>
+              <strong className="text-[#111111] font-mono">{report.caseMetadata.caseNumber}</strong>
+            </div>
+            <div>
+              <span className="text-[#8A8A8A] block text-[11px]">Lead Investigator</span>
+              <strong className="text-[#111111]">{report.caseMetadata.filedBy}</strong>
+            </div>
+            <div>
+              <span className="text-[#8A8A8A] block text-[11px]">Incident Timestamp</span>
+              <strong className="text-[#111111]">{report.caseMetadata.accidentDate}</strong>
+            </div>
+            <div>
+              <span className="text-[#8A8A8A] block text-[11px]">Empirical Ground Truth</span>
+              <strong className="text-[#1A7A2E]">{report.caseMetadata.status}</strong>
+            </div>
+          </div>
+
+          <div className="p-5 rounded-[18px] bg-[#F5F8FF] border border-[#E0EBFB] text-xs text-[#333333] leading-relaxed space-y-2">
+            <span className="font-bold text-[#0A66FF] uppercase tracking-wider text-[11px] block">
+              Dossier Synthesis Summary &bull; Empirical Ground Truth
+            </span>
+            <p>
+              {report.incidentStoryNarrative.investigativeSynthesis}
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between text-xs text-[#8A8A8A] pt-1">
+            <span>
+              Contains {report.investigationProgression.evidenceRecords.length} synchronized digital evidence assets &bull; {report.timelineChronology.length} chronological milestones &bull; Official Legal Admissibility Format
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsPreviewOpen(true)}
+              className="text-[#0A66FF] hover:underline font-bold flex items-center gap-1 cursor-pointer"
+            >
+              Read Full Document &rarr;
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      {/* ── MODAL: PROFESSIONAL PDF DOCUMENT PREVIEW (NO BOXES, NO TABS, CLEAN PAPER DOSSIER) ── */}
+      {isPreviewOpen && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-fadeIn">
+          
+          <div className="relative w-full max-w-4xl max-h-[92vh] flex flex-col bg-slate-900 rounded-2xl shadow-2xl overflow-hidden border border-slate-700">
+            
+            {/* Modal Control Bar */}
+            <div className="px-6 py-3.5 bg-slate-950 border-b border-slate-800 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2 text-white text-xs font-semibold">
+                <FileText className="w-4 h-4 text-blue-400" />
+                <span>Document Viewer &bull; {report.caseMetadata.caseNumber}</span>
+                <span className="text-slate-500 font-normal hidden sm:inline">| Official Legal Format</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition flex items-center gap-1.5 cursor-pointer"
+                  title="Print Document"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Print</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleDownload}
+                  disabled={isDownloading}
+                  className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                  title="Download PDF"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download PDF</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsPreviewOpen(false)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer ml-1"
+                  title="Close Preview"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body: True White Paper Document (PDF Format - Plain & Professional) */}
+            <div className="flex-1 overflow-y-auto bg-slate-200/80 p-4 sm:p-8 flex justify-center">
+              
+              <div className="w-full max-w-[800px] bg-white shadow-xl text-slate-900 p-8 sm:p-14 font-sans space-y-8 select-text border border-slate-300">
+                
+                {/* ── 1. OFFICIAL LETTERHEAD ── */}
+                <div className="border-b-2 border-slate-900 pb-5 text-center space-y-1.5">
+                  <div className="text-[11px] font-bold tracking-[0.2em] uppercase text-slate-600">
+                    Republic of India &bull; Ministry of Transport &bull; Digital Forensic Reconstruction Division
+                  </div>
+                  <h1 className="text-xl sm:text-2xl font-extrabold uppercase tracking-wide text-slate-950 font-serif">
+                    REKISHI FORENSIC COLLISION INVESTIGATION BUREAU
+                  </h1>
+                  <div className="text-xs font-medium uppercase tracking-wider text-slate-700">
+                    Official Incident Investigation Dossier &bull; Multi-Source Causation Report
+                  </div>
+                  <div className="text-[10px] font-mono text-slate-500 pt-1">
+                    CONFIDENTIAL &bull; PREPARED FOR STATUTORY INQUEST &amp; LEGAL ADMISSIBILITY
+                  </div>
+                </div>
+
+                {/* ── 2. CASE IDENTIFICATION TABLE ── */}
+                <div className="text-xs border-t border-b border-slate-300 py-3 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
+                  <div>
+                    <span className="text-slate-500 font-medium inline-block w-36">Case File Reference:</span>
+                    <strong className="text-slate-900 font-mono">{report.caseMetadata.caseNumber}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 font-medium inline-block w-36">Lead Investigator:</span>
+                    <strong className="text-slate-900">{report.caseMetadata.filedBy}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 font-medium inline-block w-36">Incident Location:</span>
+                    <span className="text-slate-900">{report.caseMetadata.address}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 font-medium inline-block w-36">Date &amp; Incident Time:</span>
+                    <span className="text-slate-900 font-semibold">{report.caseMetadata.accidentDate}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 font-medium inline-block w-36">GPS Coordinates:</span>
+                    <span className="text-slate-900 font-mono">
+                      {report.caseMetadata.latitude ? `${report.caseMetadata.latitude}° N, ${report.caseMetadata.longitude}° E` : "Territorial Grid Verified"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 font-medium inline-block w-36">Dossier Integrity:</span>
+                    <strong className="text-emerald-700 font-bold">{report.caseMetadata.status} (94% Confidence)</strong>
+                  </div>
+                </div>
+
+                {/* ── 3. SECTION I: INVESTIGATIVE PROGRESSION & INGESTION ── */}
+                <div className="space-y-3">
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-slate-950 border-b border-slate-200 pb-1 font-serif">
+                    1. Investigative Methodology &amp; Evidence Acquisition Log
+                  </h2>
+                  <p className="text-xs text-slate-700 leading-relaxed text-justify">
+                    {report.investigationProgression.overview}
+                  </p>
+                  
+                  <div className="space-y-2 pt-1 text-xs">
+                    {report.investigationProgression.phases.map((phase) => (
+                      <div key={phase.stepNumber} className="pl-4 border-l-2 border-slate-400 space-y-0.5">
+                        <div className="font-bold text-slate-900">
+                          {phase.stepNumber}: {phase.title} &bull; <span className="text-slate-500 font-normal">{phase.timestamp}</span>
+                        </div>
+                        <p className="text-slate-600 leading-relaxed text-justify">
+                          {phase.description} Associated evidence: <em>{phase.evidenceAcquired.join(", ")}</em>.
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Clean Plain Evidence Table */}
+                  <div className="pt-2">
+                    <table className="w-full text-left text-xs border-t border-b border-slate-300">
+                      <thead>
+                        <tr className="border-b border-slate-200 text-slate-600 font-bold text-[11px]">
+                          <th className="py-1.5">Asset Reference</th>
+                          <th className="py-1.5">Category</th>
+                          <th className="py-1.5">Extraction Summary</th>
+                          <th className="py-1.5">Physical Telemetry</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-slate-800">
+                        {report.investigationProgression.evidenceRecords.map((r, i) => (
+                          <tr key={i}>
+                            <td className="py-1.5 font-mono font-medium">{r.name}</td>
+                            <td className="py-1.5 text-slate-600">{r.type}</td>
+                            <td className="py-1.5 text-slate-700">{r.observations}</td>
+                            <td className="py-1.5 font-mono text-[11px] text-blue-700">{r.telemetry}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* ── 4. SECTION II: CROSS-SOURCE CONFLICT ANALYSIS ── */}
+                <div className="space-y-3">
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-slate-950 border-b border-slate-200 pb-1 font-serif">
+                    2. Cross-Source Corroboration &amp; Discrepancy Resolution
+                  </h2>
+                  <p className="text-xs text-slate-700 leading-relaxed text-justify">
+                    {report.conflictAnalysis.summary}
+                  </p>
+
+                  <div className="space-y-3 pt-1 text-xs">
+                    {report.conflictAnalysis.discrepancies.map((disc, idx) => (
+                      <div key={idx} className="pl-4 border-l-2 border-amber-600 space-y-1">
+                        <div className="font-bold text-slate-900">
+                          Disputed Point #{idx + 1}: {disc.disputedTopic}
+                        </div>
+                        <div className="text-slate-700 leading-relaxed text-justify">
+                          <strong>Witness Deposition:</strong> &ldquo;{disc.witnessClaim}&rdquo;
+                        </div>
+                        <div className="text-slate-700 leading-relaxed text-justify">
+                          <strong>Empirical Telemetry &amp; Optical Analysis:</strong> {disc.opticalSensorReality}
+                        </div>
+                        <div className="text-emerald-800 font-semibold leading-relaxed text-justify">
+                          <strong>Forensic Finding:</strong> {disc.forensicConclusion}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* ── 5. SECTION III: THE INCIDENT RECONSTRUCTION (THE STORY) ── */}
+                <div className="space-y-4">
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-slate-950 border-b border-slate-200 pb-1 font-serif">
+                    3. The Incident Reconstruction: Chronological Narrative
+                  </h2>
+                  
+                  <div className="space-y-3 text-xs text-slate-800 leading-relaxed text-justify">
+                    <div>
+                      <strong className="text-slate-950 block font-serif text-[13px] mb-1">
+                        Phase A &bull; Pre-Collision Approach &amp; Environmental Conditions
+                      </strong>
+                      <p>{report.incidentStoryNarrative.preCollisionApproach}</p>
+                    </div>
+
+                    <div>
+                      <strong className="text-slate-950 block font-serif text-[13px] mb-1">
+                        Phase B &bull; Perception-Reaction Interval &amp; Evasive Braking
+                      </strong>
+                      <p>{report.incidentStoryNarrative.reactionAndCriticalWindow}</p>
+                    </div>
+
+                    <div>
+                      <strong className="text-slate-950 block font-serif text-[13px] mb-1">
+                        Phase C &bull; Physical Contact Dynamics &amp; Structural Mechanics
+                      </strong>
+                      <p>{report.incidentStoryNarrative.pointOfImpactDynamics}</p>
+                    </div>
+
+                    <div>
+                      <strong className="text-slate-950 block font-serif text-[13px] mb-1">
+                        Phase D &bull; Post-Collision Trajectory, Rest Position &amp; Emergency Deployment
+                      </strong>
+                      <p>{report.incidentStoryNarrative.postImpactRestAndEmergency}</p>
+                    </div>
+
+                    <div>
+                      <strong className="text-slate-950 block font-serif text-[13px] mb-1">
+                        Phase E &bull; Conclusive Investigative Synthesis
+                      </strong>
+                      <p className="font-medium text-slate-900">{report.incidentStoryNarrative.investigativeSynthesis}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── 6. SECTION IV: SYNCHRONIZED TIMELINE CHRONOLOGY ── */}
+                <div className="space-y-3">
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-slate-950 border-b border-slate-200 pb-1 font-serif">
+                    4. Synchronized Event Chronology Log
+                  </h2>
+
+                  <div className="space-y-1.5 text-xs">
+                    {report.timelineChronology.map((t, idx) => (
+                      <div key={idx} className="flex items-start gap-4 py-1 border-b border-slate-100">
+                        <span className="font-mono font-bold text-blue-700 shrink-0 w-20">[{t.time}]</span>
+                        <div className="space-y-0.5">
+                          <strong className="text-slate-900 block">{t.event}</strong>
+                          <span className="text-slate-600 block">{t.detail} (Source: {t.source})</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* ── 7. SECTION V: FORENSIC DETERMINATIONS & OFFICIAL SIGNOFF ── */}
+                <div className="space-y-4 pt-2">
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-slate-950 border-b border-slate-200 pb-1 font-serif">
+                    5. Forensic Causation &amp; Official Liability Determination
+                  </h2>
+
+                  <div className="space-y-2 text-xs">
+                    <p className="text-slate-800 leading-relaxed text-justify">
+                      <strong>Primary Physical Cause:</strong> {report.findingsAndLiability.primaryCause}
+                    </p>
+                    <p className="text-slate-800 leading-relaxed text-justify">
+                      <strong>Contributing Factors:</strong> {report.findingsAndLiability.contributingFactors.join("; ")}.
+                    </p>
+                    <p className="text-slate-800 leading-relaxed text-justify">
+                      <strong>Liability Assessment:</strong> {report.findingsAndLiability.liabilityAssessment}
+                    </p>
+                  </div>
+
+                  {/* Formal Signature & Seal Block */}
+                  <div className="pt-6 border-t-2 border-slate-900 grid grid-cols-2 gap-8 text-xs">
+                    <div>
+                      <div className="text-slate-500 text-[11px] uppercase tracking-wider">Investigating Officer Signoff</div>
+                      <div className="font-serif font-bold text-base text-slate-950 mt-1">{report.findingsAndLiability.investigatorSignoff.officer}</div>
+                      <div className="text-slate-600 text-[11px]">{report.findingsAndLiability.investigatorSignoff.credentials}</div>
+                      <div className="text-slate-500 text-[10px] mt-0.5">Date Certified: {report.findingsAndLiability.investigatorSignoff.date}</div>
+                    </div>
+
+                    <div className="text-right">
+                      <div className="text-slate-500 text-[11px] uppercase tracking-wider">Digital Authority Seal</div>
+                      <div className="font-mono font-bold text-slate-900 text-xs mt-1">SEAL-REKISHI-{caseData.caseNumber}</div>
+                      <div className="text-emerald-700 text-[11px] font-semibold flex items-center justify-end gap-1 mt-0.5">
+                        <ShieldCheck className="w-3.5 h-3.5" /> Hardware Certified &amp; Tamper Sealed
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
           </div>
         </div>
       )}
-
-    </div>
+    </>
   );
 }
-

@@ -87,6 +87,18 @@ export default function CaseDetailsPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string | null>(null);
 
+  // Playback timer for 3D Forensic Simulation
+  useEffect(() => {
+    if (!isPlaying) return;
+    const interval = setInterval(() => {
+      setScrubberTime((prev) => {
+        const next = Math.round((prev + 0.1) * 10) / 10;
+        return next > 4.2 ? 0.0 : next;
+      });
+    }, 100);
+    return () => clearInterval(interval);
+  }, [isPlaying]);
+
   // Load case data and auto-refresh when AI completes in background
   useEffect(() => {
     if (!caseId) return;
@@ -991,69 +1003,6 @@ export default function CaseDetailsPage() {
               </div>
             )}
 
-            {/* ═══════════════════════════════════════════════════════════════
-                TAB 3: VISUALS TAB
-            ═══════════════════════════════════════════════════════════════ */}
-            {activeTab === "visuals" && (
-              <div className="space-y-6">
-                
-                <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-soft border border-[#F0F0F0] space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-[13px] font-medium text-[#8A8A8A]">
-                        Spatial & Chronological Verification
-                      </span>
-                      <h2 className="text-xl font-extrabold text-[#111111] mt-0.5">
-                        Scene Visuals & Geospatial Verification
-                      </h2>
-                      <p className="text-xs text-[#8A8A8A] mt-0.5">
-                        Correlated geospatial coordinates and scene overview for this case.
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#DCF5E3] text-[#1A7A2E]">
-                        GPS Synced
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Satellite / Schematic Map Mockup */}
-                  <div className="h-72 rounded-[20px] bg-[#EBF3FF] border border-[#D0E2FF] relative overflow-hidden flex items-center justify-center">
-                    <div className="absolute inset-0 bg-[radial-gradient(#0A66FF_1px,transparent_1px)] [background-size:20px_20px] opacity-25" />
-                    <div className="text-center z-10 space-y-2 p-6">
-                      <div className="w-12 h-12 rounded-full bg-[#121212] text-white flex items-center justify-center mx-auto shadow-md">
-                        <MapPin className="w-6 h-6 text-white" />
-                      </div>
-                      <div className="text-sm font-bold text-[#111111]">
-                        {caseData.address}
-                      </div>
-                      <div className="text-xs font-mono text-[#0A66FF]">
-                        {caseData.latitude ? `${caseData.latitude}° N, ${caseData.longitude}° E` : "Coordinates verified by territorial jurisdiction"}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-5 rounded-[20px] bg-[#F5F8FF] border border-[#EEEEEC] space-y-1">
-                      <span className="text-xs font-bold text-[#111111] block">Spatial Mapping Coordinates</span>
-                      <p className="text-[#8A8A8A] text-xs">
-                        {caseData.latitude ? `${caseData.latitude}° N, ${caseData.longitude}° E` : "Assigned by territorial jurisdiction."}
-                      </p>
-                    </div>
-
-                    <div className="p-5 rounded-[20px] bg-[#F5F8FF] border border-[#EEEEEC] space-y-1">
-                      <span className="text-xs font-bold text-[#111111] block">Evidence Synchrony</span>
-                      <p className="text-[#8A8A8A] text-xs">
-                        {caseData.evidenceList.length} evidence file(s) synchronized to incident timeline.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            )}
-
             {/* Visuals Tab */}
             {activeTab === "visuals" && (
               <div className="space-y-6">
@@ -1078,6 +1027,7 @@ export default function CaseDetailsPage() {
                     onTogglePlay={() => setIsPlaying(!isPlaying)}
                     caseTitle={caseData.name}
                     caseDescription={caseData.description}
+                    caseSummary={caseData.summary}
                     evidenceList={caseData.evidenceList}
                     evidenceVideoUrl={uploadedVideoUrl || (caseData as unknown as Record<string, string>).videoUrl || caseData.evidenceList.find(e => (e.dataType === "Video" || /\.(mp4|mov|avi|webm)$/i.test(e.name)) && e.fileUrl)?.fileUrl}
                     defaultScenario={(caseData as unknown as { scenario?: ScenarioType }).scenario}
