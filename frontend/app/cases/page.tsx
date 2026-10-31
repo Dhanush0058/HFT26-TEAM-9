@@ -13,10 +13,10 @@ import {
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import TopHeader from "@/components/TopHeader";
-import { getStoredCases, deleteCase, CaseDetail } from "@/lib/casesService";
+import { getStoredCases, DEFAULT_INDIAN_CASES, deleteCase, CaseDetail } from "@/lib/casesService";
 
 export default function CasesPage() {
-  const [cases, setCases] = useState<CaseDetail[]>([]);
+  const [cases, setCases] = useState<CaseDetail[]>(DEFAULT_INDIAN_CASES);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {

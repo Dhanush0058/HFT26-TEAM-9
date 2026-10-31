@@ -106,16 +106,16 @@ export const DEFAULT_INDIAN_CASES: CaseDetail[] = [
     lastAnalyzedAt: "Oct 31, 2026, 11:30 AM",
     status: "Flagged Contradiction",
     confidence: 94,
-    videoUrl: "/cases/evidence/incident_cctv_c31617fa.mp4",
+    videoUrl: "/uploads/WhatsApp_Video_2026-10-31_at_12.07.45.mp4",
     scenario: "roundabout",
     evidenceList: [
       {
         id: "EV-9597-01",
-        name: "overhead_roundabout_cctv_c31617fa.mp4",
+        name: "WhatsApp_Video_2026-10-31_at_12.07.45.mp4",
         uploadDate: "Oct 31, 2026, 10:15 AM",
         size: "1.1 MB",
         dataType: "Video",
-        fileUrl: "/cases/evidence/incident_cctv_c31617fa.mp4",
+        fileUrl: "/uploads/WhatsApp_Video_2026-10-31_at_12.07.45.mp4",
         accidentTime: "10:10 PM, 30th Oct",
         is_data_extracted: 1,
         status: "Extracted",
@@ -271,7 +271,7 @@ export const DEFAULT_INDIAN_CASES: CaseDetail[] = [
         dateTime: "31 Oct 2026, 10:15 AM",
         summaryText: "1 CCTV optical stream uploaded (Roundabout Overhead)",
         files: [
-          { name: "overhead_roundabout_cctv_c31617fa.mp4", dataType: "Video", size: "1.1 MB" }
+          { name: "WhatsApp_Video_2026-10-31_at_12.07.45.mp4", dataType: "Video", size: "1.1 MB" }
         ],
         conflict: {
           hasConflict: false,
@@ -860,7 +860,7 @@ export const DEFAULT_INDIAN_CASES: CaseDetail[] = [
   }
 ];
 
-const STORAGE_KEY = "rekishi_cases_store_v4";
+const STORAGE_KEY = "rekishi_cases_store_v8";
 const LEGACY_STORAGE_KEY = "rekishi_cases_store_v3";
 const ACTIVITY_KEY = "rekishi_activity_feed_v4";
 const LEGACY_ACTIVITY_KEY = "rekishi_activity_feed_v3";
@@ -1292,6 +1292,25 @@ export function getStoredCases(): CaseDetail[] {
       }
       return true;
     });
+
+    // Ensure all DEFAULT_INDIAN_CASES (including CASE-2026-9597) are present at the top
+    for (let i = DEFAULT_INDIAN_CASES.length - 1; i >= 0; i--) {
+      const defCase = DEFAULT_INDIAN_CASES[i];
+      const matchIdx = cleaned.findIndex(
+        (c) => (c.id || "").toUpperCase() === defCase.id.toUpperCase() || 
+               (c.caseNumber || "").toUpperCase() === defCase.caseNumber.toUpperCase()
+      );
+      if (matchIdx === -1) {
+        cleaned.unshift(defCase);
+      } else {
+        cleaned[matchIdx] = {
+          ...defCase,
+          ...cleaned[matchIdx],
+          videoUrl: defCase.videoUrl || cleaned[matchIdx].videoUrl,
+          evidenceList: defCase.evidenceList || cleaned[matchIdx].evidenceList
+        };
+      }
+    }
 
     // Ensure all cases have updates and fields
     const enriched = ensureCaseUpdatesAndFields(cleaned);

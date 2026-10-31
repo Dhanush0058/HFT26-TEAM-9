@@ -12,10 +12,10 @@ import {
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import TopHeader from "@/components/TopHeader";
-import { getStoredCases, getRecentActivities, CaseDetail, ActivityFeedItem } from "@/lib/casesService";
+import { getStoredCases, DEFAULT_INDIAN_CASES, getRecentActivities, CaseDetail, ActivityFeedItem } from "@/lib/casesService";
 
 export default function DashboardMetricsPage() {
-  const [cases, setCases] = useState<CaseDetail[]>([]);
+  const [cases, setCases] = useState<CaseDetail[]>(DEFAULT_INDIAN_CASES);
   const [activities, setActivities] = useState<ActivityFeedItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeBar, setActiveBar] = useState<number>(4); // Default selected bar (Sep/Oct)

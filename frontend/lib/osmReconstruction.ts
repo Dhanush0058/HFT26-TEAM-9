@@ -447,7 +447,39 @@ export interface VehicleSplineTracks {
 }
 
 export function buildScenarioSplineTracks(scenario: string): VehicleSplineTracks {
-  if (scenario === "CAR_VS_LORRY") {
+  if (scenario === "ROUNDABOUT_ENCLOACHMENT" || scenario === "ROUNDABOUT") {
+    // Exact reconstruction of the uploaded accident video (Car vs Motorcycle at Roundabout):
+    // Approach road entering counter-clockwise roundabout circle.
+    // Vehicle A: Dark Crossover SUV (Vehicle B in report) in right lane overtaking & encroaching left into bike lane
+    // Vehicle B: Black Motorcycle (Vehicle A in report) in inner left lane forced into evasive swerve onto shoulder
+    const splineA = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(1.4, 0, 28.0),
+      new THREE.Vector3(1.4, 0, 19.0),
+      new THREE.Vector3(0.8, 0, 11.0),
+      new THREE.Vector3(-0.4, 0, 5.0),
+      new THREE.Vector3(-1.8, 0, 1.8),  // Leftward lane encroachment directly into bike corridor
+      new THREE.Vector3(-1.4, 0, -0.6), // Emergency ABS threshold braking
+      new THREE.Vector3(-0.8, 0, -3.0)  // Complete stop inside roundabout
+    ]);
+
+    const splineB = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-3.2, 0, 26.0),
+      new THREE.Vector3(-3.2, 0, 18.0),
+      new THREE.Vector3(-3.3, 0, 11.0),
+      new THREE.Vector3(-3.8, 0, 5.0),
+      new THREE.Vector3(-5.2, 0, 1.8),  // Evasive swerve to avoid being hit
+      new THREE.Vector3(-6.6, 0, 0.4),  // Low-side fall & slide onto shoulder
+      new THREE.Vector3(-7.4, 0, -0.8)  // Final rest position on paved shoulder
+    ]);
+
+    return {
+      splineA,
+      splineB,
+      speedAAt: (t) => (t < 2.0 ? 44 : t < 3.8 ? 50 : t < 4.5 ? 12 : 0),
+      speedBAt: (t) => (t < 3.8 ? 38 : t < 4.2 ? 18 : 0),
+      brakeAAt: (t) => t >= 3.9 && t <= 4.8
+    };
+  } else   if (scenario === "CAR_VS_LORRY") {
     // Car moves westbound along highway; Lorry crosses from north side-junction
     const splineA = new THREE.CatmullRomCurve3([
       new THREE.Vector3(-28.0, 0, 1.6),
