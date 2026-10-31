@@ -98,8 +98,8 @@ export const DEFAULT_INDIAN_CASES: CaseDetail[] = [
     filedBy: "Inspector R. K. Sharma",
     filedDate: "Oct 28, 2026, 04:30 PM",
     address: "ORR Junction near Gachibowli Flyover, Hyderabad, Telangana",
-    latitude: 17.4401,
-    longitude: 78.3489,
+    latitude: 17.440598,
+    longitude: 78.360779,
     accidentDate: "Oct 28, 2026, 03:15 PM",
     description: "Collision involving a commercial passenger auto-rickshaw and a private compact SUV approaching the signal intersection during evening traffic flow.",
     summary: "At approximately 03:15 PM, vehicle approaching Gachibowli ORR junction from Hitec City direction experienced lateral impact. Dashcam footage confirms traffic signal had transitioned to green for main corridor. Witness statement alleging red light violation is disproven by optical camera timeline. Vehicle telemetry confirms abrupt emergency braking 0.8 seconds before impact.",
@@ -125,7 +125,7 @@ export const DEFAULT_INDIAN_CASES: CaseDetail[] = [
           fields: {
             "Incident Date": "28 Oct 2026",
             "Time of Incident": "03:15:02 PM IST",
-            "Location Coordinates": "17.4401° N, 78.3489° E (Gachibowli ORR)",
+            "Location Coordinates": "17.440598° N, 78.360779° E (Gachibowli ORR)",
             "Signal Status": "Green (Corridor Open, Verified Optical)",
             "Primary Vehicle": "TS 09 UB 4412 (Compact SUV)",
             "Secondary Vehicle": "TS 07 UA 9104 (Commercial Auto)",
@@ -1294,6 +1294,37 @@ export function analyzeCaseEvidence(caseId: string): CaseDetail {
   return caseItem;
 }
 
+
+/**
+ * Automatically extracts GPS coordinates (latitude, longitude) from incident text,
+ * police panchnama reports, evidence summaries, or raw telemetry.
+ */
+export function extractGpsCoordinatesFromText(text: string): { latitude: number; longitude: number } | null {
+  if (!text) return null;
+
+  // Pattern 1: Explicit labels e.g. "GPS Coordinates: 17.440598, 78.360779" or "Coordinates: 17.4401° N, 78.3489° E"
+  const labelMatch = text.match(/(?:gps|coords?|coordinates|location|lat[\s\/\-_]*lon)[:\s]+([0-8]?\d\.\d{3,8})\s*(?:°?\s*[NS])?\s*[,;\s]+\s*([0-1]?\d{1,2}\.\d{3,8})\s*(?:°?\s*[EW])?/i);
+  if (labelMatch) {
+    const lat = parseFloat(labelMatch[1]);
+    const lon = parseFloat(labelMatch[2]);
+    if (!isNaN(lat) && !isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
+      return { latitude: lat, longitude: lon };
+    }
+  }
+
+  // Pattern 2: Decimal degrees e.g. "17.440598, 78.360779"
+  const decMatch = text.match(/([0-8]?\d\.\d{4,8})\s*(?:°?\s*[NS])?\s*[,;\s]+\s*([0-1]?\d{1,2}\.\d{4,8})\s*(?:°?\s*[EW])?/i);
+  if (decMatch) {
+    const lat = parseFloat(decMatch[1]);
+    const lon = parseFloat(decMatch[2]);
+    if (!isNaN(lat) && !isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
+      return { latitude: lat, longitude: lon };
+    }
+  }
+
+  return null;
+}
+
 export function addEvidenceToCase(
   caseId: string, 
   file: { name: string; size: string; type: string; accidentTime?: string; fileUrl?: string }
@@ -1350,6 +1381,15 @@ export function addEvidenceToCase(
       transcript: forensicData.transcript
     }
   };
+
+  // Dynamically detect GPS coordinates from ingested evidence and sync to case
+  const detectedGps = extractGpsCoordinatesFromText(
+    `${file.name} ${newEv.extractedData?.summary || ""} ${JSON.stringify(newEv.extractedData?.fields || {})}`
+  );
+  if (detectedGps) {
+    caseItem.latitude = detectedGps.latitude;
+    caseItem.longitude = detectedGps.longitude;
+  }
 
   caseItem.evidenceList.push(newEv);
 

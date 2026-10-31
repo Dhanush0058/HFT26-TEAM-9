@@ -3,12 +3,21 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { 
-  Play, 
-  Pause, 
-  RotateCcw, 
-  Video
+import {
+  Play,
+  Pause,
+  RotateCcw,
+  Video,
+  MapPin,
+  Compass,
+  Eye
 } from "lucide-react";
+import {
+  fetchOsmSurroundings,
+  createProceduralEnvironmentGroup,
+  buildScenarioSplineTracks,
+  OsmEnvironmentData
+} from "@/lib/osmReconstruction";
 
 export type ScenarioType = "CAR_VS_LORRY" | "CAR_VS_BIKE" | "HIGHWAY_REAR_END" | "HEAD_ON" | "INTERSECTION_TBONE";
 export type JunctionType = "T_JUNCTION" | "FOUR_WAY" | "EXPRESSWAY";
@@ -22,8 +31,11 @@ interface ThreeForensicCanvasProps {
   caseTitle?: string;
   caseDescription?: string;
   caseSummary?: string;
+  latitude?: number;
+  longitude?: number;
+  address?: string;
   evidenceVideoUrl?: string;
-  evidenceList?: Array<{ name: string; dataType?: string; extractedData?: { summary?: string; [key: string]: unknown } }>;
+  evidenceList?: Array<{ name: string; dataType?: string; extractedData?: { summary?: string;[key: string]: unknown } }>;
   defaultScenario?: ScenarioType;
   onVideoUploaded?: (file: File) => void;
 }
@@ -36,6 +48,9 @@ export default function ThreeForensicCanvas({
   caseTitle = "Intersection Collision Reconstruction",
   caseDescription = "",
   caseSummary = "",
+  latitude = 17.440598,
+  longitude = 78.360779,
+  address = "ORR Junction near Gachibowli, Hyderabad",
   evidenceVideoUrl,
   evidenceList = [],
   defaultScenario,
@@ -74,10 +89,50 @@ export default function ThreeForensicCanvas({
   const initialDetection = autoDetectScenarioAndJunction(evidenceVideoUrl);
   const [activeScenario, setActiveScenario] = useState<ScenarioType>(initialDetection.scenario);
   const [activeJunction, setActiveJunction] = useState<JunctionType>(initialDetection.junction);
-  const [cameraPerspective] = useState<CameraPerspective>("ORBIT");
+  const [cameraPerspective, setCameraPerspective] = useState<CameraPerspective>("ORBIT");
+  const groundMeshRef = useRef<THREE.Mesh | null>(null);
+  const groundMatRef = useRef<THREE.MeshStandardMaterial | null>(null);
+  const perspectiveRef = useRef<CameraPerspective>("ORBIT");
+  useEffect(() => {
+    perspectiveRef.current = cameraPerspective;
+    if (cameraPerspective === "ORBIT" && cameraRef.current && controlsRef.current) {
+      controlsRef.current.enabled = true;
+    }
+  }, [cameraPerspective]);
+
+
   const [isExporting, setIsExporting] = useState(false);
   const [exportNotice, setExportNotice] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [osmData, setOsmData] = useState<OsmEnvironmentData | null>(null);
+  const [osmLoading, setOsmLoading] = useState(false);
+  const [telemetryState, setTelemetryState] = useState({ speedA: 48, speedB: 36, isBrakingA: false });
+  const osmGroupRef = useRef<THREE.Group | null>(null);
+  const splineTracksRef = useRef(buildScenarioSplineTracks(activeScenario));
+
+  // Load surrounding OSM geometry (buildings & trees) dynamically for coordinates
+  useEffect(() => {
+    let isMounted = true;
+    setOsmLoading(true);
+    const validLat = typeof latitude === "number" && !isNaN(latitude) ? latitude : 17.440598;
+    const validLon = typeof longitude === "number" && !isNaN(longitude) ? longitude : 78.360779;
+
+    fetchOsmSurroundings(validLat, validLon).then((data) => {
+      if (isMounted) {
+        setOsmData(data);
+        setOsmLoading(false);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [latitude, longitude]);
+
+  // Sync spline paths whenever activeScenario updates
+  useEffect(() => {
+    splineTracksRef.current = buildScenarioSplineTracks(activeScenario);
+  }, [activeScenario]);
 
   // Automatically select scenario & junction from case keywords, summary & evidence
   useEffect(() => {
@@ -143,15 +198,47 @@ export default function ThreeForensicCanvas({
     const width = containerRef.current.clientWidth || 800;
     const height = containerRef.current.clientHeight || 520;
 
-    // 1. Scene & Atmospheric Fog
+    // Helper to generate light blue background with clearly visible transparent grid boxes
+    const createBackgroundSkyGridTexture = () => {
+      const size = 512;
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        // Base light blue background color
+        ctx.fillStyle = "#dce7f3";
+        ctx.fillRect(0, 0, size, size);
+
+        // Subtle diagonal gradient blue lines matching application theme
+        ctx.strokeStyle = "rgba(59, 130, 246, 0.13)";
+        ctx.lineWidth = 1.5;
+        const step = 20;
+        for (let i = -size; i <= size * 2; i += step) {
+          ctx.beginPath();
+          ctx.moveTo(i, 0);
+          ctx.lineTo(i + size, size);
+          ctx.stroke();
+        }
+      }
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      tex.minFilter = THREE.NearestFilter;
+      tex.magFilter = THREE.NearestFilter;
+      return tex;
+    };
+
+    // 1. Scene & Atmospheric Fog with subtle background grid boxes
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x060911);
-    scene.fog = new THREE.FogExp2(0x060911, 0.010);
+    const bgGridTexture = createBackgroundSkyGridTexture();
+    scene.background = bgGridTexture;
+    scene.fog = new THREE.FogExp2(0xdce7f3, 0.0025);
     sceneRef.current = scene;
 
-    // 2. Camera: Cinematic unobstructed isometric perspective
-    const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 1000);
-    camera.position.set(16, 14, 20);
+    // 2. Camera: True 45-degree Isometric High-Angle Perspective
+    const camera = new THREE.PerspectiveCamera(36, width / height, 0.1, 1000);
+    camera.position.set(24, 22, 24);
     camera.lookAt(0, 0.5, 0);
     cameraRef.current = camera;
 
@@ -168,7 +255,7 @@ export default function ThreeForensicCanvas({
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
+    renderer.toneMappingExposure = 1.15;
     rendererRef.current = renderer;
 
     // 4. Free 3D OrbitControls (Mouse drag to orbit 360°)
@@ -181,33 +268,213 @@ export default function ThreeForensicCanvas({
     controls.target.set(0, 0.5, 0);
     controlsRef.current = controls;
 
-    // 5. Lighting
-    const ambientLight = new THREE.AmbientLight(0x94a3b8, 0.55);
+    // 5. Lighting: Crisp 45-degree directional sunlight casting sharp clean shadows
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0xc7d6e5, 1.25);
+    scene.add(hemiLight);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
     scene.add(ambientLight);
 
-    const mainSun = new THREE.DirectionalLight(0xffffff, 1.35);
-    mainSun.position.set(22, 36, 16);
+    const mainSun = new THREE.DirectionalLight(0xfffaea, 1.9);
+    mainSun.position.set(28, 45, -18);
     mainSun.castShadow = true;
     mainSun.shadow.mapSize.width = 2048;
     mainSun.shadow.mapSize.height = 2048;
     mainSun.shadow.bias = -0.0001;
     scene.add(mainSun);
 
-    const rimLight = new THREE.DirectionalLight(0x38bdf8, 0.45);
+    const rimLight = new THREE.DirectionalLight(0xbfdbfe, 0.5);
     rimLight.position.set(-20, 18, -18);
     scene.add(rimLight);
 
-    // 6. Base Ground Plane
-    const asphaltMat = new THREE.MeshStandardMaterial({ color: 0x0c111a, roughness: 0.85 });
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(130, 130), asphaltMat);
+    // 6. Base Ground Plane with Architectural Square Grid Texture (Subtle, elegant low-opacity)
+    const createArchitecturalGridTexture = () => {
+      const size = 128;
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.fillStyle = "#edf2f7"; // soft light blueprint ground
+        ctx.fillRect(0, 0, size, size);
+        ctx.strokeStyle = "rgba(148, 163, 184, 0.40)"; // soft, subtle architectural grid lines
+        ctx.lineWidth = 1.0;
+        ctx.strokeRect(0, 0, size, size);
+      }
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(36, 36);
+      return tex;
+    };
+
+    const gridTexture = createArchitecturalGridTexture();
+    const groundMat = new THREE.MeshStandardMaterial({
+      map: gridTexture,
+      roughness: 0.92,
+      metalness: 0.03
+    });
+    groundMatRef.current = groundMat;
+
+
+
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(160, 160), groundMat);
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     scene.add(ground);
+    groundMeshRef.current = ground;
 
-    const roadMat = new THREE.MeshStandardMaterial({ color: 0x141a27, roughness: 0.72 });
-    const curbMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.65 });
-    const lineMat = new THREE.MeshBasicMaterial({ color: 0xf8fafc });
-    const lampPostMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.8, roughness: 0.3 });
+    // Subtle grid on sidewalks without cutting through the asphalt road
+    const curbMat = new THREE.MeshStandardMaterial({ 
+      map: gridTexture, 
+      roughness: 0.85, 
+      metalness: 0.04 
+    });
+    const roadMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.88 });
+    const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff }); // continuous crisp white lane lines
+    const lampPostMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.8, roughness: 0.3 });
+
+    // Helper for Pedestrian Zebra Crossings (All 4 Intersection Approaches)
+    const addZebraCrossings = (targetGroup: THREE.Group) => {
+      // East Crosswalk
+      for (let z = -5.0; z <= 5.0; z += 1.25) {
+        const stripe = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 2.8), lineMat);
+        stripe.rotation.x = -Math.PI / 2;
+        stripe.position.set(7.5, 0.048, z);
+        targetGroup.add(stripe);
+      }
+      // West Crosswalk
+      for (let z = -5.0; z <= 5.0; z += 1.25) {
+        const stripe = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 2.8), lineMat);
+        stripe.rotation.x = -Math.PI / 2;
+        stripe.position.set(-7.5, 0.048, z);
+        targetGroup.add(stripe);
+      }
+      // North Crosswalk
+      for (let x = -5.0; x <= 5.0; x += 1.25) {
+        const stripe = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 0.7), lineMat);
+        stripe.rotation.x = -Math.PI / 2;
+        stripe.position.set(x, 0.048, -7.5);
+        targetGroup.add(stripe);
+      }
+      // South Crosswalk
+      for (let x = -5.0; x <= 5.0; x += 1.25) {
+        const stripe = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 0.7), lineMat);
+        stripe.rotation.x = -Math.PI / 2;
+        stripe.position.set(x, 0.048, 7.5);
+        targetGroup.add(stripe);
+      }
+    };
+
+    // Helper for White Directional Arrows on Pavement
+    const addDirectionalArrow = (targetGroup: THREE.Group, x: number, z: number, rotY: number) => {
+      const g = new THREE.Group();
+      g.position.set(x, 0.046, z);
+      g.rotation.y = rotY;
+
+      const stem = new THREE.Mesh(new THREE.PlaneGeometry(0.32, 2.2), lineMat);
+      stem.rotation.x = -Math.PI / 2;
+      g.add(stem);
+
+      const head = new THREE.Mesh(new THREE.ConeGeometry(0.55, 1.1, 3), lineMat);
+      head.rotation.x = -Math.PI / 2;
+      head.position.set(0, 0, -1.35);
+      g.add(head);
+
+      targetGroup.add(g);
+    };
+
+    // Helper for Traffic Signal Gantries with Forensically Verified Light States
+    const signalMastMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.85, roughness: 0.3 });
+    const greenLightMat = new THREE.MeshStandardMaterial({ color: 0x22c55e, emissive: 0x16a34a, emissiveIntensity: 1.2 });
+    const redLightMat = new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0xdc2626, emissiveIntensity: 1.2 });
+    const offLightMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.9 });
+
+    const addTrafficSignalGantry = (targetGroup: THREE.Group, x: number, z: number, rotY: number, showGreenArterial: boolean) => {
+      const g = new THREE.Group();
+      g.position.set(x, 0, z);
+      g.rotation.y = rotY;
+
+      // Vertical structural steel pole
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.18, 6.4, 12), signalMastMat);
+      pole.position.y = 3.2;
+      g.add(pole);
+
+      // Overhead cantilever truss
+      const truss = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.18, 0.18), signalMastMat);
+      truss.position.set(2.1, 6.1, 0);
+      g.add(truss);
+
+      // Signal housing
+      const housing = new THREE.Mesh(new THREE.BoxGeometry(0.45, 1.2, 0.32), signalMastMat);
+      housing.position.set(3.4, 5.4, 0);
+      g.add(housing);
+
+      // Top Red light
+      const red = new THREE.Mesh(new THREE.CircleGeometry(0.12, 16), showGreenArterial ? offLightMat : redLightMat);
+      red.position.set(3.4, 5.75, 0.17);
+      g.add(red);
+
+      // Middle Amber light
+      const amber = new THREE.Mesh(new THREE.CircleGeometry(0.12, 16), offLightMat);
+      amber.position.set(3.4, 5.4, 0.17);
+      g.add(amber);
+
+      // Bottom Green light (Corroborating optical ground truth of primary vehicle)
+      const green = new THREE.Mesh(new THREE.CircleGeometry(0.12, 16), showGreenArterial ? greenLightMat : offLightMat);
+      green.position.set(3.4, 5.05, 0.17);
+      g.add(green);
+
+      targetGroup.add(g);
+    };
+
+    // Gachibowli Elevated Flyover Structure Spanning Overhead
+    const flyoverGroup = new THREE.Group();
+    const concreteMat = new THREE.MeshStandardMaterial({ color: 0xd6dbe4, roughness: 0.68, metalness: 0.08 });
+    const flyoverRoadMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.85 });
+    const pierMat = new THREE.MeshStandardMaterial({ color: 0xc4cbd5, roughness: 0.7 });
+
+    // Elevated Bridge Deck
+    const deck = new THREE.Mesh(new THREE.BoxGeometry(140, 0.65, 8.8), concreteMat);
+    deck.position.set(0, 5.65, -14.2);
+    deck.castShadow = true;
+    deck.receiveShadow = true;
+    flyoverGroup.add(deck);
+
+    // Deck Pavement
+    const deckSurface = new THREE.Mesh(new THREE.PlaneGeometry(140, 8.0), flyoverRoadMat);
+    deckSurface.rotation.x = -Math.PI / 2;
+    deckSurface.position.set(0, 6.0, -14.2);
+    flyoverGroup.add(deckSurface);
+
+    // Deck Center Dashed Lines
+    for (let x = -40; x <= 40; x += 4.5) {
+      const d = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 0.2), lineMat);
+      d.rotation.x = -Math.PI / 2;
+      d.position.set(x, 6.02, -14.2);
+      flyoverGroup.add(d);
+    }
+
+    // Safety Concrete Parapets
+    const northParapet = new THREE.Mesh(new THREE.BoxGeometry(140, 0.85, 0.3), concreteMat);
+    northParapet.position.set(0, 6.4, -18.45);
+    northParapet.castShadow = true;
+    flyoverGroup.add(northParapet);
+
+    const southParapet = northParapet.clone();
+    southParapet.position.z = -9.95;
+    flyoverGroup.add(southParapet);
+
+    // Cylindrical Concrete Bridge Piers
+    [-52, -32, -12, 12, 32, 52].forEach((px) => {
+      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.95, 5.3, 16), pierMat);
+      p.position.set(px, 2.65, -14.2);
+      p.castShadow = true;
+      p.receiveShadow = true;
+      flyoverGroup.add(p);
+    });
+
+    scene.add(flyoverGroup);
 
     // Helper for Streetlamps (placed safely outside camera lines)
     const addStreetLamp = (targetGroup: THREE.Group, x: number, z: number, rotY: number) => {
@@ -228,7 +495,7 @@ export default function ThreeForensicCanvas({
       head.position.set(3.0, 7.1, 0);
       g.add(head);
 
-      const light = new THREE.SpotLight(0xfef08a, 2.2, 24, Math.PI / 4, 0.45);
+      const light = new THREE.SpotLight(0xfef08a, 0.0, 24, Math.PI / 4, 0.45);
       light.position.set(3.0, 7.0, 0);
       const target = new THREE.Object3D();
       target.position.set(3.0, 0, 0);
@@ -298,6 +565,31 @@ export default function ThreeForensicCanvas({
       tJunctionGroup.add(d);
     }
 
+    // Outer solid white road border lines for T-Junction
+    const addTJBorderEW = (xStart: number, xEnd: number, z: number) => {
+      const len = Math.abs(xEnd - xStart);
+      const l = new THREE.Mesh(new THREE.PlaneGeometry(len, 0.22), lineMat);
+      l.rotation.x = -Math.PI / 2;
+      l.position.set((xStart + xEnd) / 2, 0.045, z);
+      tJunctionGroup.add(l);
+    };
+    addTJBorderEW(-44, -6.1, -6.3);
+    addTJBorderEW(6.1, 44, -6.3);
+    addTJBorderEW(-44, 44, 6.3); // Continuous unbroken south outer border
+
+    const addTJBorderNS = (x: number, zStart: number, zEnd: number) => {
+      const len = Math.abs(zEnd - zStart);
+      const l = new THREE.Mesh(new THREE.PlaneGeometry(0.22, len), lineMat);
+      l.rotation.x = -Math.PI / 2;
+      l.position.set(x, 0.045, (zStart + zEnd) / 2);
+      tJunctionGroup.add(l);
+    };
+    addTJBorderNS(-5.8, -44, -6.3);
+    addTJBorderNS(5.8, -44, -6.3);
+
+    addZebraCrossings(tJunctionGroup);
+    addTrafficSignalGantry(tJunctionGroup, -8.0, 7.5, 0, true);   // Arterial Green light
+    addTrafficSignalGantry(tJunctionGroup, 8.0, -7.5, Math.PI, false); // Lateral Red light
     addStreetLamp(tJunctionGroup, -16.0, -16.0, Math.PI / 4);
     addStreetLamp(tJunctionGroup, 16.0, -16.0, -Math.PI / 4);
     addStreetLamp(tJunctionGroup, 0.0, 16.0, Math.PI);
@@ -311,28 +603,56 @@ export default function ThreeForensicCanvas({
     const intersectionGroup = new THREE.Group();
     intersectionRoadGroupRef.current = intersectionGroup;
 
-    const ewRoad = new THREE.Mesh(new THREE.PlaneGeometry(90, 12), roadMat);
+    const ewRoad = new THREE.Mesh(new THREE.PlaneGeometry(140, 12), roadMat);
     ewRoad.rotation.x = -Math.PI / 2;
     ewRoad.position.y = 0.02;
     ewRoad.receiveShadow = true;
     intersectionGroup.add(ewRoad);
 
-    const nsRoad = new THREE.Mesh(new THREE.PlaneGeometry(12, 90), roadMat);
+    const nsRoad = new THREE.Mesh(new THREE.PlaneGeometry(12, 140), roadMat);
     nsRoad.rotation.x = -Math.PI / 2;
     nsRoad.position.y = 0.03;
     nsRoad.receiveShadow = true;
     intersectionGroup.add(nsRoad);
 
+    // Continuous architectural curbs framing sidewalks seamlessly
     const add4WayCurb = (x: number, z: number) => {
-      const c = new THREE.Mesh(new THREE.BoxGeometry(32, 0.28, 32), curbMat);
+      const c = new THREE.Mesh(new THREE.BoxGeometry(60, 0.28, 60), curbMat);
       c.position.set(x, 0.14, z);
       c.receiveShadow = true;
       intersectionGroup.add(c);
     };
-    add4WayCurb(-22, -22);
-    add4WayCurb(22, -22);
-    add4WayCurb(-22, 22);
-    add4WayCurb(22, 22);
+    add4WayCurb(-36, -36);
+    add4WayCurb(36, -36);
+    add4WayCurb(-36, 36);
+    add4WayCurb(36, 36);
+
+    // Solid stop bars before crosswalks
+    const stopLineEast = new THREE.Mesh(new THREE.PlaneGeometry(0.55, 5.8), lineMat);
+    stopLineEast.rotation.x = -Math.PI / 2;
+    stopLineEast.position.set(-6.1, 0.046, 3.0);
+    intersectionGroup.add(stopLineEast);
+
+    const stopLineWest = new THREE.Mesh(new THREE.PlaneGeometry(0.55, 5.8), lineMat);
+    stopLineWest.rotation.x = -Math.PI / 2;
+    stopLineWest.position.set(6.1, 0.046, -3.0);
+    intersectionGroup.add(stopLineWest);
+
+    const stopLineNorth = new THREE.Mesh(new THREE.PlaneGeometry(5.8, 0.55), lineMat);
+    stopLineNorth.rotation.x = -Math.PI / 2;
+    stopLineNorth.position.set(3.0, 0.046, -6.1);
+    intersectionGroup.add(stopLineNorth);
+
+    const stopLineSouth = new THREE.Mesh(new THREE.PlaneGeometry(5.8, 0.55), lineMat);
+    stopLineSouth.rotation.x = -Math.PI / 2;
+    stopLineSouth.position.set(-3.0, 0.046, 6.1);
+    intersectionGroup.add(stopLineSouth);
+
+    // Forensic directional arrows on approach lanes
+    addDirectionalArrow(intersectionGroup, -16.0, 3.0, Math.PI / 2); // V1 Eastbound Approach
+    addDirectionalArrow(intersectionGroup, 16.0, -3.0, -Math.PI / 2); // Westbound Approach
+    addDirectionalArrow(intersectionGroup, 3.0, 16.0, 0); // V2 Northbound Approach
+    addDirectionalArrow(intersectionGroup, -3.0, -16.0, Math.PI); // Southbound Approach
 
     for (let x = -40; x <= 40; x += 4.5) {
       if (Math.abs(x) < 7) continue;
@@ -349,6 +669,35 @@ export default function ThreeForensicCanvas({
       intersectionGroup.add(d);
     }
 
+    // Continuous Crisp White Outer Road Border Lines (Framing Sidewalks like reference)
+    const addBorderLineEW = (xStart: number, xEnd: number, z: number) => {
+      const len = Math.abs(xEnd - xStart);
+      const l = new THREE.Mesh(new THREE.PlaneGeometry(len, 0.22), lineMat);
+      l.rotation.x = -Math.PI / 2;
+      l.position.set((xStart + xEnd) / 2, 0.045, z);
+      intersectionGroup.add(l);
+    };
+    const addBorderLineNS = (x: number, zStart: number, zEnd: number) => {
+      const len = Math.abs(zEnd - zStart);
+      const l = new THREE.Mesh(new THREE.PlaneGeometry(0.22, len), lineMat);
+      l.rotation.x = -Math.PI / 2;
+      l.position.set(x, 0.045, (zStart + zEnd) / 2);
+      intersectionGroup.add(l);
+    };
+
+    addBorderLineEW(-66, -6.1, -5.8);
+    addBorderLineEW(6.1, 66, -5.8);
+    addBorderLineEW(-66, -6.1, 5.8);
+    addBorderLineEW(6.1, 66, 5.8);
+
+    addBorderLineNS(-5.8, -66, -6.1);
+    addBorderLineNS(-5.8, 6.1, 66);
+    addBorderLineNS(5.8, -66, -6.1);
+    addBorderLineNS(5.8, 6.1, 66);
+
+    addZebraCrossings(intersectionGroup);
+    addTrafficSignalGantry(intersectionGroup, -7.5, 7.5, 0, true);
+    addTrafficSignalGantry(intersectionGroup, 7.5, -7.5, Math.PI, false);
     addStreetLamp(intersectionGroup, -14.0, -14.0, Math.PI / 4);
     addStreetLamp(intersectionGroup, 14.0, -14.0, -Math.PI / 4);
     addStreetLamp(intersectionGroup, -14.0, 14.0, (3 * Math.PI) / 4);
@@ -671,9 +1020,25 @@ export default function ThreeForensicCanvas({
     let animId: number;
     const animate = () => {
       animId = requestAnimationFrame(animate);
-      if (controlsRef.current) {
+
+      // Angled POV camera movement tracking vehicles with realistic driver angle
+      if (perspectiveRef.current === "CAR_POV" && carARef.current && cameraRef.current) {
+        const xA = carARef.current.position.x;
+        const zA = carARef.current.position.z;
+        const rotY = carARef.current.rotation.y;
+        cameraRef.current.position.set(xA + 0.3 * Math.cos(rotY), 1.25, zA - 0.3 * Math.sin(rotY));
+        cameraRef.current.lookAt(xA + 25 * Math.cos(rotY), 1.15, zA - 25 * Math.sin(rotY));
+      } else if (perspectiveRef.current === "LORRY_POV" && vehicleBGroupRef.current && cameraRef.current) {
+        const xB = vehicleBGroupRef.current.position.x;
+        const zB = vehicleBGroupRef.current.position.z;
+        const isLorry = lorryMeshRef.current?.visible;
+        const camHeight = isLorry ? 3.0 : 1.55;
+        cameraRef.current.position.set(xB, camHeight, isLorry ? zB - 0.4 : zB);
+        cameraRef.current.lookAt(xB, 0.7, zB + 28);
+      } else if (controlsRef.current && perspectiveRef.current === "ORBIT") {
         controlsRef.current.update();
       }
+
       if (rendererRef.current && sceneRef.current && cameraRef.current) {
         rendererRef.current.render(sceneRef.current, cameraRef.current);
       }
@@ -696,6 +1061,25 @@ export default function ThreeForensicCanvas({
       renderer.dispose();
     };
   }, []);
+
+  // Mount / Update OSM Procedural Environment in 3D Scene
+  useEffect(() => {
+    if (!sceneRef.current || !osmData) return;
+    if (osmGroupRef.current) {
+      sceneRef.current.remove(osmGroupRef.current);
+      osmGroupRef.current = null;
+    }
+    const group = createProceduralEnvironmentGroup(osmData);
+    osmGroupRef.current = group;
+    sceneRef.current.add(group);
+
+    return () => {
+      if (osmGroupRef.current && sceneRef.current) {
+        sceneRef.current.remove(osmGroupRef.current);
+        osmGroupRef.current = null;
+      }
+    };
+  }, [osmData]);
 
   // Update Road Environment when Junction Type changes
   useEffect(() => {
@@ -731,6 +1115,11 @@ export default function ThreeForensicCanvas({
   // Update Kinematics & Camera Perspectives based on Scrubber Time & State
   useEffect(() => {
     const t = scrubberTime;
+    const tracks = splineTracksRef.current;
+    const curSpeedA = tracks.speedAAt(t);
+    const curSpeedB = tracks.speedBAt(t);
+    const curBrake = tracks.brakeAAt(t);
+    setTelemetryState({ speedA: curSpeedA, speedB: curSpeedB, isBrakingA: curBrake });
 
     if (activeScenario === "CAR_VS_LORRY") {
       // ─────────────────────────────────────────────────────────────
@@ -747,13 +1136,13 @@ export default function ThreeForensicCanvas({
         isBrakingA = false;
       } else if (t < 2.7) {
         const dtBrake = t - 2.0;
-        xA = -3.0 + (dtBrake * 5.4);
+        xA = -5.8 + (dtBrake * 5.4);
         isBrakingA = true;
         pitchA = -0.025; // ABS nose dive
       } else {
         const dtPost = t - 2.7;
-        xA = 0.8 + Math.min(0.2, dtPost * 0.1);
-        rotA = -Math.min(0.18, dtPost * 0.2); // Rebound deflection
+        xA = -2.08 - Math.min(0.22, dtPost * 0.15);
+        rotA = -Math.min(0.24, dtPost * 0.26); // Rebound deflection
         isBrakingA = true;
         pitchA = 0;
       }
@@ -783,7 +1172,7 @@ export default function ThreeForensicCanvas({
         zB = -26.0 + (t * 8.9);
       } else {
         const dt = t - 2.7;
-        zB = -1.97 + Math.min(3.8, dt * 2.4);
+        zB = -2.2 + (dt * 5.4);
         rollLorry = Math.sin(dt * 7.0) * 0.04 * Math.exp(-dt * 2.5); // Suspension rock
       }
 
@@ -794,7 +1183,7 @@ export default function ThreeForensicCanvas({
 
       if (impactRingRef.current) {
         const ringMat = impactRingRef.current.material as THREE.MeshBasicMaterial;
-        impactRingRef.current.position.set(1.6, 0.1, 1.6);
+        impactRingRef.current.position.set(0.3, 0.1, 1.6);
         if (t >= 2.6 && t <= 3.4) {
           const factor = (t - 2.6) / 0.8;
           ringMat.opacity = Math.max(0, 0.95 - factor);
@@ -903,12 +1292,12 @@ export default function ThreeForensicCanvas({
         pitchA = 0;
       } else if (t < 2.8) {
         const dtBrake = t - 2.0;
-        xA = -3.0 + (dtBrake * 4.5);
+        xA = -5.8 + (dtBrake * 4.6);
         isBrakingA = true;
         pitchA = -0.022;
       } else {
         const dtPost = t - 2.8;
-        xA = 0.6 + Math.min(0.4, dtPost * 0.3);
+        xA = -2.12 - Math.min(0.15, dtPost * 0.1);
         rotA = -Math.min(0.12, dtPost * 0.15);
         isBrakingA = true;
         pitchA = 0;
@@ -982,12 +1371,15 @@ export default function ThreeForensicCanvas({
 
       if (cameraPerspective === "CAR_POV") {
         controlsRef.current.enabled = false;
-        cameraRef.current.position.set(xA + 0.6, 1.25, zA);
-        cameraRef.current.lookAt(xA + 25, 1.25, zA);
+        const rotY = carARef.current?.rotation.y || 0;
+        cameraRef.current.position.set(xA + 0.3 * Math.cos(rotY), 1.25, zA - 0.3 * Math.sin(rotY));
+        cameraRef.current.lookAt(xA + 25 * Math.cos(rotY), 1.15, zA - 25 * Math.sin(rotY));
       } else if (cameraPerspective === "LORRY_POV") {
         controlsRef.current.enabled = false;
-        cameraRef.current.position.set(xB, 3.2, zB - 0.4);
-        cameraRef.current.lookAt(xB, 0.6, zB + 28);
+        const isLorry = activeScenario === "CAR_VS_LORRY";
+        const camHeight = isLorry ? 3.0 : 1.55;
+        cameraRef.current.position.set(xB, camHeight, isLorry ? zB - 0.4 : zB);
+        cameraRef.current.lookAt(xB, 0.7, zB + 28);
       } else if (cameraPerspective === "CCTV_CAM") {
         controlsRef.current.enabled = false;
         cameraRef.current.position.set(-13, 14, -13);
@@ -1056,7 +1448,7 @@ export default function ThreeForensicCanvas({
   return (
     <div className="space-y-3">
       {/* Hidden File Input for Video Drag-and-Drop / Upload */}
-      <input 
+      <input
         ref={fileInputRef}
         type="file"
         accept="video/mp4,video/webm,video/mov,video/quicktime,video/avi"
@@ -1065,22 +1457,121 @@ export default function ThreeForensicCanvas({
       />
 
       {/* Main Forensic Player Viewport (100% Full-Width 3D Canvas) */}
-      <div 
+      <div
         ref={containerRef}
         onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
         onDragLeave={() => setIsDragOver(false)}
         onDrop={handleDrop}
-        className={`relative w-full h-[520px] bg-slate-950 rounded-xl overflow-hidden border shadow-2xl flex flex-col justify-between transition-colors ${
-          isDragOver ? "border-blue-500 bg-slate-900" : "border-slate-800"
-        }`}
+        style={{
+          backgroundImage: `
+            radial-gradient(ellipse at 50% 0%, rgba(59, 130, 246, 0.16), transparent 70%),
+            repeating-linear-gradient(
+              -45deg,
+              rgba(59, 130, 246, 0.12) 0px,
+              rgba(59, 130, 246, 0.12) 1.5px,
+              transparent 1.5px,
+              transparent 18px
+            )
+          `,
+          backgroundColor: '#dce7f3'
+        }}
+        className={`relative w-full h-[520px] rounded-xl overflow-hidden border shadow-xl flex flex-col justify-between transition-colors ${isDragOver ? "border-blue-500 bg-sky-100" : "border-slate-200"
+          }`}
       >
         {/* PURE 100% FULL-WIDTH THREE.JS FORENSIC CANVAS */}
-        <canvas 
-          ref={canvasRef} 
-          className="w-full h-full block cursor-grab active:cursor-grabbing" 
+        <canvas
+          ref={canvasRef}
+          className="w-full h-full block cursor-grab active:cursor-grabbing"
         />
 
-        {/* BOTTOM CONTROLS: Clean Timeline Scrubber, Playback, and High-Resolution Video Export */}
+
+        {/* TOP HUD BAR: Unified single-row container with guaranteed zero overlap */}
+        <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 z-30 pointer-events-none">
+          {/* 1. Location & GPS Coordinates (Compact, Truncated, Clean Rekishi Style) */}
+          <div className="pointer-events-auto bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-slate-200/90 shadow-sm max-w-[210px] sm:max-w-[280px] shrink-0">
+            <div className="text-xs font-bold text-slate-900 leading-tight truncate" title={address}>
+              {address}
+            </div>
+            <div className="flex items-center gap-1.5 text-[11px] font-mono text-slate-500 mt-0.5 truncate">
+              <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+              <span>{latitude.toFixed(6)}° N, {longitude.toFixed(6)}° E</span>
+            </div>
+          </div>
+
+          {/* 2. Camera Perspective Controls (Pill switcher) */}
+          <div className="pointer-events-auto bg-white/95 backdrop-blur-md p-1 rounded-full border border-slate-200/90 shadow-sm flex items-center gap-1 shrink">
+            <button
+              type="button"
+              onClick={() => setCameraPerspective("ORBIT")}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${cameraPerspective === "ORBIT"
+                ? "bg-slate-900 text-white shadow-sm"
+                : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+                }`}
+            >
+              <Compass className="w-3.5 h-3.5" />
+              <span>Free Roam</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCameraPerspective("CAR_POV")}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${cameraPerspective === "CAR_POV"
+                ? "bg-slate-900 text-white shadow-sm"
+                : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+                }`}
+            >
+              <Eye className="w-3.5 h-3.5 text-rose-500" />
+              <span>POV Vehicle 1</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCameraPerspective("LORRY_POV")}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${cameraPerspective === "LORRY_POV"
+                ? "bg-slate-900 text-white shadow-sm"
+                : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+                }`}
+            >
+              <Eye className="w-3.5 h-3.5 text-blue-500" />
+              <span>
+                {activeScenario === "CAR_VS_LORRY" ? "POV Vehicle 2 (Truck)" : activeScenario === "CAR_VS_BIKE" ? "POV Vehicle 2 (Bike)" : "POV Vehicle 2"}
+              </span>
+            </button>
+          </div>
+
+
+
+          {/* 3. Telemetry Speedometer & ABS Status */}
+          <div className="pointer-events-auto bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-slate-200/90 shadow-sm shrink-0 flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0"></span>
+              <div>
+                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider leading-none">Vehicle 1</div>
+                <div className="text-xs font-bold text-slate-900 font-mono leading-tight mt-0.5">
+                  {telemetryState.speedA} <span className="text-[10px] text-slate-400 font-sans font-normal">km/h</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="w-[1px] h-6 bg-slate-200"></div>
+
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0"></span>
+              <div>
+                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider leading-none">Vehicle 2</div>
+                <div className="text-xs font-bold text-slate-900 font-mono leading-tight mt-0.5">
+                  {telemetryState.speedB} <span className="text-[10px] text-slate-400 font-sans font-normal">km/h</span>
+                </div>
+              </div>
+            </div>
+
+            {telemetryState.isBrakingA && (
+              <span className="px-2 py-0.5 rounded-full bg-rose-50 border border-rose-200 text-rose-600 font-bold text-[9px] animate-pulse">
+                ABS
+              </span>
+            )}
+          </div>
+        </div>{/* BOTTOM CONTROLS: Clean Timeline Scrubber, Playback, and High-Resolution Video Export */}
         <div className="absolute bottom-3 left-3 right-3 bg-slate-950/90 backdrop-blur-md p-3 rounded-lg border border-slate-800 flex items-center gap-4 shadow-xl z-30">
           <button
             onClick={onTogglePlay}
@@ -1110,6 +1601,7 @@ export default function ThreeForensicCanvas({
               onChange={(e) => onTimeChange(parseFloat(e.target.value))}
               className="flex-1 accent-blue-500 h-2 bg-slate-800 rounded-lg cursor-pointer"
             />
+
             <span className="font-mono text-xs font-bold text-white shrink-0 min-w-[65px]">
               T+{scrubberTime < 10 ? `0${scrubberTime.toFixed(1)}` : scrubberTime.toFixed(1)}s
             </span>

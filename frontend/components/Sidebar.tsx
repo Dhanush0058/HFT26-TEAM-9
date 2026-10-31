@@ -52,8 +52,12 @@ export default function Sidebar({ currentTab, casesCount = 0 }: SidebarProps) {
       <div className="relative z-10">
         {/* Top Header Section of Sidebar: exactly 72px tall with border-b, merging seamlessly with TopHeader */}
         <div className="h-[72px] px-5 flex items-center gap-3 border-b border-[#F0F0F0]">
-          <div className="w-10 h-10 rounded-full bg-[#121212] text-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
-            <Shield className="w-5 h-5" />
+          <div className="w-10 h-10 rounded-xl overflow-hidden bg-white border border-[#EBEBEB] shadow-sm shrink-0 flex items-center justify-center p-0.5">
+            <img 
+              src="/logo.png" 
+              alt="REKISHI Logo" 
+              className="w-full h-full object-cover rounded-lg"
+            />
           </div>
           <div>
             <div className="text-base font-extrabold tracking-tight text-[#111111] leading-none">
